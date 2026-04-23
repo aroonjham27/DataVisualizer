@@ -23,8 +23,12 @@ For the current repository, the system boundary is:
    The reviewed semantic contract for that dataset
 3. `datavisualizer.planner`
    The semantic query planner that maps user questions into structured analysis plans
-4. Future SQL compiler and visualization layer
-   Downstream components that should consume the analysis plan rather than bypass the semantic model
+4. `datavisualizer.sql_compiler`
+   The deterministic compiler that maps supported analysis plans into read-only DuckDB SQL
+5. `datavisualizer.execution`
+   A minimal DuckDB execution harness for compiled read-only SQL
+6. Future visualization layer
+   Downstream components that should consume result data and chart intent rather than bypass the semantic model
 
 The semantic layer and planner sit between raw data files and any automated analysis behavior. That keeps the first version reviewable by humans and reduces the risk of the agent inventing joins, measures, or drill paths.
 
@@ -36,6 +40,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Ambiguity is surfaced: fields such as `total_quote_amount`, `metric_value`, and `price_positioning` are kept but marked for review.
 - Planning is semantic-model-first: natural-language questions are resolved into analysis metadata before any SQL exists.
 - Drill continuation carries semantic state, including the selected visual member when a follow-up is scoped to a clicked chart value.
+- SQL compilation is plan-first: only supported `AnalysisPlan` shapes compile, and unsupported filters, grains, joins, or aggregations are rejected.
 
 ## Boundaries And Guardrails
 

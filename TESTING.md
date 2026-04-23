@@ -21,9 +21,14 @@ py -3 -m unittest discover -s tests -t .
 - fallback planning behavior
 - `AnalysisPlan` serialization round trips
 - minimal API payload handling
+- true HTTP planning API round trips
+- deterministic SQL compilation
+- read-only DuckDB execution against seed CSVs
+- unsupported SQL plan-shape rejection
 
 ## Expectations
 
 - Add or update golden questions when planner behavior changes materially.
 - Keep tests semantic-model-first: assert plans reference semantic entities and fields, not raw SQL.
 - When ambiguity is expected, test for warnings rather than forcing brittle guesses.
+- Keep SQL compiler tests focused on structured plans and compiled SQL, never natural-language SQL generation.

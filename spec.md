@@ -1,56 +1,70 @@
-# Semantic Planner Hardening Spec
+# Plan-To-SQL Compiler Spec
 
 ## Task Summary
 
-Harden the current semantic planner before adding a deterministic plan-to-SQL compiler. This pass should improve planner contracts, drill context, routing safety, and test coverage without generating SQL.
+Build a deterministic compiler that turns a governed `AnalysisPlan` into safe read-only DuckDB SQL for the pilot seed dataset.
 
 ## Goals
 
-- Keep documentation accurate for the current repo state.
-- Extend analysis state so drill continuation can carry a selected visual member.
-- Add tests for join paths, warning/status behavior, fallback planning, and `AnalysisPlan` serialization round trips.
-- Tighten brittle routing, especially avoiding broad routing of every `trend` question to usage planning.
-- Keep the planner deterministic, semantic-model-first, and small.
+- Compile only from the semantic model and structured `AnalysisPlan`.
+- Support primary entity selection, approved join paths, grouped dimensions, time bucketing, measure aggregations, measure-local filters, plan filters, selected-member drill filters, stable ordering, and row limiting.
+- Add a minimal DuckDB execution harness for verification against seed CSVs.
+- Add tests for SQL compilation and basic execution.
+- Add a lightweight true HTTP round-trip test for the planning API.
 
 ## Non-Goals
 
-- SQL generation or execution
-- Frontend visualization UI
-- New external frameworks
-- Broad natural-language platform scaffolding
+- No frontend UI.
+- No natural-language SQL generation.
+- No arbitrary SQL expression support.
+- No broad SQL optimizer or warehouse abstraction.
+- No external frameworks.
 
 ## Repo Facts Observed
 
-- `origin/main` and local `main` are in sync.
-- The repo contains seed data under `data/`.
-- The repo contains the reviewed pilot semantic model at `configs/semantic_models/pilot_pricing_v0.json`.
-- The repo contains a minimal Python runtime under `datavisualizer/`.
-- The repo contains a standard-library `unittest` suite under `tests/`.
-- No package manager, external dependency stack, SQL compiler, or frontend exists yet.
+- `origin/main` and local `main` were in sync before this work.
+- The repo contains seed CSVs under `data/seed/`.
+- The repo contains a reviewed semantic model at `configs/semantic_models/pilot_pricing_v0.json`.
+- The repo contains deterministic planner contracts and drill context support under `datavisualizer/`.
+- The repo contains a standard-library `unittest` suite.
+- DuckDB Python package `1.5.2` is available in the local environment.
 
 ## Design Choices For This Pass
 
-- Continue using Python standard library only.
-- Add selected-member drill context to the typed contracts rather than introducing session storage.
-- Let drill continuation apply selected-member scope as a semantic filter when provided.
-- Tighten routing with a small explicit route table instead of broad keyword checks.
-- Preserve fallback behavior as `review_needed` so unsupported questions are safe for review before SQL compilation.
+- Keep SQL generation deterministic and pilot-focused.
+- Compile CTEs over `read_csv_auto(...)` for each referenced semantic entity.
+- Reject unsupported plan shapes instead of guessing.
+- Use semantic aliases and compiler-owned SQL expressions rather than raw user text.
+- Keep execution harness read-only by accepting compiled SQL only and rejecting non-`SELECT` SQL.
 
-## Risks And Edge Cases
+## Supported Plan Shapes
 
-- A visual member selection may reference a field that is already present as a dimension; this should scope the next drill rather than duplicate a dimension.
-- Broad words like `trend` can appear in unrelated questions and should not force usage planning.
-- Fallback planning is useful for exploration but should not be treated as high-confidence.
-- Join path correctness matters now because the next milestone will compile these paths into SQL.
+- One primary entity.
+- Approved join paths from `AnalysisPlan.join_path`.
+- Dimensions and time buckets in `SELECT` and `GROUP BY`.
+- Aggregations: `count_distinct`, `sum`, `average`, and the pilot `win_rate` ratio.
+- Measure-local equality filters via `CASE WHEN ... THEN ... END`.
+- Plan filters with `=` and `in`.
+- `year`, `quarter`, `month`, and `day` time grains.
+- Stable `ORDER BY` on grouped fields and `LIMIT`.
+
+## Rejected Plan Shapes
+
+- Unknown entities or fields.
+- Joins not present in the plan's approved join path.
+- Unsupported aggregations.
+- Unsupported filter operators.
+- Unsupported time grains.
+- Raw SQL expressions from requests or plans.
 
 ## Verification Plan
 
 | Requirement | Proof Method |
 |---|---|
-| Docs reflect current repo state | Review `spec.md`, `README.md`, and `TESTING.md` as needed |
-| Selected visual member can scope drill continuation | Unit test with selected field/value carried into drill state and filters |
-| Join paths are stable and semantic-model based | Unit tests asserting expected join edges for cross-entity plans |
-| Warning/status behavior is explicit | Unit tests for `review_needed` and `ok` plan cases |
-| Fallback behavior is safe | Unit test for unsupported question routing to fallback plan with warning |
-| Plan serialization is stable | Unit test for `AnalysisPlan.to_dict()` / `from_dict()` round trip |
-| Broad trend routing is tightened | Unit test proving unrelated trend questions do not auto-route to usage |
+| SQL uses semantic model and plan fields only | Unit tests assert compiled SQL uses expected CSV CTEs, aliases, joins, and no raw-question SQL |
+| Join paths compile correctly | Unit tests for quote/product and competitor/opportunity/competitor joins |
+| Filters compile safely | Unit tests for selected-member drill filters and measure-local filters |
+| Time bucketing compiles | Unit tests for close-month and usage-month plans |
+| Compiled SQL executes against seed CSVs | DuckDB execution tests with non-empty result sets |
+| Unsupported shapes are rejected | Unit tests for unsupported aggregation/filter/time grain |
+| Planning API has true HTTP coverage | Test starts local stdlib HTTP server and posts to `/analysis-plan` |

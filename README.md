@@ -9,6 +9,7 @@ This repository now contains:
 - imported synthetic pricing seed data from `PricingProject` under `data/`
 - a reviewed pilot semantic model under `configs/semantic_models/`
 - a minimal Python semantic query planner runtime under `datavisualizer/`
+- a deterministic plan-to-SQL compiler and DuckDB execution harness
 - a standard-library test suite under `tests/`
 
 ## Running the project
@@ -23,6 +24,17 @@ Run the test suite:
 
 ```powershell
 py -3 -m unittest discover -s tests -t .
+```
+
+The compiler is currently exposed as Python API, not as a standalone CLI:
+
+```python
+from datavisualizer import DuckDbSqlCompiler, SemanticPlanner, execute_compiled_query
+
+planner = SemanticPlanner.from_default_model()
+plan = planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+compiled = DuckDbSqlCompiler.from_default_model().compile(plan)
+result = execute_compiled_query(compiled)
 ```
 
 ## Data
@@ -43,7 +55,7 @@ This repository includes the approved canonical synthetic seed copied from `../P
 - [data/README.md](data/README.md): provenance and scope of the imported pricing seed
 - `data/seed/`: approved canonical seed CSVs and manifests copied from `PricingProject`
 - `data/reports/`: evaluation reports copied to preserve seed approval context
-- `datavisualizer/`: semantic-model loader, typed planner contracts, planner logic, and minimal API
+- `datavisualizer/`: semantic-model loader, typed planner contracts, planner logic, SQL compiler, execution harness, and minimal API
 - `tests/`: stdlib planner and API tests
 - [AGENTS.md](AGENTS.md): concise repository instructions for agents
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution workflow, planning discipline, and verification expectations
