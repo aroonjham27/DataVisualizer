@@ -7,7 +7,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from .contracts import AnalysisRequest
+from .answer import AnswerService
+from .contracts import AnalysisRequest, AnswerRequest
 from .planner import DEFAULT_MODEL_PATH, SemanticPlanner
 from .semantic_model import load_semantic_model
 
@@ -24,18 +25,28 @@ def handle_plan_request(payload: dict[str, Any], planner: SemanticPlanner | None
     return plan.to_dict()
 
 
+def handle_answer_request(payload: dict[str, Any], service: AnswerService | None = None) -> dict[str, Any]:
+    request = AnswerRequest.from_dict(payload)
+    active_service = service or AnswerService.from_model_path(request.semantic_model_path)
+    return active_service.answer_request(request).to_dict()
+
+
 class PlanningRequestHandler(BaseHTTPRequestHandler):
     planner = build_planner()
+    answer_service = AnswerService.from_default_model()
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.path != "/analysis-plan":
+        if self.path not in {"/analysis-plan", "/answer"}:
             self.send_error(HTTPStatus.NOT_FOUND, "Unsupported route")
             return
         content_length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(content_length)
         try:
             payload = json.loads(body.decode("utf-8"))
-            response = handle_plan_request(payload, self.planner)
+            if self.path == "/analysis-plan":
+                response = handle_plan_request(payload, self.planner)
+            else:
+                response = handle_answer_request(payload, self.answer_service)
         except Exception as exc:  # noqa: BLE001
             self.send_response(HTTPStatus.BAD_REQUEST)
             self.send_header("Content-Type", "application/json")
@@ -62,6 +73,7 @@ def main() -> None:
     args = parser.parse_args()
 
     PlanningRequestHandler.planner = build_planner(args.semantic_model_path)
+    PlanningRequestHandler.answer_service = AnswerService.from_model_path(args.semantic_model_path)
     server = ThreadingHTTPServer((args.host, args.port), PlanningRequestHandler)
     try:
         print(f"Serving semantic planner API on http://{args.host}:{args.port}")

@@ -25,6 +25,11 @@ py -3 -m unittest discover -s tests -t .
 - deterministic SQL compilation
 - read-only DuckDB execution against seed CSVs
 - unsupported SQL plan-shape rejection
+- end-to-end compiled-plan answer generation
+- deterministic chart spec generation for `line`, `bar`, `grouped_bar`, and `table`
+- true HTTP `/answer` round trips
+- selected-member drill context through the answer path and over HTTP
+- restricted SQL gateway success and rejection cases
 
 ## Expectations
 
@@ -32,3 +37,4 @@ py -3 -m unittest discover -s tests -t .
 - Keep tests semantic-model-first: assert plans reference semantic entities and fields, not raw SQL.
 - When ambiguity is expected, test for warnings rather than forcing brittle guesses.
 - Keep SQL compiler tests focused on structured plans and compiled SQL, never natural-language SQL generation.
+- Keep restricted SQL tests focused on governed validation boundaries; it is a fallback tool surface, not the default answer path.

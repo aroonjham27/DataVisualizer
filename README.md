@@ -10,6 +10,8 @@ This repository now contains:
 - a reviewed pilot semantic model under `configs/semantic_models/`
 - a minimal Python semantic query planner runtime under `datavisualizer/`
 - a deterministic plan-to-SQL compiler and DuckDB execution harness
+- an end-to-end compiled-plan answer pipeline with chart metadata
+- a governed restricted-SQL gateway for future fallback tooling
 - a standard-library test suite under `tests/`
 
 ## Running the project
@@ -20,21 +22,24 @@ Run the minimal planner API from the repository root:
 py -3 -m datavisualizer.api
 ```
 
+The API currently exposes:
+
+- `POST /analysis-plan` for planning only
+- `POST /answer` for the default compiled-plan answer path
+
 Run the test suite:
 
 ```powershell
 py -3 -m unittest discover -s tests -t .
 ```
 
-The compiler is currently exposed as Python API, not as a standalone CLI:
+The answer pipeline is currently exposed through Python and the minimal HTTP API, not as a standalone CLI:
 
 ```python
-from datavisualizer import DuckDbSqlCompiler, SemanticPlanner, execute_compiled_query
+from datavisualizer import AnswerService
 
-planner = SemanticPlanner.from_default_model()
-plan = planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
-compiled = DuckDbSqlCompiler.from_default_model().compile(plan)
-result = execute_compiled_query(compiled)
+service = AnswerService.from_default_model()
+answer = service.answer("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
 ```
 
 ## Data
@@ -55,8 +60,8 @@ This repository includes the approved canonical synthetic seed copied from `../P
 - [data/README.md](data/README.md): provenance and scope of the imported pricing seed
 - `data/seed/`: approved canonical seed CSVs and manifests copied from `PricingProject`
 - `data/reports/`: evaluation reports copied to preserve seed approval context
-- `datavisualizer/`: semantic-model loader, typed planner contracts, planner logic, SQL compiler, execution harness, and minimal API
-- `tests/`: stdlib planner and API tests
+- `datavisualizer/`: semantic-model loader, typed contracts, planner logic, SQL compiler, query gateway, answer service, execution harness, chart specs, and minimal API
+- `tests/`: stdlib planner, compiler, answer pipeline, restricted SQL, and API tests
 - [AGENTS.md](AGENTS.md): concise repository instructions for agents
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution workflow, planning discipline, and verification expectations
 - [TESTING.md](TESTING.md): test commands and validation expectations

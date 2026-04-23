@@ -27,7 +27,11 @@ For the current repository, the system boundary is:
    The deterministic compiler that maps supported analysis plans into read-only DuckDB SQL
 5. `datavisualizer.execution`
    A minimal DuckDB execution harness for compiled read-only SQL
-6. Future visualization layer
+6. `datavisualizer.query_gateway`
+   The governed execution boundary with a default compiled-plan path and a restricted-SQL fallback service
+7. `datavisualizer.answer`
+   The end-to-end answer service that plans, compiles, executes, shapes results, and emits chart metadata
+8. Future visualization layer
    Downstream components that should consume result data and chart intent rather than bypass the semantic model
 
 The semantic layer and planner sit between raw data files and any automated analysis behavior. That keeps the first version reviewable by humans and reduces the risk of the agent inventing joins, measures, or drill paths.
@@ -41,6 +45,9 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Planning is semantic-model-first: natural-language questions are resolved into analysis metadata before any SQL exists.
 - Drill continuation carries semantic state, including the selected visual member when a follow-up is scoped to a clicked chart value.
 - SQL compilation is plan-first: only supported `AnalysisPlan` shapes compile, and unsupported filters, grains, joins, or aggregations are rejected.
+- Answers default to `compiled_plan` mode. Restricted SQL is a governed secondary boundary for future LLM tooling, not the primary route.
+- Chart specs are deterministic metadata for `line`, `bar`, `grouped_bar`, and `table`; rendering remains outside this repository.
+- Restricted SQL is intentionally narrow: semantic-model entities only, approved join edges only, read-only statements only, no direct file access, and gateway-enforced row limits.
 
 ## Boundaries And Guardrails
 
@@ -48,6 +55,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Quote-history facts (`price_snapshots`) and signed-contract facts (`contract_terms`) are both modeled, but they should not be mixed casually.
 - Usage facts should flow through `contracts` or `accounts`, not be joined directly to opportunities.
 - The pilot dataset is not treated as proof that every relationship is universal outside this seed.
+- Restricted SQL should not be used when the compiled-plan path already supports the request.
 
 ## Review Model
 

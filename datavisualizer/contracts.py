@@ -195,3 +195,75 @@ class AnalysisRequest:
             selected_member=parse_selection(payload.get("selected_member")),
             semantic_model_path=payload.get("semantic_model_path"),
         )
+
+
+@dataclass(frozen=True)
+class AnswerRequest:
+    question: str
+    current_analysis_state: AnalysisPlan | None = None
+    selected_member: DrillSelection | None = None
+    semantic_model_path: str | None = None
+    row_limit: int | None = None
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "AnswerRequest":
+        analysis_request = AnalysisRequest.from_dict(payload)
+        row_limit = payload.get("row_limit")
+        return cls(
+            question=analysis_request.question,
+            current_analysis_state=analysis_request.current_analysis_state,
+            selected_member=analysis_request.selected_member,
+            semantic_model_path=analysis_request.semantic_model_path,
+            row_limit=int(row_limit) if row_limit is not None else None,
+        )
+
+
+@dataclass(frozen=True)
+class QueryMetadata:
+    query_mode: str
+    row_limit: int
+    involved_entities: tuple[str, ...]
+    validation_notes: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ResultColumn:
+    name: str
+    label: str
+    data_type: str
+    semantic_lineage: tuple[str, ...]
+    role: str
+
+
+@dataclass(frozen=True)
+class ResultLimitMetadata:
+    row_limit: int
+    returned_rows: int
+    possibly_truncated: bool
+
+
+@dataclass(frozen=True)
+class ChartSpec:
+    chart_type: str
+    title: str
+    x: str | None = None
+    y: tuple[str, ...] = ()
+    series: str | None = None
+    columns: tuple[str, ...] = ()
+    warnings: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class AnswerResponse:
+    plan: AnalysisPlan
+    query_mode: str
+    query_metadata: QueryMetadata
+    sql: str
+    columns: tuple[ResultColumn, ...]
+    rows: tuple[tuple[Any, ...], ...]
+    limit: ResultLimitMetadata
+    warnings: tuple[str, ...]
+    chart_spec: ChartSpec
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
