@@ -21,10 +21,12 @@ For the current repository, the system boundary is:
    The imported pilot dataset copied from `PricingProject`
 2. `configs/semantic_models/pilot_pricing_v0.json`
    The reviewed semantic contract for that dataset
-3. Visualization agent or future BI/query layer
-   A consumer that should use the semantic contract first, then generate analyses from it
+3. `datavisualizer.planner`
+   The semantic query planner that maps user questions into structured analysis plans
+4. Future SQL compiler and visualization layer
+   Downstream components that should consume the analysis plan rather than bypass the semantic model
 
-The semantic layer sits between raw data files and any automated analysis behavior. That keeps the first version reviewable by humans and reduces the risk of the agent inventing joins or measures.
+The semantic layer and planner sit between raw data files and any automated analysis behavior. That keeps the first version reviewable by humans and reduces the risk of the agent inventing joins, measures, or drill paths.
 
 ## Design Choices For V0
 
@@ -32,6 +34,7 @@ The semantic layer sits between raw data files and any automated analysis behavi
 - Lean and extensible: only seed-backed tables and fields are modeled.
 - Fact separation is preserved: opportunities, quote lines, price snapshots, contract terms, and usage are not collapsed into one reporting table.
 - Ambiguity is surfaced: fields such as `total_quote_amount`, `metric_value`, and `price_positioning` are kept but marked for review.
+- Planning is semantic-model-first: natural-language questions are resolved into analysis metadata before any SQL exists.
 
 ## Boundaries And Guardrails
 

@@ -1,0 +1,88 @@
+[
+  {
+    "question": "What is win rate by close month, account segment, sales region, and lifecycle type?",
+    "expected": {
+      "primary_entity": "opportunities",
+      "measures": [
+        "opportunities.win_rate"
+      ],
+      "dimensions": [
+        "accounts.segment",
+        "opportunities.sales_region",
+        "opportunities.lifecycle_type"
+      ],
+      "time_dimension": "opportunities.close_date",
+      "time_grain": "month",
+      "chart_type": "line"
+    }
+  },
+  {
+    "question": "How do quoted discount rates and annualized quote amounts vary by product family and line role?",
+    "expected": {
+      "primary_entity": "opportunity_line_items",
+      "measures": [
+        "opportunity_line_items.annualized_amount",
+        "opportunity_line_items.average_discount_pct"
+      ],
+      "dimensions": [
+        "products.product_family",
+        "opportunity_line_items.line_role"
+      ],
+      "time_dimension": null,
+      "time_grain": null,
+      "chart_type": "grouped_bar"
+    }
+  },
+  {
+    "question": "Which competitors appear most often in lost enterprise opportunities, and how are they positioned on price?",
+    "expected": {
+      "primary_entity": "opportunity_competitors",
+      "measures": [
+        "opportunity_competitors.competitor_mention_count"
+      ],
+      "dimensions": [
+        "competitors.competitor_name",
+        "opportunity_competitors.price_positioning"
+      ],
+      "filters": [
+        "opportunities.outcome=lost",
+        "opportunities.segment=enterprise"
+      ],
+      "chart_type": "bar"
+    }
+  },
+  {
+    "question": "How do signed annual subscription fees and support fees vary by contract status, billing frequency, support tier, and term sequence?",
+    "expected": {
+      "primary_entity": "contract_terms",
+      "measures": [
+        "contract_terms.annual_subscription_fee",
+        "contract_terms.support_fee"
+      ],
+      "dimensions": [
+        "contracts.contract_status",
+        "contracts.billing_frequency",
+        "contract_terms.support_tier",
+        "contract_terms.term_sequence"
+      ],
+      "chart_type": "table"
+    }
+  },
+  {
+    "question": "How do active users and processed transactions trend over time by product family and customer segment after contract start?",
+    "expected": {
+      "primary_entity": "usage_metrics",
+      "measure_filters": [
+        "usage_metrics.metric_name=active_users",
+        "usage_metrics.metric_name=processed_transactions"
+      ],
+      "dimensions": [
+        "products.product_family",
+        "accounts.segment"
+      ],
+      "time_dimension": "usage_metrics.metric_period_start",
+      "time_grain": "month",
+      "chart_type": "line"
+    }
+  }
+]

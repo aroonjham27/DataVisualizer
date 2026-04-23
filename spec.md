@@ -1,64 +1,92 @@
-# Semantic Layer Bootstrap Spec
+# Semantic Query Planner Spec
 
 ## Task Summary
 
-Create a v0 semantic layer for the pilot pricing seed in `DataVisualizer` so a visualization agent can reason over business entities, facts, dimensions, joins, and drill paths without starting from raw SQL.
+Build the semantic query planner layer for `DataVisualizer`. The planner must convert a user question into a structured analysis plan grounded in the existing semantic model, and it must support drill continuation using current analysis state.
 
 ## Goals
 
-- Define a reviewed semantic contract from the imported seed data.
-- Keep the model lean, explicit, and easy to extend.
-- Separate confident mappings from uncertain ones.
-- Document the role of the semantic layer in the local system.
+- Define typed models for an `AnalysisPlan`.
+- Load and use the existing semantic model as the governing contract.
+- Resolve a user question into:
+  - primary entity
+  - measure
+  - dimensions
+  - time dimension
+  - time grain
+  - filters
+  - join path
+  - drill hierarchy
+  - chart intent
+  - warnings
+- Support conversational drill continuation such as "go one level deeper".
+- Add a minimal backend API surface for planning.
+- Add the lightest justified test harness for this milestone.
 
 ## Non-Goals
 
-- Building query-generation logic
-- Declaring the model final or production-ready
-- Inventing business definitions not supported by the seed or its source schema
-- Creating a denormalized warehouse layer
+- SQL generation or execution
+- Frontend visualization UI
+- Broad agent orchestration
+- Warehouse or semantic-model redesign
+- Introducing external frameworks or dependencies unless they are clearly required
 
-## Evidence Base
+## Repo Facts Observed
 
-- `data/seed/*.csv`
-- `data/seed/manifest.json`
-- `data/seed/approval_manifest.json`
-- `data/reports/candidate_evaluation.{json,md}`
-- Source schema provenance from `../PricingProject/src/pricing_foundation/schema.py`
-- Source table intent from `../PricingProject/docs/schema.md`
+- The repo contains reviewed seed data in `data/`.
+- The repo contains a bootstrap semantic model at `configs/semantic_models/pilot_pricing_v0.json`.
+- The repo does not currently contain committed Python runtime code, a package manager config, or a test harness.
+- Repository docs currently describe the repo as lacking runtime/build/test tooling.
 
-## Working Assumptions
+## Design Choices For This Milestone
 
-- The imported CSVs are the pilot dataset and are the local source of truth for v0 semantics.
-- The source pricing project schema and schema docs are acceptable provenance for interpreting the copied field names.
-- Ambiguous fields should be labeled as review-needed rather than normalized into strong semantic claims.
+- Use Python standard library only unless a clear blocker appears.
+- Create a small `src/` package for planner code.
+- Use `unittest` for tests to avoid adding dependency management prematurely.
+- Expose a minimal HTTP JSON API with stdlib server support rather than introducing a web framework.
+- Keep planner behavior deterministic and rule-based against the semantic metadata rather than generative.
+
+## Semantic Planning Scope
+
+The planner should support the pilot semantic model well enough to plan questions around:
+
+- win/loss and opportunity performance
+- product and quote composition
+- competitor analysis
+- contract structure
+- usage trends
+
+It should use warnings instead of silently guessing when:
+
+- multiple measures look plausible
+- a question references an ambiguous metric
+- a drill continuation has no valid next level
+- the semantic model does not clearly support the requested concept
 
 ## Proposed Deliverables
 
-- `ARCHITECTURE.md`
-- `configs/semantic_models/pilot_pricing_v0.yaml`
-- `SEMANTIC_REVIEW.md`
-
-## Candidate Semantic Scope
-
-- Core business entities: accounts, products, opportunities, contracts, competitors
-- Fact-like entities: opportunity_line_items, price_snapshots, contract_terms, usage_metrics, opportunity_competitors, win_loss_details
-- Explicit joins and drill hierarchies rooted in the observed foreign keys
-- A small golden question set to validate semantic usefulness
+- planner package under `src/`
+- typed planner contracts
+- semantic model loader utilities
+- planner logic
+- minimal backend planning API
+- tests and golden question fixtures
+- repo doc updates for running and testing, if new runtime/test workflows are introduced
 
 ## Risks And Edge Cases
 
-- The pilot data only contains closed opportunities even though the source schema allows `open`.
-- `parent_account_id` exists but is not populated in the pilot seed.
-- Some numeric fields are sparse or context-dependent, especially `total_quote_amount`, `transaction_fee_per_unit`, and `metric_value`.
-- Duplicate-looking business attributes appear at multiple grains, such as segment and sales region on both accounts and opportunities.
+- The semantic model contains multiple fact tables, so question routing may be ambiguous.
+- Conversational follow-up like "go deeper" depends on previously chosen drill hierarchy and current drill level.
+- Some concepts in the dataset are sparse or context-sensitive, especially quote values, usage metrics, and competitive price positioning.
+- The pilot seed only contains closed opportunities, so plan behavior should not imply open-pipeline support.
 
 ## Verification Plan
 
 | Requirement | Proof Method |
 |---|---|
-| Semantic model is grounded in actual local data fields | Match model entities and fields against `data/seed` CSV headers |
-| Join paths reflect observed relationships | Use copied schema provenance from `schema.py` and table-level row coverage checks |
-| Ambiguities are explicit | Review model and `SEMANTIC_REVIEW.md` for flagged fields and assumptions |
-| Documentation explains the semantic layer's role | Review `ARCHITECTURE.md` for system placement and scope boundaries |
-| Model supports concrete visualization questions | Confirm golden question set maps to entities, joins, measures, and time dimensions in the model |
+| Typed planner models exist and serialize cleanly | Unit tests for model creation and API payloads |
+| Planner resolves pilot golden questions into expected analysis-plan structure | Golden question tests with expected entity, measure, dimensions, and joins |
+| Drill continuation works from prior analysis state | Unit tests covering "go one level deeper" and invalid drill cases |
+| Planner behavior stays semantic-model-first | Tests and code review confirming planner reads metadata rather than hard-coded raw table assumptions |
+| Minimal API surface works | API tests against the request handler or application entry point |
+| Documentation reflects any newly added runtime/test workflow | Review updated repo docs |

@@ -1,6 +1,6 @@
 # Contributing
 
-This repository currently has no committed runtime, build, or test toolchain. Until those files exist, contributions should stay evidence-based, minimal, and explicit about what was and was not verified.
+This repository now contains a minimal Python runtime and a standard-library test workflow. Contributions should stay evidence-based, minimal, and explicit about what was and was not verified.
 
 ## Working principles
 
@@ -24,7 +24,7 @@ Use this workflow for non-trivial changes:
 ## Verification expectations
 
 - Base verification on the tooling that actually exists in the repo.
-- If tests or runnable checks are added later, document the exact commands in the repo docs where they belong.
+- Document exact runnable commands in the repo docs when runtime or test workflows change.
 - If no automated checks exist, record the manual validation performed instead of implying that the work was fully verified.
 
 ## Documentation maintenance
@@ -32,5 +32,5 @@ Use this workflow for non-trivial changes:
 - Update existing docs before creating new ones.
 - Keep `.gitignore` current when new local-only, generated, cache, build, or database artifacts appear.
 - Keep `AGENTS.md` short and operational.
-- Add `TESTING.md` only when there is a real validation workflow to document.
+- Keep `TESTING.md` current when planner behavior, golden questions, or test commands change.
 - Add `ARCHITECTURE.md` only when the codebase has enough structure or design tradeoffs to justify it.

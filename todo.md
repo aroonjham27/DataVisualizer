@@ -1,8 +1,12 @@
 # Todo
 
-- [x] Inspect imported seed files, manifests, and source schema provenance
-- [x] Sample real values and relationship coverage for key tables
-- [x] Draft the v0 semantic model
-- [x] Write `ARCHITECTURE.md`
-- [x] Write `SEMANTIC_REVIEW.md`
-- [x] Review the docs and model for duplication, ambiguity flags, and evidence alignment
+- [x] Inspect current repo docs, semantic model, and repo state
+- [x] Design the minimal runtime shape for the planner layer
+- [x] Implement typed semantic and analysis-plan models
+- [x] Implement semantic-model loading and lookup helpers
+- [x] Implement deterministic planner behavior for pilot questions
+- [x] Implement drill continuation from prior analysis state
+- [x] Expose a minimal backend API for plan generation
+- [x] Add a light test harness and golden question tests
+- [x] Update repo docs to reflect the new runtime and test workflow
+- [x] Run checks and review for ambiguity handling and semantic-model-first behavior
