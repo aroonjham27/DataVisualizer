@@ -35,6 +35,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Fact separation is preserved: opportunities, quote lines, price snapshots, contract terms, and usage are not collapsed into one reporting table.
 - Ambiguity is surfaced: fields such as `total_quote_amount`, `metric_value`, and `price_positioning` are kept but marked for review.
 - Planning is semantic-model-first: natural-language questions are resolved into analysis metadata before any SQL exists.
+- Drill continuation carries semantic state, including the selected visual member when a follow-up is scoped to a clicked chart value.
 
 ## Boundaries And Guardrails
 

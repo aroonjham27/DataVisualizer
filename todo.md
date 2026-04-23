@@ -1,12 +1,12 @@
 # Todo
 
-- [x] Inspect current repo docs, semantic model, and repo state
-- [x] Design the minimal runtime shape for the planner layer
-- [x] Implement typed semantic and analysis-plan models
-- [x] Implement semantic-model loading and lookup helpers
-- [x] Implement deterministic planner behavior for pilot questions
-- [x] Implement drill continuation from prior analysis state
-- [x] Expose a minimal backend API for plan generation
-- [x] Add a light test harness and golden question tests
-- [x] Update repo docs to reflect the new runtime and test workflow
-- [x] Run checks and review for ambiguity handling and semantic-model-first behavior
+- [x] Inspect current repo docs, semantic model, planner, tests, and GitHub sync state
+- [x] Update `spec.md` for the current hardening milestone
+- [x] Extend analysis state with selected visual member drill context
+- [x] Tighten brittle planner routing rules
+- [x] Add tests for join paths
+- [x] Add tests for warning/status behavior
+- [x] Add tests for fallback planning behavior
+- [x] Add tests for `AnalysisPlan` serialization round trip
+- [x] Add tests for selected-member scoped drill continuation
+- [x] Run the test suite and review remaining SQL-compiler risks

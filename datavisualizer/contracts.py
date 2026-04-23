@@ -43,12 +43,20 @@ class PlanJoinStep:
 
 
 @dataclass(frozen=True)
+class DrillSelection:
+    field: PlannedField
+    values: tuple[Any, ...]
+    source: str = "visual_member"
+
+
+@dataclass(frozen=True)
 class DrillState:
     hierarchy_name: str
     hierarchy_label: str
     levels: tuple[str, ...]
     current_level_index: int
     next_level: str | None
+    selected_member: DrillSelection | None = None
     is_continuation: bool = False
 
 
@@ -109,6 +117,15 @@ class AnalysisPlan:
                 notes=raw.get("notes", ""),
             )
 
+        def parse_selection(raw: dict[str, Any] | None) -> DrillSelection | None:
+            if raw is None:
+                return None
+            return DrillSelection(
+                field=parse_field(raw["field"]),  # type: ignore[arg-type]
+                values=tuple(raw.get("values", ())),
+                source=raw.get("source", "visual_member"),
+            )
+
         def parse_drill(raw: dict[str, Any] | None) -> DrillState | None:
             if raw is None:
                 return None
@@ -118,6 +135,7 @@ class AnalysisPlan:
                 levels=tuple(raw["levels"]),
                 current_level_index=raw["current_level_index"],
                 next_level=raw.get("next_level"),
+                selected_member=parse_selection(raw.get("selected_member")),
                 is_continuation=raw.get("is_continuation", False),
             )
 
@@ -150,14 +168,30 @@ class AnalysisPlan:
 class AnalysisRequest:
     question: str
     current_analysis_state: AnalysisPlan | None = None
+    selected_member: DrillSelection | None = None
     semantic_model_path: str | None = None
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "AnalysisRequest":
+        def parse_field(raw: dict[str, Any] | None) -> PlannedField | None:
+            if raw is None:
+                return None
+            return PlannedField(**raw)
+
+        def parse_selection(raw: dict[str, Any] | None) -> DrillSelection | None:
+            if raw is None:
+                return None
+            return DrillSelection(
+                field=parse_field(raw["field"]),  # type: ignore[arg-type]
+                values=tuple(raw.get("values", ())),
+                source=raw.get("source", "visual_member"),
+            )
+
         current_state_payload = payload.get("current_analysis_state")
         current_state = AnalysisPlan.from_dict(current_state_payload) if current_state_payload else None
         return cls(
             question=payload["question"],
             current_analysis_state=current_state,
+            selected_member=parse_selection(payload.get("selected_member")),
             semantic_model_path=payload.get("semantic_model_path"),
         )

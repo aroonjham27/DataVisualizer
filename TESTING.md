@@ -15,6 +15,11 @@ py -3 -m unittest discover -s tests -t .
 - semantic model loading
 - golden-question planning for the pilot dataset
 - drill continuation behavior
+- selected visual member drill scoping
+- join path correctness
+- warning/status behavior
+- fallback planning behavior
+- `AnalysisPlan` serialization round trips
 - minimal API payload handling
 
 ## Expectations

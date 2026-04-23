@@ -9,6 +9,7 @@ from pathlib import Path
 from .contracts import (
     AnalysisPlan,
     ChartIntent,
+    DrillSelection,
     DrillState,
     PlanJoinStep,
     PlannedField,
@@ -40,10 +41,15 @@ class SemanticPlanner:
     def from_default_model(cls) -> "SemanticPlanner":
         return cls(load_semantic_model(DEFAULT_MODEL_PATH))
 
-    def plan(self, question: str, current_state: AnalysisPlan | None = None) -> AnalysisPlan:
+    def plan(
+        self,
+        question: str,
+        current_state: AnalysisPlan | None = None,
+        selected_member: DrillSelection | None = None,
+    ) -> AnalysisPlan:
         normalized = _normalize(question)
         if self._is_drill_continuation(normalized):
-            return self._continue_drill(question, current_state)
+            return self._continue_drill(question, current_state, selected_member)
         return self._plan_initial(question, normalized)
 
     def _plan_initial(self, question: str, normalized_question: str) -> AnalysisPlan:
@@ -53,7 +59,7 @@ class SemanticPlanner:
             return self._plan_competitors(question, normalized_question)
         if "subscription fee" in normalized_question or "support fee" in normalized_question:
             return self._plan_contract_terms(question, normalized_question)
-        if "active users" in normalized_question or "processed transactions" in normalized_question or "trend" in normalized_question:
+        if self._is_usage_question(normalized_question):
             return self._plan_usage(question, normalized_question)
         if "discount" in normalized_question or "annualized quote" in normalized_question or "quoted" in normalized_question:
             return self._plan_quote_mix(question, normalized_question)
@@ -274,6 +280,9 @@ class SemanticPlanner:
                     best_score = score
                     best_entity = entity.name
                     best_measure = self._measure(entity.name, measure.name)
+        if best_score < 2:
+            best_entity = "opportunities"
+            best_measure = self._measure("opportunities", "opportunity_count")
         warnings = ["Planner used a fallback semantic match because no curated pilot pattern matched the question."]
         return self._build_plan(
             question=question,
@@ -290,7 +299,12 @@ class SemanticPlanner:
             warnings=warnings,
         )
 
-    def _continue_drill(self, question: str, current_state: AnalysisPlan | None) -> AnalysisPlan:
+    def _continue_drill(
+        self,
+        question: str,
+        current_state: AnalysisPlan | None,
+        selected_member: DrillSelection | None = None,
+    ) -> AnalysisPlan:
         if current_state is None:
             return self._build_plan(
                 question=question,
@@ -310,11 +324,16 @@ class SemanticPlanner:
             return replace(
                 current_state,
                 question=question,
+                status="review_needed",
                 warnings=current_state.warnings + ("No deeper drill level is available for the current analysis state.",),
             )
+        active_selection = selected_member
+        if active_selection is None and current_state.drill.selected_member is not None:
+            active_selection = current_state.drill.selected_member
         next_field_id = current_state.drill.next_level
         next_field = self._field_from_field_id(next_field_id)
         updated_dimensions = list(current_state.dimensions)
+        updated_filters = self._filters_with_selected_member(list(current_state.filters), active_selection)
         insert_at = len(updated_dimensions)
         current_drill_field_id = current_state.drill.levels[current_state.drill.current_level_index]
         for index, field in enumerate(updated_dimensions):
@@ -332,12 +351,13 @@ class SemanticPlanner:
             levels=hierarchy.levels,
             current_level_index=new_depth,
             next_level=next_level,
+            selected_member=active_selection,
             is_continuation=True,
         )
         updated_join_path = self._resolve_join_path(
             current_state.primary_entity,
             updated_dimensions,
-            list(current_state.filters),
+            updated_filters,
             current_state.time_dimension,
         )
         updated_chart = self._select_chart_intent(list(current_state.measures), updated_dimensions, current_state.time_dimension, _normalize(question))
@@ -351,7 +371,7 @@ class SemanticPlanner:
             dimensions=tuple(updated_dimensions),
             time_dimension=current_state.time_dimension,
             time_grain=current_state.time_grain,
-            filters=current_state.filters,
+            filters=tuple(updated_filters),
             join_path=tuple(updated_join_path),
             drill=updated_drill,
             chart_intent=updated_chart,
@@ -580,6 +600,50 @@ class SemanticPlanner:
             "drill one level",
         )
         return any(phrase in normalized_question for phrase in phrases)
+
+    def _is_usage_question(self, normalized_question: str) -> bool:
+        usage_terms = (
+            "active users",
+            "processed transactions",
+            "usage",
+            "consumption",
+            "metric value",
+            "metric values",
+        )
+        return any(term in normalized_question for term in usage_terms)
+
+    def _filters_with_selected_member(
+        self,
+        filters: list[PlannedFilter],
+        selected_member: DrillSelection | None,
+    ) -> list[PlannedFilter]:
+        if selected_member is None:
+            return filters
+        operator = "=" if len(selected_member.values) == 1 else "in"
+        value: object
+        if len(selected_member.values) == 1:
+            value = selected_member.values[0]
+        else:
+            value = selected_member.values
+        selected_filter = PlannedFilter(
+            field=selected_member.field,
+            operator=operator,
+            value=value,
+            source=selected_member.source,
+        )
+        existing = {
+            (filter_.field.field_id, filter_.operator, str(filter_.value), filter_.source)
+            for filter_ in filters
+        }
+        signature = (
+            selected_filter.field.field_id,
+            selected_filter.operator,
+            str(selected_filter.value),
+            selected_filter.source,
+        )
+        if signature in existing:
+            return filters
+        return [*filters, selected_filter]
 
     def _build_value_index(self) -> dict[str, dict[str, list[tuple[str, str]]]]:
         index: dict[str, dict[str, list[tuple[str, str]]]] = {}

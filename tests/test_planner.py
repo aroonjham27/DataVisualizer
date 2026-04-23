@@ -4,6 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
+from datavisualizer.contracts import AnalysisPlan, DrillSelection
 from datavisualizer.planner import SemanticPlanner
 
 
@@ -66,6 +67,60 @@ class PlannerGoldenQuestionTests(unittest.TestCase):
         follow_up = self.planner.plan("Go one level deeper", current_state=initial)
 
         self.assertIn("No deeper drill level is available", " ".join(follow_up.warnings))
+
+    def test_selected_member_drill_context_scopes_follow_up(self) -> None:
+        initial = self.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+        selected_member = DrillSelection(field=initial.dimensions[0], values=("analytics",))
+
+        follow_up = self.planner.plan("Go one level deeper", current_state=initial, selected_member=selected_member)
+
+        self.assertIsNotNone(follow_up.drill)
+        self.assertEqual(follow_up.drill.selected_member, selected_member)
+        self.assertEqual([(item.field.field_id, item.operator, item.value, item.source) for item in follow_up.filters], [
+            ("products.product_family", "=", "analytics", "visual_member")
+        ])
+
+    def test_competitor_plan_has_expected_join_path_edges(self) -> None:
+        plan = self.planner.plan("Which competitors appear most often in lost enterprise opportunities, and how are they positioned on price?")
+
+        edges = {(step.left_entity, step.right_entity, step.traversal) for step in plan.join_path}
+        self.assertEqual(edges, {
+            ("opportunities", "opportunity_competitors", "reverse"),
+            ("opportunity_competitors", "competitors", "forward"),
+        })
+
+    def test_quote_mix_plan_has_expected_product_join_path(self) -> None:
+        plan = self.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+
+        self.assertEqual([(step.left_entity, step.right_entity, step.traversal) for step in plan.join_path], [
+            ("opportunity_line_items", "products", "forward")
+        ])
+
+    def test_warning_status_behavior(self) -> None:
+        review_needed = self.planner.plan("What is win rate by sales region?")
+        ok_plan = self.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+
+        self.assertEqual(review_needed.status, "review_needed")
+        self.assertIn("account-level sales region", " ".join(review_needed.warnings))
+        self.assertEqual(ok_plan.status, "ok")
+        self.assertEqual(ok_plan.warnings, ())
+
+    def test_fallback_planning_behavior_for_unsupported_trend_question(self) -> None:
+        plan = self.planner.plan("Show me the retention trend by renewal risk")
+
+        self.assertEqual(plan.status, "review_needed")
+        self.assertEqual(plan.primary_entity, "opportunities")
+        self.assertEqual(_measure_field_ids(plan.measures), ["opportunities.opportunity_count"])
+        self.assertEqual(plan.chart_intent.chart_type if plan.chart_intent else None, "table")
+        self.assertIn("fallback semantic match", " ".join(plan.warnings))
+
+    def test_analysis_plan_serialization_round_trip(self) -> None:
+        plan = self.planner.plan("Which competitors appear most often in lost enterprise opportunities, and how are they positioned on price?")
+        payload = json.loads(json.dumps(plan.to_dict()))
+
+        restored = AnalysisPlan.from_dict(payload)
+
+        self.assertEqual(restored, plan)
 
 
 if __name__ == "__main__":

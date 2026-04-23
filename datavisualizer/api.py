@@ -20,7 +20,7 @@ def build_planner(model_path: str | None = None) -> SemanticPlanner:
 def handle_plan_request(payload: dict[str, Any], planner: SemanticPlanner | None = None) -> dict[str, Any]:
     request = AnalysisRequest.from_dict(payload)
     active_planner = planner or build_planner(request.semantic_model_path)
-    plan = active_planner.plan(request.question, request.current_analysis_state)
+    plan = active_planner.plan(request.question, request.current_analysis_state, request.selected_member)
     return plan.to_dict()
 
 
