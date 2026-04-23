@@ -22,10 +22,12 @@ class ApiTests(unittest.TestCase):
             planner=self.planner,
         )
 
-        self.assertEqual(response["primary_entity"], "opportunities")
-        self.assertEqual(response["time_dimension"]["entity"], "opportunities")
-        self.assertEqual(response["time_dimension"]["name"], "close_date")
-        self.assertEqual(response["time_grain"], "month")
+        self.assertTrue(response["ok"])
+        self.assertEqual(response["tool_name"], "analysis_plan")
+        self.assertEqual(response["data"]["primary_entity"], "opportunities")
+        self.assertEqual(response["data"]["time_dimension"]["entity"], "opportunities")
+        self.assertEqual(response["data"]["time_dimension"]["name"], "close_date")
+        self.assertEqual(response["data"]["time_grain"], "month")
 
     def test_handle_plan_request_accepts_selected_member_for_drill(self) -> None:
         initial = self.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
@@ -44,9 +46,10 @@ class ApiTests(unittest.TestCase):
             planner=self.planner,
         )
 
-        self.assertEqual(response["drill"]["selected_member"]["field"]["entity"], "products")
-        self.assertEqual(response["drill"]["selected_member"]["values"], ("analytics",))
-        self.assertEqual(response["filters"][0]["field"]["name"], "product_family")
+        self.assertTrue(response["ok"])
+        self.assertEqual(response["data"]["drill"]["selected_member"]["field"]["entity"], "products")
+        self.assertEqual(response["data"]["drill"]["selected_member"]["values"], ("analytics",))
+        self.assertEqual(response["data"]["filters"][0]["field"]["name"], "product_family")
 
     def test_http_round_trip_returns_analysis_plan(self) -> None:
         PlanningRequestHandler.planner = self.planner
@@ -68,8 +71,10 @@ class ApiTests(unittest.TestCase):
             server.server_close()
             thread.join(timeout=5)
 
-        self.assertEqual(payload["primary_entity"], "opportunities")
-        self.assertEqual(payload["measures"][0]["field"]["name"], "win_rate")
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["tool_name"], "analysis_plan")
+        self.assertEqual(payload["data"]["primary_entity"], "opportunities")
+        self.assertEqual(payload["data"]["measures"][0]["field"]["name"], "win_rate")
 
 
 if __name__ == "__main__":

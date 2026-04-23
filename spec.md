@@ -1,70 +1,65 @@
-# Restricted SQL And Chart Hardening Spec
+# Phase 1 Tool Boundary Spec
 
 ## Task Summary
 
-Harden the restricted-SQL fallback boundary and make chart specs inspect result rows so the answer pipeline is safer and more renderer-ready.
+Complete Phase 1 of the roadmap by making the backend clean, explicit, and stable for future LLM tool-calling without integrating a live model yet.
 
 ## Goals
 
-- Keep `/answer` defaulting to the compiled-plan path.
-- Replace broad restricted-SQL relation parsing with a small tokenized structure parser.
-- Preserve semantic-model-approved entities and joins only.
-- Preserve read-only behavior and gateway-enforced row limits.
-- Improve result-limit metadata by detecting true truncation with one-extra-row probing.
-- Generate chart specs from both semantic columns and result rows.
-- Fall back to tables for weak chart shapes such as empty, sparse, over-wide, or too-many-category results.
+- Treat `/answer` as the default governed analytics tool.
+- Treat restricted SQL as a separate governed capability, not the default analytics path.
+- Add explicit routing controls:
+  - `compiled_plan_only`
+  - `restricted_sql_allowed`
+- Add a first-class machine-friendly error contract across service and HTTP surfaces.
+- Normalize answer payloads for future model consumption while preserving the current deterministic backend behavior.
+- Update roadmap tracking and only mark Phase 1 items complete if this pass truly covers them.
 
 ## Non-Goals
 
+- No live LLM integration.
+- No OpenRouter or provider wiring.
 - No frontend UI rendering.
-- No arbitrary LLM-authored SQL execution.
-- No broad SQL parser.
-- No new SQL clauses unless this pass validates them explicitly.
-- No semantic model redesign.
+- No semantic-model redesign.
+- No widening of the restricted SQL subset beyond what is already validated.
 
 ## Repo Facts Observed
 
-- Local `main` and `origin/main` were in sync before this work.
-- The repo contains a planner, compiler, answer service, chart spec generator, query gateway, and stdlib tests.
-- Restricted SQL is already a secondary internal gateway path, not the default `/answer` route.
-- Existing tests cover planning, compilation, execution, answer generation, `/answer`, and restricted SQL basics.
+- The repo already has a deterministic planner, SQL compiler, execution harness, answer pipeline, restricted SQL gateway, and stdlib HTTP surface.
+- `/answer` currently always uses the compiled-plan lane.
+- The repo already has row-aware chart fallback and restricted SQL hardening.
+- `DataVisualizer_ROADMAP.md` exists in the repo root and Phase 1 is still unchecked.
 
 ## Design Choices For This Pass
 
-- Keep the restricted SQL subset intentionally small: one `SELECT`, semantic `FROM`, optional explicit `JOIN ... ON`, optional `WHERE`, `GROUP BY`, `ORDER BY`, and optional trailing `LIMIT`.
-- Tokenize SQL before validating relation order and join clauses, rather than relying on regex relation extraction.
-- Continue to reject structurally ambiguous or unsupported SQL instead of trying to repair it.
-- Execute one extra row internally and trim before returning results so `truncated` means more data was actually available.
-- Keep chart heuristics deterministic and conservative. If chart quality is questionable, return a `table` spec with warnings.
+- Keep the tool contract additive and explicit rather than replacing the current answer payload wholesale.
+- Introduce stable request contracts for routing controls instead of implicit behavior.
+- Introduce stable success/error envelopes so a future orchestrator can parse results deterministically.
+- Keep compiled-plan execution the default and preferred answer route.
+- Keep restricted SQL separate and explicit so future model tooling must opt into it.
 
-## Supported Restricted SQL Shapes
+## Planned Contract Changes
 
-- Read-only `SELECT` statements only.
-- Semantic-model entity names in `FROM` and `JOIN`.
-- Optional aliases using bare alias or `AS alias`.
-- Explicit inner `JOIN ... ON left_alias.key = right_alias.key`.
-- Approved semantic-model join edges only.
-- Optional `WHERE` with simple `=` or `IN` predicates joined by `AND`.
-- Optional `GROUP BY`, `ORDER BY`, and trailing `LIMIT`.
-
-## Rejected Restricted SQL Shapes
-
-- Writes or side effects.
-- Semicolons or multiple statements.
-- Direct file/table-function access such as `read_csv_auto`.
-- Unknown entities.
-- Cross joins, comma joins, subqueries, CTEs, derived tables, unions, set operations, or nested relation expressions.
-- Joins without approved semantic keys.
-- Joins with `OR`, inequality, function calls, or incomplete `ON` predicates.
-- Unsupported operators such as `LIKE`, `ILIKE`, regex, inequality, arithmetic predicates, or unvalidated functions in filters.
+- `AnswerRequest` gains a routing block with explicit controls.
+- Answer responses expose:
+  - tool identity
+  - routing policy
+  - query mode
+  - stable query metadata
+  - structured warnings
+- Backend errors expose:
+  - `error_type`
+  - `error_code`
+  - `message`
+  - optional structured details
 
 ## Verification Plan
 
 | Requirement | Proof Method |
 |---|---|
-| Restricted SQL uses tokenized structure validation | Unit tests for malformed relation/join shapes that used to look superficially valid |
-| Approved restricted SQL still executes | Existing and new gateway tests |
-| Unsafe restricted SQL is rejected | Unit tests for subqueries, comma joins, incomplete joins, unsupported predicates, and direct file access |
-| True truncation is detected | Answer tests with small and oversized row limits |
-| Chart specs inspect rows | Unit tests for empty results, too many categories, over-wide grouped results, sparse results, and valid single/multi-series specs |
-| `/answer` remains compiled-plan default | Existing and updated answer tests |
+| `/answer` remains compiled-plan default | Unit and HTTP tests assert routing defaults and `query_mode` |
+| Routing flags are explicit and stable | Unit tests for request parsing and route behavior |
+| Error payloads are machine-friendly | Unit and HTTP tests assert stable error envelopes |
+| Answer payload is normalized for model use | Unit and HTTP tests assert stable top-level fields, routing metadata, warnings, and chart spec |
+| Restricted SQL remains separate and governed | Service tests use the explicit restricted SQL lane and assert compiled-plan is still default |
+| Phase 1 roadmap tracking is accurate | `DataVisualizer_ROADMAP.md` updated only for truly completed items |

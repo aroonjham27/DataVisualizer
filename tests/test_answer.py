@@ -5,12 +5,13 @@ import threading
 import unittest
 import urllib.request
 from dataclasses import replace
+from urllib.error import HTTPError
 from http.server import ThreadingHTTPServer
 
 from datavisualizer.answer import AnswerService
-from datavisualizer.api import PlanningRequestHandler, handle_answer_request
+from datavisualizer.api import PlanningRequestHandler, handle_answer_request, handle_restricted_sql_request
 from datavisualizer.charting import ChartSpecGenerator
-from datavisualizer.contracts import ChartIntent, DrillSelection, ResultColumn
+from datavisualizer.contracts import ChartIntent, DrillSelection, ResultColumn, RoutingControls
 from datavisualizer.query_gateway import QueryGateway, RestrictedSqlValidationError
 
 
@@ -22,6 +23,8 @@ class AnswerPipelineTests(unittest.TestCase):
     def test_answer_generation_defaults_to_compiled_plan(self) -> None:
         response = self.service.answer("What is win rate by close month, account segment, sales region, and lifecycle type?", row_limit=7)
 
+        self.assertEqual(response.tool_name, "answer")
+        self.assertEqual(response.routing.policy, "compiled_plan_only")
         self.assertEqual(response.query_mode, "compiled_plan")
         self.assertEqual(response.query_metadata.query_mode, "compiled_plan")
         self.assertEqual(response.limit.row_limit, 7)
@@ -32,6 +35,19 @@ class AnswerPipelineTests(unittest.TestCase):
         self.assertEqual(response.chart_spec.chart_type, "line")
         self.assertIn("opportunities_win_rate", response.chart_spec.y)
         self.assertEqual(response.columns[-1].semantic_lineage, ("opportunities.win_rate",))
+
+    def test_answer_routing_can_allow_restricted_sql_without_changing_default_lane(self) -> None:
+        response = self.service.answer(
+            "How do quoted discount rates and annualized quote amounts vary by product family and line role?",
+            row_limit=5,
+            routing=RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True),
+        )
+
+        self.assertEqual(response.routing.policy, "restricted_sql_allowed")
+        self.assertFalse(response.routing.compiled_plan_only)
+        self.assertTrue(response.routing.restricted_sql_allowed)
+        self.assertEqual(response.routing.selected_query_mode, "compiled_plan")
+        self.assertIn("compiled-plan remained the selected lane", " ".join(response.query_metadata.validation_notes))
 
     def test_chart_specs_for_pilot_chart_intents(self) -> None:
         line = self.service.answer("What is win rate by close month, account segment, sales region, and lifecycle type?", row_limit=3)
@@ -59,10 +75,32 @@ class AnswerPipelineTests(unittest.TestCase):
         )
 
         json.dumps(response)
-        self.assertEqual(response["query_mode"], "compiled_plan")
-        self.assertEqual(response["chart_spec"]["chart_type"], "grouped_bar")
-        self.assertLessEqual(response["limit"]["returned_rows"], 5)
-        self.assertEqual(response["columns"][0]["semantic_lineage"], ("products.product_family",))
+        self.assertTrue(response["ok"])
+        self.assertEqual(response["tool_name"], "answer")
+        self.assertEqual(response["data"]["tool_name"], "answer")
+        self.assertEqual(response["data"]["routing"]["policy"], "compiled_plan_only")
+        self.assertEqual(response["data"]["query_mode"], "compiled_plan")
+        self.assertEqual(response["data"]["chart_spec"]["chart_type"], "grouped_bar")
+        self.assertLessEqual(response["data"]["limit"]["returned_rows"], 5)
+        self.assertEqual(response["data"]["columns"][0]["semantic_lineage"], ("products.product_family",))
+
+    def test_handle_answer_request_returns_stable_error_payload(self) -> None:
+        response = self._post_answer(
+            {
+                "question": "What is win rate by close month, account segment, sales region, and lifecycle type?",
+                "routing": {
+                    "compiled_plan_only": True,
+                    "restricted_sql_allowed": True,
+                },
+            },
+            expected_status=400,
+        )
+
+        self.assertFalse(response["ok"])
+        self.assertEqual(response["tool_name"], "answer")
+        self.assertEqual(response["error"]["error_type"], "validation_error")
+        self.assertEqual(response["error"]["error_code"], "invalid_request")
+        self.assertIn("compiled_plan_only", response["error"]["message"])
 
     def test_selected_member_drill_context_flows_through_answer(self) -> None:
         initial = self.service.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
@@ -83,9 +121,12 @@ class AnswerPipelineTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual(payload["query_mode"], "compiled_plan")
-        self.assertEqual(payload["chart_spec"]["chart_type"], "grouped_bar")
-        self.assertLessEqual(payload["limit"]["returned_rows"], 4)
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["tool_name"], "answer")
+        self.assertEqual(payload["data"]["query_mode"], "compiled_plan")
+        self.assertEqual(payload["data"]["routing"]["policy"], "compiled_plan_only")
+        self.assertEqual(payload["data"]["chart_spec"]["chart_type"], "grouped_bar")
+        self.assertLessEqual(payload["data"]["limit"]["returned_rows"], 4)
 
     def test_http_answer_round_trip_with_selected_member_drill_context(self) -> None:
         initial = self.service.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
@@ -102,11 +143,28 @@ class AnswerPipelineTests(unittest.TestCase):
             }
         )
 
-        self.assertEqual(payload["query_mode"], "compiled_plan")
-        self.assertEqual(payload["plan"]["filters"][0]["field"]["entity"], "products")
-        self.assertEqual(payload["plan"]["filters"][0]["field"]["name"], "product_family")
-        self.assertEqual(payload["plan"]["filters"][0]["value"], "analytics")
-        self.assertIn("products_product_name", payload["chart_spec"]["columns"])
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["data"]["query_mode"], "compiled_plan")
+        self.assertEqual(payload["data"]["plan"]["filters"][0]["field"]["entity"], "products")
+        self.assertEqual(payload["data"]["plan"]["filters"][0]["field"]["name"], "product_family")
+        self.assertEqual(payload["data"]["plan"]["filters"][0]["value"], "analytics")
+        self.assertIn("products_product_name", payload["data"]["chart_spec"]["columns"])
+
+    def test_http_answer_round_trip_with_restricted_sql_allowed_flag(self) -> None:
+        payload = self._post_answer(
+            {
+                "question": "How do quoted discount rates and annualized quote amounts vary by product family and line role?",
+                "routing": {
+                    "compiled_plan_only": False,
+                    "restricted_sql_allowed": True,
+                },
+                "row_limit": 4,
+            }
+        )
+
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["data"]["routing"]["policy"], "restricted_sql_allowed")
+        self.assertEqual(payload["data"]["routing"]["selected_query_mode"], "compiled_plan")
 
     def test_answer_empty_result_falls_back_to_table(self) -> None:
         initial = self.service.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
@@ -117,7 +175,7 @@ class AnswerPipelineTests(unittest.TestCase):
         self.assertEqual(response.limit.returned_rows, 0)
         self.assertFalse(response.limit.truncated)
         self.assertEqual(response.chart_spec.chart_type, "table")
-        self.assertIn("empty", " ".join(response.warnings).lower())
+        self.assertIn("empty", " ".join(item.message for item in response.warnings).lower())
 
     def test_answer_over_wide_result_falls_back_to_table(self) -> None:
         service = AnswerService.from_default_model()
@@ -126,9 +184,40 @@ class AnswerPipelineTests(unittest.TestCase):
         response = service.answer("What is win rate by close month, account segment, sales region, and lifecycle type?", row_limit=5)
 
         self.assertEqual(response.chart_spec.chart_type, "table")
-        self.assertIn("over-wide", " ".join(response.warnings))
+        self.assertIn("over-wide", " ".join(item.message for item in response.warnings))
 
-    def _post_answer(self, payload: dict[str, object]) -> dict[str, object]:
+    def test_restricted_sql_tool_contract_is_serializable(self) -> None:
+        response = handle_restricted_sql_request(
+            {
+                "sql": "SELECT segment, COUNT(DISTINCT opportunity_id) AS opportunity_count "
+                "FROM opportunities GROUP BY segment ORDER BY opportunity_count DESC",
+                "row_limit": 3,
+            },
+            service=self.service,
+        )
+
+        json.dumps(response)
+        self.assertTrue(response["ok"])
+        self.assertEqual(response["tool_name"], "restricted_sql")
+        self.assertEqual(response["data"]["query_mode"], "restricted_sql")
+        self.assertLessEqual(response["data"]["limit"]["returned_rows"], 3)
+
+    def test_http_restricted_sql_round_trip_returns_stable_error_payload(self) -> None:
+        payload = self._post_json(
+            "/restricted-sql",
+            {"sql": "SELECT * FROM missing_entity"},
+            expected_status=400,
+        )
+
+        self.assertFalse(payload["ok"])
+        self.assertEqual(payload["tool_name"], "restricted_sql")
+        self.assertEqual(payload["error"]["error_type"], "unsupported_query_shape")
+        self.assertEqual(payload["error"]["error_code"], "unsupported_query_shape")
+
+    def _post_answer(self, payload: dict[str, object], expected_status: int = 200) -> dict[str, object]:
+        return self._post_json("/answer", payload, expected_status=expected_status)
+
+    def _post_json(self, path: str, payload: dict[str, object], expected_status: int = 200) -> dict[str, object]:
         PlanningRequestHandler.answer_service = self.service
         PlanningRequestHandler.planner = self.service.planner
         server = ThreadingHTTPServer(("127.0.0.1", 0), PlanningRequestHandler)
@@ -136,13 +225,20 @@ class AnswerPipelineTests(unittest.TestCase):
         thread.start()
         try:
             request = urllib.request.Request(
-                f"http://127.0.0.1:{server.server_port}/answer",
+                f"http://127.0.0.1:{server.server_port}{path}",
                 data=json.dumps(payload).encode("utf-8"),
                 headers={"Content-Type": "application/json"},
                 method="POST",
             )
-            with urllib.request.urlopen(request, timeout=5) as response:
-                return json.loads(response.read().decode("utf-8"))
+            try:
+                with urllib.request.urlopen(request, timeout=5) as response:
+                    self.assertEqual(response.status, expected_status)
+                    return json.loads(response.read().decode("utf-8"))
+            except HTTPError as exc:
+                self.assertEqual(exc.code, expected_status)
+                body = exc.read().decode("utf-8")
+                exc.close()
+                return json.loads(body)
         finally:
             server.shutdown()
             server.server_close()

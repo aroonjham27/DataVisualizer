@@ -26,8 +26,11 @@ The API currently exposes:
 
 - `POST /analysis-plan` for planning only
 - `POST /answer` for the default compiled-plan answer path
+- `POST /restricted-sql` for the separate governed restricted-SQL capability
 
-`/answer` returns semantic result metadata, rows, true truncation status, warnings, and a renderer-agnostic chart spec. Chart specs are row-aware and may fall back to `table` when a visual shape is empty, sparse, too wide, or has too many categories.
+Every tool-facing endpoint returns a stable envelope with `ok`, `tool_name`, `data`, and `error`.
+
+`/answer` returns explicit routing metadata, query mode, semantic result metadata, rows, true truncation status, structured warnings, and a renderer-agnostic chart spec. Chart specs are row-aware and may fall back to `table` when a visual shape is empty, sparse, too wide, or has too many categories.
 
 Run the test suite:
 
@@ -71,4 +74,11 @@ This repository includes the approved canonical synthetic seed copied from `../P
 
 ## Query Safety
 
-The default answer path is still `compiled_plan`: question -> `AnalysisPlan` -> deterministic SQL compiler -> execution. The restricted SQL gateway is a secondary internal service boundary for future LLM tooling. It accepts only a small validated `SELECT` subset over semantic-model entities and approved joins, enforces row limits, and rejects unsupported structure rather than repairing it.
+The default answer path is still `compiled_plan`: question -> `AnalysisPlan` -> deterministic SQL compiler -> execution. The restricted SQL gateway is a secondary governed capability for future LLM tooling. It accepts only a small validated `SELECT` subset over semantic-model entities and approved joins, enforces row limits, and rejects unsupported structure rather than repairing it.
+
+`/answer` accepts explicit routing controls:
+
+- `compiled_plan_only`
+- `restricted_sql_allowed`
+
+For this phase, `/answer` still selects the compiled-plan lane by default and reports that choice explicitly in the response.

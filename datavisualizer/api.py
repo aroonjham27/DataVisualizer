@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .answer import AnswerService
-from .contracts import AnalysisRequest, AnswerRequest
+from .contracts import AnalysisRequest, AnswerRequest, RestrictedSqlRequest
+from .errors import error_envelope, normalize_error, success_envelope
 from .planner import DEFAULT_MODEL_PATH, SemanticPlanner
 from .semantic_model import load_semantic_model
 
@@ -22,13 +23,19 @@ def handle_plan_request(payload: dict[str, Any], planner: SemanticPlanner | None
     request = AnalysisRequest.from_dict(payload)
     active_planner = planner or build_planner(request.semantic_model_path)
     plan = active_planner.plan(request.question, request.current_analysis_state, request.selected_member)
-    return plan.to_dict()
+    return success_envelope("analysis_plan", plan.to_dict())
 
 
 def handle_answer_request(payload: dict[str, Any], service: AnswerService | None = None) -> dict[str, Any]:
     request = AnswerRequest.from_dict(payload)
     active_service = service or AnswerService.from_model_path(request.semantic_model_path)
-    return active_service.answer_request(request).to_dict()
+    return success_envelope("answer", active_service.answer_request(request).to_dict())
+
+
+def handle_restricted_sql_request(payload: dict[str, Any], service: AnswerService | None = None) -> dict[str, Any]:
+    request = RestrictedSqlRequest.from_dict(payload)
+    active_service = service or AnswerService.from_model_path(request.semantic_model_path)
+    return success_envelope("restricted_sql", active_service.restricted_sql_request(request).to_dict())
 
 
 class PlanningRequestHandler(BaseHTTPRequestHandler):
@@ -36,7 +43,7 @@ class PlanningRequestHandler(BaseHTTPRequestHandler):
     answer_service = AnswerService.from_default_model()
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.path not in {"/analysis-plan", "/answer"}:
+        if self.path not in {"/analysis-plan", "/answer", "/restricted-sql"}:
             self.send_error(HTTPStatus.NOT_FOUND, "Unsupported route")
             return
         content_length = int(self.headers.get("Content-Length", "0"))
@@ -45,17 +52,21 @@ class PlanningRequestHandler(BaseHTTPRequestHandler):
             payload = json.loads(body.decode("utf-8"))
             if self.path == "/analysis-plan":
                 response = handle_plan_request(payload, self.planner)
+                status = HTTPStatus.OK
+            elif self.path == "/restricted-sql":
+                response = handle_restricted_sql_request(payload, self.answer_service)
+                status = HTTPStatus.OK
             else:
                 response = handle_answer_request(payload, self.answer_service)
+                status = HTTPStatus.OK
         except Exception as exc:  # noqa: BLE001
-            self.send_response(HTTPStatus.BAD_REQUEST)
-            self.send_header("Content-Type", "application/json")
-            self.end_headers()
-            self.wfile.write(json.dumps({"error": str(exc)}).encode("utf-8"))
-            return
+            payload = normalize_error(exc)
+            tool_name = "analysis_plan" if self.path == "/analysis-plan" else "restricted_sql" if self.path == "/restricted-sql" else "answer"
+            response = error_envelope(tool_name, payload)
+            status = HTTPStatus.BAD_REQUEST if payload.error_type in {"validation_error", "unsupported_query_shape"} else HTTPStatus.INTERNAL_SERVER_ERROR
 
         response_body = json.dumps(response, indent=2).encode("utf-8")
-        self.send_response(HTTPStatus.OK)
+        self.send_response(status)
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(response_body)))
         self.end_headers()

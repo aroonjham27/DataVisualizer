@@ -11,8 +11,14 @@ from .contracts import (
     AnswerRequest,
     AnswerResponse,
     DrillSelection,
+    RestrictedSqlRequest,
+    RestrictedSqlResponse,
+    QueryMetadata,
     ResultColumn,
     ResultLimitMetadata,
+    RoutingControls,
+    RoutingMetadata,
+    WarningItem,
 )
 from .planner import DEFAULT_MODEL_PATH, SemanticPlanner
 from .query_gateway import QueryGateway
@@ -40,6 +46,7 @@ class AnswerService:
             current_analysis_state=request.current_analysis_state,
             selected_member=request.selected_member,
             row_limit=request.row_limit,
+            routing=request.routing,
         )
 
     def answer(
@@ -48,17 +55,36 @@ class AnswerService:
         current_analysis_state: AnalysisPlan | None = None,
         selected_member: DrillSelection | None = None,
         row_limit: int | None = None,
+        routing: RoutingControls | None = None,
     ) -> AnswerResponse:
         plan = self.planner.plan(question, current_state=current_analysis_state, selected_member=selected_member)
         execution = self.gateway.execute_compiled_plan(plan, row_limit=row_limit)
         rows = tuple(tuple(self._json_safe(value) for value in row) for row in execution.result.rows)
         columns = self._result_columns(plan, execution.result.columns)
         chart_spec = self.chart_specs.generate(plan, columns, rows)
-        warnings = tuple(dict.fromkeys((*plan.warnings, *chart_spec.warnings)))
+        warnings = self._warning_items(plan.warnings, chart_spec.warnings)
+        query_metadata = execution.metadata
+        if routing is not None and routing.restricted_sql_allowed:
+            query_metadata = QueryMetadata(
+                query_mode=query_metadata.query_mode,
+                row_limit=query_metadata.row_limit,
+                involved_entities=query_metadata.involved_entities,
+                validation_notes=(
+                    *query_metadata.validation_notes,
+                    "Restricted SQL was allowed by routing policy but compiled-plan remained the selected lane.",
+                ),
+            )
         return AnswerResponse(
+            tool_name="answer",
             plan=plan,
+            routing=RoutingMetadata(
+                policy=routing.policy if routing is not None else "compiled_plan_only",
+                compiled_plan_only=routing.compiled_plan_only if routing is not None else True,
+                restricted_sql_allowed=routing.restricted_sql_allowed if routing is not None else False,
+                selected_query_mode=execution.query_mode,
+            ),
             query_mode=execution.query_mode,
-            query_metadata=execution.metadata,
+            query_metadata=query_metadata,
             sql=execution.sql,
             columns=columns,
             rows=rows,
@@ -70,6 +96,29 @@ class AnswerService:
             ),
             warnings=warnings,
             chart_spec=chart_spec,
+        )
+
+    def restricted_sql_request(self, request: RestrictedSqlRequest) -> RestrictedSqlResponse:
+        execution = self.gateway.execute_restricted_sql(request.sql, row_limit=request.row_limit)
+        rows = tuple(tuple(self._json_safe(value) for value in row) for row in execution.result.rows)
+        columns = tuple(
+            ResultColumn(name=column, label=column, data_type="unknown", semantic_lineage=(), role="unknown")
+            for column in execution.result.columns
+        )
+        return RestrictedSqlResponse(
+            tool_name="restricted_sql",
+            query_mode=execution.query_mode,
+            query_metadata=execution.metadata,
+            sql=execution.sql,
+            columns=columns,
+            rows=rows,
+            limit=ResultLimitMetadata(
+                row_limit=execution.metadata.row_limit,
+                returned_rows=len(rows),
+                truncated=execution.truncated,
+                possibly_truncated=execution.truncated,
+            ),
+            warnings=(),
         )
 
     def _result_columns(self, plan: AnalysisPlan, result_columns: tuple[str, ...]) -> tuple[ResultColumn, ...]:
@@ -139,3 +188,19 @@ class AnswerService:
         if isinstance(value, Decimal):
             return float(value)
         return value
+
+    def _warning_items(self, plan_warnings: tuple[str, ...], chart_warnings: tuple[str, ...]) -> tuple[WarningItem, ...]:
+        items = []
+        for message in plan_warnings:
+            items.append(WarningItem(code=self._warning_code("plan", message), message=message, source="plan"))
+        for message in chart_warnings:
+            items.append(WarningItem(code=self._warning_code("chart", message), message=message, source="chart"))
+        deduped = {}
+        for item in items:
+            deduped[(item.code, item.message, item.source)] = item
+        return tuple(deduped.values())
+
+    def _warning_code(self, source: str, message: str) -> str:
+        slug = "".join(character if character.isalnum() else "_" for character in message.lower()).strip("_")
+        slug = "_".join(part for part in slug.split("_") if part)
+        return f"{source}_{slug}"[:80]

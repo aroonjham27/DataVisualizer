@@ -33,6 +33,9 @@ py -3 -m unittest discover -s tests -t .
 - structurally invalid restricted SQL lookalike rejection
 - true truncation detection with one-extra-row probing
 - row-aware chart fallback behavior for empty, sparse, over-wide, and too-many-category results
+- stable API success and error envelopes
+- routing flag behavior and compiled-plan-default routing metadata
+- restricted SQL tool contract round trips
 
 ## Expectations
 
@@ -42,3 +45,4 @@ py -3 -m unittest discover -s tests -t .
 - Keep SQL compiler tests focused on structured plans and compiled SQL, never natural-language SQL generation.
 - Keep restricted SQL tests focused on governed validation boundaries; it is a fallback tool surface, not the default answer path.
 - When chart heuristics change, test both the intended chart and the table fallback reason.
+- Keep tool-facing payload tests explicit about `ok`, `tool_name`, `data`, `error`, routing metadata, and structured warnings.

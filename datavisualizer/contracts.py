@@ -198,12 +198,52 @@ class AnalysisRequest:
 
 
 @dataclass(frozen=True)
+class RoutingControls:
+    compiled_plan_only: bool = True
+    restricted_sql_allowed: bool = False
+    policy: str = field(init=False)
+
+    def __post_init__(self) -> None:
+        if self.compiled_plan_only and self.restricted_sql_allowed:
+            raise ValueError("Routing controls cannot request compiled_plan_only and restricted_sql_allowed at the same time.")
+        if not self.compiled_plan_only and not self.restricted_sql_allowed:
+            raise ValueError("Routing controls must enable at least one governed query lane.")
+        policy = "compiled_plan_only" if self.compiled_plan_only else "restricted_sql_allowed"
+        object.__setattr__(self, "policy", policy)
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any] | None) -> "RoutingControls":
+        if not payload:
+            return cls()
+        return cls(
+            compiled_plan_only=bool(payload.get("compiled_plan_only", True)),
+            restricted_sql_allowed=bool(payload.get("restricted_sql_allowed", False)),
+        )
+
+
+@dataclass(frozen=True)
+class RoutingMetadata:
+    policy: str
+    compiled_plan_only: bool
+    restricted_sql_allowed: bool
+    selected_query_mode: str
+
+
+@dataclass(frozen=True)
+class WarningItem:
+    code: str
+    message: str
+    source: str
+
+
+@dataclass(frozen=True)
 class AnswerRequest:
     question: str
     current_analysis_state: AnalysisPlan | None = None
     selected_member: DrillSelection | None = None
     semantic_model_path: str | None = None
     row_limit: int | None = None
+    routing: RoutingControls = field(default_factory=RoutingControls)
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "AnswerRequest":
@@ -215,6 +255,23 @@ class AnswerRequest:
             selected_member=analysis_request.selected_member,
             semantic_model_path=analysis_request.semantic_model_path,
             row_limit=int(row_limit) if row_limit is not None else None,
+            routing=RoutingControls.from_dict(payload.get("routing")),
+        )
+
+
+@dataclass(frozen=True)
+class RestrictedSqlRequest:
+    sql: str
+    row_limit: int | None = None
+    semantic_model_path: str | None = None
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "RestrictedSqlRequest":
+        row_limit = payload.get("row_limit")
+        return cls(
+            sql=payload["sql"],
+            row_limit=int(row_limit) if row_limit is not None else None,
+            semantic_model_path=payload.get("semantic_model_path"),
         )
 
 
@@ -256,15 +313,32 @@ class ChartSpec:
 
 @dataclass(frozen=True)
 class AnswerResponse:
+    tool_name: str
     plan: AnalysisPlan
+    routing: RoutingMetadata
     query_mode: str
     query_metadata: QueryMetadata
     sql: str
     columns: tuple[ResultColumn, ...]
     rows: tuple[tuple[Any, ...], ...]
     limit: ResultLimitMetadata
-    warnings: tuple[str, ...]
+    warnings: tuple[WarningItem, ...]
     chart_spec: ChartSpec
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class RestrictedSqlResponse:
+    tool_name: str
+    query_mode: str
+    query_metadata: QueryMetadata
+    sql: str
+    columns: tuple[ResultColumn, ...]
+    rows: tuple[tuple[Any, ...], ...]
+    limit: ResultLimitMetadata
+    warnings: tuple[WarningItem, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)
