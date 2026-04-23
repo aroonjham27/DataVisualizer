@@ -20,6 +20,7 @@ This roadmap tracks the path from the current pilot backend to a chat-first visu
 - [x] Explicit routing controls added
 - [x] Phase 1 tool boundary completed
 - [x] Phase 2 chat orchestration completed
+- [x] Phase 3 first chat UI completed
 
 ---
 
@@ -76,11 +77,11 @@ Goal: let the model interpret user intent, choose governed tools, and manage mul
 
 Goal: provide the user-facing chat experience that renders both data and visuals.
 
-- [ ] Build chat thread UI
-- [ ] Render table + chart + explanation in one response surface
-- [ ] Add chart interaction hooks
-- [ ] Send selected-member drill payloads back to backend
-- [ ] Show warnings and semantic ambiguity clearly
+- [x] Build chat thread UI
+- [x] Render table + chart + explanation in one response surface
+- [x] Add chart interaction hooks
+- [x] Send selected-member drill payloads back to backend
+- [x] Show warnings and semantic ambiguity clearly
 
 ---
 
@@ -165,8 +166,8 @@ MVP is complete when all of the following are true:
 
 ## Suggested immediate next task
 
-Phase 2 is complete. Move next to **Phase 3**, where the user-facing chat product begins:
+Phase 3 is complete. Move next to **Phase 4**, focused on explainability and inspection:
 
-- [ ] chat thread UI
-- [ ] rendered chart + table + explanation surface
-- [ ] chart interaction hooks wired back to backend drill state
+- [ ] what did the system do panel
+- [ ] user-visible warning banners and fallback explanations
+- [ ] clearer SQL / plan / filter inspection surface

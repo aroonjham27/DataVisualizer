@@ -42,6 +42,10 @@ py -3 -m unittest discover -s tests -t .
 - conversational carry-forward for `go deeper`, `just enterprise`, `top 5`, and `show as table`
 - true HTTP `/chat` round trips
 - env-gated live-model smoke tests for normal analytics, drill follow-up, and compiled-plan-default routing
+- root UI shell serving
+- static UI asset serving
+- UI contract helpers for chart view-model shaping
+- selected-member drill payload generation from rendered chart rows
 
 ## Expectations
 
@@ -54,6 +58,7 @@ py -3 -m unittest discover -s tests -t .
 - Keep tool-facing payload tests explicit about `ok`, `tool_name`, `data`, `error`, routing metadata, and structured warnings.
 - Keep most orchestration tests on the fake client so behavior stays deterministic.
 - Gate live-model smoke tests behind environment checks so they are optional for normal local runs.
+- Keep UI tests lightweight and contract-focused unless the repo gains a browser automation harness.
 
 ## Live Smoke Tests
 

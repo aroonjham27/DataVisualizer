@@ -27,6 +27,7 @@ from .query_gateway import QueryGateway, RestrictedSqlQueryService, RestrictedSq
 from .semantic_model import SemanticModel, load_semantic_model
 from .sql_compiler import CompiledQuery, DuckDbSqlCompiler, compile_analysis_plan
 from .tool_registry import ToolRegistry
+from .ui_contract import build_chart_view_model, build_selected_member, drill_selection_payload, row_records
 
 __all__ = [
     "AnalysisPlan",
@@ -64,7 +65,11 @@ __all__ = [
     "ToolRegistry",
     "UnsupportedQueryShapeError",
     "WarningItem",
+    "build_chart_view_model",
+    "build_selected_member",
     "compile_analysis_plan",
+    "drill_selection_payload",
     "execute_compiled_query",
     "load_semantic_model",
+    "row_records",
 ]

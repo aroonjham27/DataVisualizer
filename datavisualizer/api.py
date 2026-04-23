@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import mimetypes
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -23,6 +24,9 @@ def build_planner(model_path: str | None = None) -> SemanticPlanner:
 def build_chat_orchestrator(model_path: str | None = None) -> ChatOrchestrator:
     target = Path(model_path).resolve() if model_path else DEFAULT_MODEL_PATH
     return ChatOrchestrator.from_env(target)
+
+
+STATIC_ROOT = Path(__file__).resolve().parent / "static"
 
 
 def handle_plan_request(payload: dict[str, Any], planner: SemanticPlanner | None = None) -> dict[str, Any]:
@@ -54,6 +58,16 @@ class PlanningRequestHandler(BaseHTTPRequestHandler):
     planner = build_planner()
     answer_service = AnswerService.from_default_model()
     chat_orchestrator = build_chat_orchestrator()
+
+    def do_GET(self) -> None:  # noqa: N802
+        if self.path in {"/", "/index.html"}:
+            self._serve_static("index.html")
+            return
+        if self.path.startswith("/static/"):
+            relative = self.path.removeprefix("/static/")
+            self._serve_static(relative)
+            return
+        self.send_error(HTTPStatus.NOT_FOUND, "Unsupported route")
 
     def do_POST(self) -> None:  # noqa: N802
         if self.path not in {"/analysis-plan", "/answer", "/restricted-sql", "/chat"}:
@@ -97,6 +111,19 @@ class PlanningRequestHandler(BaseHTTPRequestHandler):
 
     def log_message(self, format: str, *args: object) -> None:  # noqa: A003
         return
+
+    def _serve_static(self, relative_path: str) -> None:
+        target = (STATIC_ROOT / relative_path).resolve()
+        if not str(target).startswith(str(STATIC_ROOT.resolve())) or not target.exists() or not target.is_file():
+            self.send_error(HTTPStatus.NOT_FOUND, "Static asset not found")
+            return
+        body = target.read_bytes()
+        content_type, _ = mimetypes.guess_type(target.name)
+        self.send_response(HTTPStatus.OK)
+        self.send_header("Content-Type", content_type or "application/octet-stream")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
 
 
 def main() -> None:

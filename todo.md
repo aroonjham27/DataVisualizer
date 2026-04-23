@@ -1,15 +1,12 @@
 # Todo
 
-- [x] Inspect current orchestration-facing contracts, tests, roadmap, and env shape
-- [x] Update `spec.md` for the Phase 2 orchestration milestone
-- [x] Add mockable LLM client contracts
-- [x] Add env-configured provider adapter with graceful missing-credential behavior
-- [x] Add explicit governed tool registration and schemas
-- [x] Add chat orchestrator service and conversation state contracts
-- [x] Add deterministic follow-up handling around current analysis state
-- [x] Add `/chat` API endpoint
-- [x] Add fake-client orchestration tests
-- [x] Add env-gated live smoke tests
+- [x] Inspect repo structure, API contracts, and current server shape for the Phase 3 UI pass
+- [x] Update `spec.md` for the Phase 3 chat UI milestone
+- [x] Add minimal static SPA assets
+- [x] Serve the SPA from the existing Python HTTP server
+- [x] Render assistant message, warnings, metadata, chart, and table from `/chat`
+- [x] Add chart interactions that send selected-member drill payloads back through `/chat`
+- [x] Add a simple UI-level “go deeper” action
+- [x] Add practical UI and contract tests
 - [x] Update docs and roadmap tracking
-- [x] Run local deterministic suite
-- [x] Run live smoke path if env allows
+- [x] Run the local deterministic suite

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>DataVisualizer Chat</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <div class="app-shell">
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Phase 3 UI</p>
+        <h1>DataVisualizer Chat</h1>
+      </div>
+      <p class="header-copy">A minimal chat-first analytics UI on top of the governed <code>/chat</code> contract.</p>
+    </header>
+
+    <main class="app-main">
+      <aside class="sidebar">
+        <section class="panel">
+          <h2>Starter Prompts</h2>
+          <div id="starter-prompts" class="prompt-list"></div>
+        </section>
+        <section class="panel">
+          <h2>Safety Posture</h2>
+          <ul class="plain-list">
+            <li><code>/chat</code> is the user-facing path.</li>
+            <li>Warnings are displayed inline with every governed answer.</li>
+            <li>Chart clicks send selected-member drill payloads back through <code>/chat</code>.</li>
+          </ul>
+        </section>
+      </aside>
+
+      <section class="chat-panel">
+        <div id="chat-thread" class="chat-thread" aria-live="polite"></div>
+        <div id="status-banner" class="status-banner" hidden></div>
+        <form id="chat-form" class="chat-form">
+          <label class="composer-label" for="chat-input">Ask a business question</label>
+          <div class="composer-row">
+            <textarea id="chat-input" name="message" rows="3" placeholder="What is win rate by close month and account segment?"></textarea>
+            <button id="send-button" type="submit">Send</button>
+          </div>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <template id="empty-state-template">
+    <section class="empty-state panel">
+      <h2>Start a governed analytics conversation</h2>
+      <p>The UI sends chat requests through <code>/chat</code>, then renders the assistant message, chart spec, warnings, and underlying table from the backend response.</p>
+    </section>
+  </template>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
