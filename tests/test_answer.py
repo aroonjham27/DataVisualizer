@@ -4,11 +4,13 @@ import json
 import threading
 import unittest
 import urllib.request
+from dataclasses import replace
 from http.server import ThreadingHTTPServer
 
 from datavisualizer.answer import AnswerService
 from datavisualizer.api import PlanningRequestHandler, handle_answer_request
-from datavisualizer.contracts import DrillSelection
+from datavisualizer.charting import ChartSpecGenerator
+from datavisualizer.contracts import ChartIntent, DrillSelection, ResultColumn
 from datavisualizer.query_gateway import QueryGateway, RestrictedSqlValidationError
 
 
@@ -24,6 +26,7 @@ class AnswerPipelineTests(unittest.TestCase):
         self.assertEqual(response.query_metadata.query_mode, "compiled_plan")
         self.assertEqual(response.limit.row_limit, 7)
         self.assertLessEqual(response.limit.returned_rows, 7)
+        self.assertTrue(response.limit.truncated)
         self.assertIn("opportunities", response.query_metadata.involved_entities)
         self.assertIn("read_csv_auto", response.sql)
         self.assertEqual(response.chart_spec.chart_type, "line")
@@ -105,6 +108,26 @@ class AnswerPipelineTests(unittest.TestCase):
         self.assertEqual(payload["plan"]["filters"][0]["value"], "analytics")
         self.assertIn("products_product_name", payload["chart_spec"]["columns"])
 
+    def test_answer_empty_result_falls_back_to_table(self) -> None:
+        initial = self.service.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+        selected_member = DrillSelection(field=initial.dimensions[0], values=("not_a_product_family",))
+
+        response = self.service.answer("Go one level deeper", current_analysis_state=initial, selected_member=selected_member, row_limit=5)
+
+        self.assertEqual(response.limit.returned_rows, 0)
+        self.assertFalse(response.limit.truncated)
+        self.assertEqual(response.chart_spec.chart_type, "table")
+        self.assertIn("empty", " ".join(response.warnings).lower())
+
+    def test_answer_over_wide_result_falls_back_to_table(self) -> None:
+        service = AnswerService.from_default_model()
+        service.chart_specs.max_chart_columns = 3
+
+        response = service.answer("What is win rate by close month, account segment, sales region, and lifecycle type?", row_limit=5)
+
+        self.assertEqual(response.chart_spec.chart_type, "table")
+        self.assertIn("over-wide", " ".join(response.warnings))
+
     def _post_answer(self, payload: dict[str, object]) -> dict[str, object]:
         PlanningRequestHandler.answer_service = self.service
         PlanningRequestHandler.planner = self.service.planner
@@ -142,6 +165,7 @@ class RestrictedSqlGatewayTests(unittest.TestCase):
         self.assertEqual(result.metadata.row_limit, 3)
         self.assertEqual(result.metadata.involved_entities, ("opportunities",))
         self.assertLessEqual(len(result.result.rows), 3)
+        self.assertTrue(result.truncated)
 
     def test_restricted_sql_executes_approved_join_query(self) -> None:
         result = self.gateway.execute_restricted_sql(
@@ -168,6 +192,72 @@ class RestrictedSqlGatewayTests(unittest.TestCase):
             with self.subTest(sql=sql):
                 with self.assertRaises(RestrictedSqlValidationError):
                     self.gateway.execute_restricted_sql(sql)
+
+    def test_restricted_sql_rejects_structurally_invalid_lookalikes(self) -> None:
+        bad_queries = [
+            "SELECT * FROM (SELECT * FROM opportunities) o",
+            "SELECT * FROM accounts, opportunities",
+            "SELECT * FROM accounts JOIN opportunities",
+            "SELECT * FROM accounts JOIN opportunities ON accounts.account_id",
+            "SELECT * FROM accounts JOIN opportunities ON accounts.account_id = opportunities.account_id OR 1 = 1",
+            "SELECT * FROM accounts JOIN opportunities ON lower(accounts.account_id) = opportunities.account_id",
+            "SELECT * FROM accounts JOIN opportunities ON accounts.account_id <> opportunities.account_id",
+            "SELECT * FROM accounts unexpected_alias opportunities",
+            "SELECT * FROM accounts WHERE segment != 'enterprise'",
+            "WITH q AS (SELECT * FROM accounts) SELECT * FROM q",
+        ]
+
+        for sql in bad_queries:
+            with self.subTest(sql=sql):
+                with self.assertRaises(RestrictedSqlValidationError):
+                    self.gateway.execute_restricted_sql(sql)
+
+
+class RowAwareChartSpecTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.generator = ChartSpecGenerator()
+        self.plan = AnswerService.from_default_model().planner.plan(
+            "How do quoted discount rates and annualized quote amounts vary by product family and line role?"
+        )
+
+    def test_too_many_categories_falls_back_to_table(self) -> None:
+        columns = (
+            ResultColumn("category", "Category", "string", ("products.product_family",), "dimension"),
+            ResultColumn("value", "Value", "number", ("opportunity_line_items.annualized_amount",), "measure"),
+        )
+        rows = tuple((f"category_{index}", index) for index in range(self.generator.max_categories + 1))
+        plan = replace(self.plan, chart_intent=ChartIntent(chart_type="bar", reason="test"))
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "table")
+        self.assertIn("too many categories", " ".join(chart.warnings))
+
+    def test_sparse_rows_fall_back_to_table(self) -> None:
+        columns = (
+            ResultColumn("category", "Category", "string", ("products.product_family",), "dimension"),
+            ResultColumn("value", "Value", "number", ("opportunity_line_items.annualized_amount",), "measure"),
+        )
+        rows = (("analytics", None), ("workflow", None), ("platform", None))
+        plan = replace(self.plan, chart_intent=ChartIntent(chart_type="bar", reason="test"))
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "table")
+        self.assertIn("sparse", " ".join(chart.warnings))
+
+    def test_single_series_grouped_bar_omits_series(self) -> None:
+        columns = (
+            ResultColumn("category", "Category", "string", ("products.product_family",), "dimension"),
+            ResultColumn("value", "Value", "number", ("opportunity_line_items.annualized_amount",), "measure"),
+        )
+        rows = (("analytics", 10), ("workflow", 20))
+        plan = replace(self.plan, chart_intent=ChartIntent(chart_type="grouped_bar", reason="test"))
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "grouped_bar")
+        self.assertIsNone(chart.series)
 
 
 if __name__ == "__main__":

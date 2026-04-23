@@ -46,8 +46,9 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Drill continuation carries semantic state, including the selected visual member when a follow-up is scoped to a clicked chart value.
 - SQL compilation is plan-first: only supported `AnalysisPlan` shapes compile, and unsupported filters, grains, joins, or aggregations are rejected.
 - Answers default to `compiled_plan` mode. Restricted SQL is a governed secondary boundary for future LLM tooling, not the primary route.
-- Chart specs are deterministic metadata for `line`, `bar`, `grouped_bar`, and `table`; rendering remains outside this repository.
-- Restricted SQL is intentionally narrow: semantic-model entities only, approved join edges only, read-only statements only, no direct file access, and gateway-enforced row limits.
+- Chart specs are deterministic metadata for `line`, `bar`, `grouped_bar`, and `table`; rendering remains outside this repository. The generator inspects returned rows and falls back to tables for weak chart shapes.
+- Restricted SQL is intentionally narrow: tokenized `SELECT` validation, semantic-model entities only, approved join edges only, read-only statements only, no direct file access, and gateway-enforced row limits.
+- Query execution uses one-extra-row probing so answer metadata distinguishes returned rows from true truncation.
 
 ## Boundaries And Guardrails
 
@@ -56,6 +57,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Usage facts should flow through `contracts` or `accounts`, not be joined directly to opportunities.
 - The pilot dataset is not treated as proof that every relationship is universal outside this seed.
 - Restricted SQL should not be used when the compiled-plan path already supports the request.
+- Restricted SQL does not support CTEs, subqueries, comma joins, cross joins, unions, arbitrary operators, or direct table-function/file access.
 
 ## Review Model
 

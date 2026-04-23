@@ -1,73 +1,70 @@
-# Answer Pipeline And Query Gateway Spec
+# Restricted SQL And Chart Hardening Spec
 
 ## Task Summary
 
-Build the first end-to-end answer path on top of the existing semantic planner, SQL compiler, and DuckDB execution harness.
+Harden the restricted-SQL fallback boundary and make chart specs inspect result rows so the answer pipeline is safer and more renderer-ready.
 
 ## Goals
 
-- Default `/answer` to the governed compiled-plan path.
-- Return one structured answer payload containing the plan, query metadata, SQL, typed result columns, rows, truncation metadata, warnings, and chart spec.
-- Generate deterministic chart specs for the current pilot chart intents: `line`, `bar`, `grouped_bar`, and `table`.
-- Add a query gateway with two explicit modes:
-  - `compiled_plan`: plan -> compiler -> execution
-  - `restricted_sql`: validated governed SQL -> execution
-- Keep restricted SQL as a secondary service boundary for future LLM tooling, not the default answer route.
-- Add tests for answer generation, chart specs, HTTP `/answer`, selected-member drill context, and restricted SQL validation.
+- Keep `/answer` defaulting to the compiled-plan path.
+- Replace broad restricted-SQL relation parsing with a small tokenized structure parser.
+- Preserve semantic-model-approved entities and joins only.
+- Preserve read-only behavior and gateway-enforced row limits.
+- Improve result-limit metadata by detecting true truncation with one-extra-row probing.
+- Generate chart specs from both semantic columns and result rows.
+- Fall back to tables for weak chart shapes such as empty, sparse, over-wide, or too-many-category results.
 
 ## Non-Goals
 
 - No frontend UI rendering.
-- No LLM-authored arbitrary SQL generation.
-- No broad SQL parser or optimizer.
-- No new web framework.
-- No broad semantic model refactor.
+- No arbitrary LLM-authored SQL execution.
+- No broad SQL parser.
+- No new SQL clauses unless this pass validates them explicitly.
+- No semantic model redesign.
 
 ## Repo Facts Observed
 
-- `origin/main` and local `main` were in sync before this work.
-- The repo contains seed CSVs under `data/seed/`.
-- The repo contains a reviewed semantic model at `configs/semantic_models/pilot_pricing_v0.json`.
-- The repo contains deterministic planner contracts and selected-member drill support under `datavisualizer/`.
-- The repo contains a deterministic DuckDB SQL compiler and read-only execution harness.
-- The repo uses Python standard-library `unittest` and a standard-library HTTP server for API tests.
-- DuckDB is available in the local environment.
+- Local `main` and `origin/main` were in sync before this work.
+- The repo contains a planner, compiler, answer service, chart spec generator, query gateway, and stdlib tests.
+- Restricted SQL is already a secondary internal gateway path, not the default `/answer` route.
+- Existing tests cover planning, compilation, execution, answer generation, `/answer`, and restricted SQL basics.
 
 ## Design Choices For This Pass
 
-- Add the answer pipeline as a thin orchestration layer over existing planner/compiler/executor components.
-- Keep result metadata semantic by deriving column lineage from the `AnalysisPlan`, not by guessing from raw SQL.
-- Treat chart specs as declarative metadata only; no frontend rendering is introduced.
-- Validate restricted SQL with a pilot-focused allowlist:
-  - read-only `SELECT` statements only for this pilot pass
-  - no multi-statement SQL
-  - no direct file access
-  - semantic-model entity names only in `FROM`/`JOIN`
-  - joins must match approved semantic-model join edges
-  - row limits are enforced by the gateway
+- Keep the restricted SQL subset intentionally small: one `SELECT`, semantic `FROM`, optional explicit `JOIN ... ON`, optional `WHERE`, `GROUP BY`, `ORDER BY`, and optional trailing `LIMIT`.
+- Tokenize SQL before validating relation order and join clauses, rather than relying on regex relation extraction.
+- Continue to reject structurally ambiguous or unsupported SQL instead of trying to repair it.
+- Execute one extra row internally and trim before returning results so `truncated` means more data was actually available.
+- Keep chart heuristics deterministic and conservative. If chart quality is questionable, return a `table` spec with warnings.
 
-## Supported Answer Shapes
+## Supported Restricted SQL Shapes
 
-- Planned semantic questions supported by the existing planner.
-- Compiled-plan execution against seed CSVs.
-- Plan filters, selected-member drill filters, measure-local filters, grouped dimensions, time buckets, and row limits supported by the compiler.
-- Chart specs for `line`, `bar`, `grouped_bar`, and `table`.
-- Restricted SQL queries that stay within semantic-model entities and approved joins.
+- Read-only `SELECT` statements only.
+- Semantic-model entity names in `FROM` and `JOIN`.
+- Optional aliases using bare alias or `AS alias`.
+- Explicit inner `JOIN ... ON left_alias.key = right_alias.key`.
+- Approved semantic-model join edges only.
+- Optional `WHERE` with simple `=` or `IN` predicates joined by `AND`.
+- Optional `GROUP BY`, `ORDER BY`, and trailing `LIMIT`.
 
-## Rejected Query Shapes
+## Rejected Restricted SQL Shapes
 
-- Unsupported planner/compiler plan shapes.
-- Restricted SQL with write operations, direct file access, unapproved entities, unapproved joins, unsafe identifiers, multi-statement text, `WITH`, or unsupported statement types.
-- Restricted SQL as the automatic route when compiled-plan execution can answer the request.
+- Writes or side effects.
+- Semicolons or multiple statements.
+- Direct file/table-function access such as `read_csv_auto`.
+- Unknown entities.
+- Cross joins, comma joins, subqueries, CTEs, derived tables, unions, set operations, or nested relation expressions.
+- Joins without approved semantic keys.
+- Joins with `OR`, inequality, function calls, or incomplete `ON` predicates.
+- Unsupported operators such as `LIKE`, `ILIKE`, regex, inequality, arithmetic predicates, or unvalidated functions in filters.
 
 ## Verification Plan
 
 | Requirement | Proof Method |
 |---|---|
-| `/answer` defaults to compiled plans | Unit and HTTP tests assert `query_mode == compiled_plan` |
-| Answer payload is structured and serializable | Unit tests inspect plan, SQL, metadata, columns, rows, truncation, warnings, and chart spec |
-| Chart specs are deterministic | Unit tests cover line, bar, grouped bar, and table pilot questions |
-| Drill context flows through answer path | Unit and HTTP tests pass selected visual member context |
-| Restricted SQL validates governed shapes | Unit tests cover approved SQL success |
-| Restricted SQL rejects unsafe shapes | Unit tests cover write SQL, direct file access, unapproved entities, and unapproved joins |
-| Existing planner/compiler behavior remains intact | Full `unittest` suite |
+| Restricted SQL uses tokenized structure validation | Unit tests for malformed relation/join shapes that used to look superficially valid |
+| Approved restricted SQL still executes | Existing and new gateway tests |
+| Unsafe restricted SQL is rejected | Unit tests for subqueries, comma joins, incomplete joins, unsupported predicates, and direct file access |
+| True truncation is detected | Answer tests with small and oversized row limits |
+| Chart specs inspect rows | Unit tests for empty results, too many categories, over-wide grouped results, sparse results, and valid single/multi-series specs |
+| `/answer` remains compiled-plan default | Existing and updated answer tests |

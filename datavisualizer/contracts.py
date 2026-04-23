@@ -239,6 +239,7 @@ class ResultColumn:
 class ResultLimitMetadata:
     row_limit: int
     returned_rows: int
+    truncated: bool
     possibly_truncated: bool
 
 

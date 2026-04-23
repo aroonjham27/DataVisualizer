@@ -27,6 +27,8 @@ The API currently exposes:
 - `POST /analysis-plan` for planning only
 - `POST /answer` for the default compiled-plan answer path
 
+`/answer` returns semantic result metadata, rows, true truncation status, warnings, and a renderer-agnostic chart spec. Chart specs are row-aware and may fall back to `table` when a visual shape is empty, sparse, too wide, or has too many categories.
+
 Run the test suite:
 
 ```powershell
@@ -66,3 +68,7 @@ This repository includes the approved canonical synthetic seed copied from `../P
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution workflow, planning discipline, and verification expectations
 - [TESTING.md](TESTING.md): test commands and validation expectations
 - [README.md](README.md): project status and documentation index
+
+## Query Safety
+
+The default answer path is still `compiled_plan`: question -> `AnalysisPlan` -> deterministic SQL compiler -> execution. The restricted SQL gateway is a secondary internal service boundary for future LLM tooling. It accepts only a small validated `SELECT` subset over semantic-model entities and approved joins, enforces row limits, and rejects unsupported structure rather than repairing it.

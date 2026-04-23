@@ -30,6 +30,9 @@ py -3 -m unittest discover -s tests -t .
 - true HTTP `/answer` round trips
 - selected-member drill context through the answer path and over HTTP
 - restricted SQL gateway success and rejection cases
+- structurally invalid restricted SQL lookalike rejection
+- true truncation detection with one-extra-row probing
+- row-aware chart fallback behavior for empty, sparse, over-wide, and too-many-category results
 
 ## Expectations
 
@@ -38,3 +41,4 @@ py -3 -m unittest discover -s tests -t .
 - When ambiguity is expected, test for warnings rather than forcing brittle guesses.
 - Keep SQL compiler tests focused on structured plans and compiled SQL, never natural-language SQL generation.
 - Keep restricted SQL tests focused on governed validation boundaries; it is a fallback tool surface, not the default answer path.
+- When chart heuristics change, test both the intended chart and the table fallback reason.

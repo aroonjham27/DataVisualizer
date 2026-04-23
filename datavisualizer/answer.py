@@ -53,7 +53,7 @@ class AnswerService:
         execution = self.gateway.execute_compiled_plan(plan, row_limit=row_limit)
         rows = tuple(tuple(self._json_safe(value) for value in row) for row in execution.result.rows)
         columns = self._result_columns(plan, execution.result.columns)
-        chart_spec = self.chart_specs.generate(plan, columns)
+        chart_spec = self.chart_specs.generate(plan, columns, rows)
         warnings = tuple(dict.fromkeys((*plan.warnings, *chart_spec.warnings)))
         return AnswerResponse(
             plan=plan,
@@ -65,7 +65,8 @@ class AnswerService:
             limit=ResultLimitMetadata(
                 row_limit=execution.metadata.row_limit,
                 returned_rows=len(rows),
-                possibly_truncated=len(rows) >= execution.metadata.row_limit,
+                truncated=execution.truncated,
+                possibly_truncated=execution.truncated,
             ),
             warnings=warnings,
             chart_spec=chart_spec,
