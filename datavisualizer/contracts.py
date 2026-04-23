@@ -244,6 +244,8 @@ class AnswerRequest:
     semantic_model_path: str | None = None
     row_limit: int | None = None
     routing: RoutingControls = field(default_factory=RoutingControls)
+    reuse_current_plan: bool = False
+    chart_type_override: str | None = None
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "AnswerRequest":
@@ -256,6 +258,8 @@ class AnswerRequest:
             semantic_model_path=analysis_request.semantic_model_path,
             row_limit=int(row_limit) if row_limit is not None else None,
             routing=RoutingControls.from_dict(payload.get("routing")),
+            reuse_current_plan=bool(payload.get("reuse_current_plan", False)),
+            chart_type_override=payload.get("chart_type_override"),
         )
 
 
@@ -339,6 +343,111 @@ class RestrictedSqlResponse:
     rows: tuple[tuple[Any, ...], ...]
     limit: ResultLimitMetadata
     warnings: tuple[WarningItem, ...] = ()
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ChatMessage:
+    role: str
+    content: str
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "ChatMessage":
+        return cls(role=payload["role"], content=payload["content"])
+
+
+@dataclass(frozen=True)
+class ConversationState:
+    current_analysis_state: AnalysisPlan | None = None
+    selected_member: DrillSelection | None = None
+    last_tool_name: str | None = None
+    last_query_mode: str | None = None
+    last_chart_type: str | None = None
+    last_row_limit: int | None = None
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any] | None) -> "ConversationState | None":
+        if payload is None:
+            return None
+
+        def parse_field(raw: dict[str, Any] | None) -> PlannedField | None:
+            if raw is None:
+                return None
+            return PlannedField(**raw)
+
+        def parse_selection(raw: dict[str, Any] | None) -> DrillSelection | None:
+            if raw is None:
+                return None
+            return DrillSelection(
+                field=parse_field(raw["field"]),  # type: ignore[arg-type]
+                values=tuple(raw.get("values", ())),
+                source=raw.get("source", "visual_member"),
+            )
+
+        current_state_payload = payload.get("current_analysis_state")
+        return cls(
+            current_analysis_state=AnalysisPlan.from_dict(current_state_payload) if current_state_payload else None,
+            selected_member=parse_selection(payload.get("selected_member")),
+            last_tool_name=payload.get("last_tool_name"),
+            last_query_mode=payload.get("last_query_mode"),
+            last_chart_type=payload.get("last_chart_type"),
+            last_row_limit=payload.get("last_row_limit"),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass(frozen=True)
+class ChatRequest:
+    messages: tuple[ChatMessage, ...]
+    conversation_state: ConversationState | None = None
+    selected_member: DrillSelection | None = None
+    semantic_model_path: str | None = None
+    routing: RoutingControls = field(default_factory=RoutingControls)
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "ChatRequest":
+        def parse_field(raw: dict[str, Any] | None) -> PlannedField | None:
+            if raw is None:
+                return None
+            return PlannedField(**raw)
+
+        def parse_selection(raw: dict[str, Any] | None) -> DrillSelection | None:
+            if raw is None:
+                return None
+            return DrillSelection(
+                field=parse_field(raw["field"]),  # type: ignore[arg-type]
+                values=tuple(raw.get("values", ())),
+                source=raw.get("source", "visual_member"),
+            )
+
+        return cls(
+            messages=tuple(ChatMessage.from_dict(item) for item in payload.get("messages", ())),
+            conversation_state=ConversationState.from_dict(payload.get("conversation_state")),
+            selected_member=parse_selection(payload.get("selected_member")),
+            semantic_model_path=payload.get("semantic_model_path"),
+            routing=RoutingControls.from_dict(payload.get("routing")),
+        )
+
+
+@dataclass(frozen=True)
+class ToolCallTrace:
+    tool_name: str
+    arguments: dict[str, Any]
+    result_ok: bool
+
+
+@dataclass(frozen=True)
+class ChatResponse:
+    tool_name: str
+    assistant_message: str
+    executed_tool_name: str | None
+    tool_result: dict[str, Any] | None
+    conversation_state: ConversationState
+    tool_trace: tuple[ToolCallTrace, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         return asdict(self)

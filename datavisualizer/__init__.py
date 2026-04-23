@@ -1,4 +1,5 @@
 from .answer import AnswerService
+from .chat_orchestrator import ChatOrchestrator
 from .charting import ChartSpecGenerator
 from .contracts import (
     AnalysisPlan,
@@ -6,19 +7,26 @@ from .contracts import (
     AnswerRequest,
     AnswerResponse,
     ChartSpec,
+    ChatMessage,
+    ChatRequest,
+    ChatResponse,
+    ConversationState,
     DrillSelection,
     RestrictedSqlRequest,
     RestrictedSqlResponse,
     RoutingControls,
     RoutingMetadata,
+    ToolCallTrace,
     WarningItem,
 )
 from .errors import ErrorPayload, QueryExecutionFailure, RequestValidationError, UnsupportedQueryShapeError
 from .execution import QueryResult, execute_compiled_query
+from .llm_client import FakeLlmClient, OpenAiCompatibleLlmClient, ProviderConfig
 from .planner import SemanticPlanner
 from .query_gateway import QueryGateway, RestrictedSqlQueryService, RestrictedSqlValidationError
 from .semantic_model import SemanticModel, load_semantic_model
 from .sql_compiler import CompiledQuery, DuckDbSqlCompiler, compile_analysis_plan
+from .tool_registry import ToolRegistry
 
 __all__ = [
     "AnalysisPlan",
@@ -28,10 +36,18 @@ __all__ = [
     "AnswerService",
     "ChartSpec",
     "ChartSpecGenerator",
+    "ChatMessage",
+    "ChatOrchestrator",
+    "ChatRequest",
+    "ChatResponse",
     "CompiledQuery",
+    "ConversationState",
     "DuckDbSqlCompiler",
     "DrillSelection",
     "ErrorPayload",
+    "FakeLlmClient",
+    "OpenAiCompatibleLlmClient",
+    "ProviderConfig",
     "QueryExecutionFailure",
     "QueryGateway",
     "QueryResult",
@@ -44,6 +60,8 @@ __all__ = [
     "RoutingMetadata",
     "SemanticModel",
     "SemanticPlanner",
+    "ToolCallTrace",
+    "ToolRegistry",
     "UnsupportedQueryShapeError",
     "WarningItem",
     "compile_analysis_plan",

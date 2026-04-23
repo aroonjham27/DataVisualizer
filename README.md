@@ -12,6 +12,7 @@ This repository now contains:
 - a deterministic plan-to-SQL compiler and DuckDB execution harness
 - an end-to-end compiled-plan answer pipeline with chart metadata
 - a governed restricted-SQL gateway for future fallback tooling
+- a provider-agnostic chat orchestrator with env-configured live LLM support
 - a standard-library test suite under `tests/`
 
 ## Running the project
@@ -27,10 +28,18 @@ The API currently exposes:
 - `POST /analysis-plan` for planning only
 - `POST /answer` for the default compiled-plan answer path
 - `POST /restricted-sql` for the separate governed restricted-SQL capability
+- `POST /chat` for live-model orchestration over the governed backend tools
 
 Every tool-facing endpoint returns a stable envelope with `ok`, `tool_name`, `data`, and `error`.
 
 `/answer` returns explicit routing metadata, query mode, semantic result metadata, rows, true truncation status, structured warnings, and a renderer-agnostic chart spec. Chart specs are row-aware and may fall back to `table` when a visual shape is empty, sparse, too wide, or has too many categories.
+
+`/chat` sits on top of the governed tools instead of replacing them. The orchestrator exposes:
+
+- `answer` as the default analytics tool
+- `restricted_sql` as a secondary governed tool when routing allows it and the request is clearly SQL-specific
+
+The live provider adapter is env-configured and provider-agnostic. The current local setup supports an OpenRouter-backed OpenAI-compatible endpoint without hard-coding provider secrets into the repo.
 
 Run the test suite:
 
@@ -38,13 +47,25 @@ Run the test suite:
 py -3 -m unittest discover -s tests -t .
 ```
 
+Run the env-gated live chat smoke tests only when live provider credentials are configured:
+
+```powershell
+$env:DATAVISUALIZER_RUN_LIVE_SMOKE="1"
+py -3 -m unittest tests.test_chat.LiveChatSmokeTests
+```
+
 The answer pipeline is currently exposed through Python and the minimal HTTP API, not as a standalone CLI:
 
 ```python
-from datavisualizer import AnswerService
+from datavisualizer import AnswerService, ChatMessage, ChatOrchestrator, ChatRequest
 
 service = AnswerService.from_default_model()
 answer = service.answer("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+
+orchestrator = ChatOrchestrator.from_env()
+chat = orchestrator.chat_request(
+    ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),))
+)
 ```
 
 ## Data
@@ -65,8 +86,8 @@ This repository includes the approved canonical synthetic seed copied from `../P
 - [data/README.md](data/README.md): provenance and scope of the imported pricing seed
 - `data/seed/`: approved canonical seed CSVs and manifests copied from `PricingProject`
 - `data/reports/`: evaluation reports copied to preserve seed approval context
-- `datavisualizer/`: semantic-model loader, typed contracts, planner logic, SQL compiler, query gateway, answer service, execution harness, chart specs, and minimal API
-- `tests/`: stdlib planner, compiler, answer pipeline, restricted SQL, and API tests
+- `datavisualizer/`: semantic-model loader, typed contracts, planner logic, SQL compiler, query gateway, answer service, execution harness, chart specs, LLM adapter, tool registry, chat orchestrator, and minimal API
+- `tests/`: stdlib planner, compiler, answer pipeline, restricted SQL, chat orchestration, and API tests
 - [AGENTS.md](AGENTS.md): concise repository instructions for agents
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution workflow, planning discipline, and verification expectations
 - [TESTING.md](TESTING.md): test commands and validation expectations
@@ -82,3 +103,5 @@ The default answer path is still `compiled_plan`: question -> `AnalysisPlan` -> 
 - `restricted_sql_allowed`
 
 For this phase, `/answer` still selects the compiled-plan lane by default and reports that choice explicitly in the response.
+
+The chat orchestrator preserves that posture. It uses live-model interpretation only to choose and parameterize governed tools. Tool execution itself remains deterministic and backend-controlled.

@@ -50,6 +50,8 @@ class SemanticPlanner:
         normalized = _normalize(question)
         if self._is_drill_continuation(normalized):
             return self._continue_drill(question, current_state, selected_member)
+        if current_state is not None and self._is_state_filter_followup(normalized):
+            return self._continue_with_filter(question, normalized, current_state, selected_member)
         return self._plan_initial(question, normalized)
 
     def _plan_initial(self, question: str, normalized_question: str) -> AnalysisPlan:
@@ -380,6 +382,67 @@ class SemanticPlanner:
             notes=current_state.notes + (f"Added drill level {next_field.field_id}.",),
         )
 
+    def _continue_with_filter(
+        self,
+        question: str,
+        normalized_question: str,
+        current_state: AnalysisPlan,
+        selected_member: DrillSelection | None = None,
+    ) -> AnalysisPlan:
+        candidate_entities: list[str] = [current_state.primary_entity]
+        for field in current_state.dimensions:
+            if field.entity not in candidate_entities:
+                candidate_entities.append(field.entity)
+        for filter_ in current_state.filters:
+            if filter_.field.entity not in candidate_entities:
+                candidate_entities.append(filter_.field.entity)
+        if current_state.time_dimension is not None and current_state.time_dimension.entity not in candidate_entities:
+            candidate_entities.append(current_state.time_dimension.entity)
+        new_filters = self._extract_filters(normalized_question, candidate_entities)
+        active_selection = selected_member
+        if active_selection is None and current_state.drill is not None:
+            active_selection = current_state.drill.selected_member
+        updated_filters = self._filters_with_selected_member(list(current_state.filters), active_selection)
+        for filter_ in new_filters:
+            signature = (filter_.field.field_id, filter_.operator, str(filter_.value), filter_.source)
+            existing = {
+                (item.field.field_id, item.operator, str(item.value), item.source)
+                for item in updated_filters
+            }
+            if signature not in existing:
+                updated_filters.append(filter_)
+        if not new_filters:
+            return replace(
+                current_state,
+                question=question,
+                warnings=current_state.warnings + ("No semantic filter value from the follow-up could be applied to the current analysis state.",),
+                matched_terms=current_state.matched_terms + ("state filter follow-up",),
+            )
+        updated_join_path = self._resolve_join_path(
+            current_state.primary_entity,
+            list(current_state.dimensions),
+            updated_filters,
+            current_state.time_dimension,
+        )
+        return AnalysisPlan(
+            question=question,
+            semantic_model_name=current_state.semantic_model_name,
+            semantic_model_version=current_state.semantic_model_version,
+            status="ok" if not current_state.warnings else "review_needed",
+            primary_entity=current_state.primary_entity,
+            measures=current_state.measures,
+            dimensions=current_state.dimensions,
+            time_dimension=current_state.time_dimension,
+            time_grain=current_state.time_grain,
+            filters=tuple(updated_filters),
+            join_path=tuple(updated_join_path),
+            drill=current_state.drill,
+            chart_intent=current_state.chart_intent,
+            warnings=current_state.warnings,
+            matched_terms=current_state.matched_terms + ("state filter follow-up",),
+            notes=current_state.notes + ("Applied follow-up semantic filter to the existing analysis state.",),
+        )
+
     def _build_plan(
         self,
         *,
@@ -611,6 +674,9 @@ class SemanticPlanner:
             "metric values",
         )
         return any(term in normalized_question for term in usage_terms)
+
+    def _is_state_filter_followup(self, normalized_question: str) -> bool:
+        return normalized_question.startswith("just ") or normalized_question.startswith("only ")
 
     def _filters_with_selected_member(
         self,

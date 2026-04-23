@@ -1,65 +1,70 @@
-# Phase 1 Tool Boundary Spec
+# Phase 2 Chat Orchestration Spec
 
 ## Task Summary
 
-Complete Phase 1 of the roadmap by making the backend clean, explicit, and stable for future LLM tool-calling without integrating a live model yet.
+Complete Phase 2 of the roadmap by adding the first live LLM orchestration layer on top of the existing governed analytics tools.
 
 ## Goals
 
-- Treat `/answer` as the default governed analytics tool.
-- Treat restricted SQL as a separate governed capability, not the default analytics path.
-- Add explicit routing controls:
-  - `compiled_plan_only`
-  - `restricted_sql_allowed`
-- Add a first-class machine-friendly error contract across service and HTTP surfaces.
-- Normalize answer payloads for future model consumption while preserving the current deterministic backend behavior.
-- Update roadmap tracking and only mark Phase 1 items complete if this pass truly covers them.
+- Add a mockable LLM client interface.
+- Add a real env-configured, provider-agnostic HTTP adapter that works with the current OpenRouter setup.
+- Add a fake LLM client for deterministic tests.
+- Register the governed analytics tools with explicit schemas:
+  - default compiled-plan `/answer`
+  - governed restricted-SQL capability
+- Add a chat orchestrator service that:
+  - accepts chat messages
+  - maintains conversation state
+  - decides which governed tool to call
+  - executes tool calls deterministically
+  - returns a structured assistant response payload
+- Add a chat API endpoint without replacing existing governed tool endpoints.
+- Add env-gated live-model smoke coverage for:
+  - a normal analytics question
+  - a drill follow-up
+  - a case where restricted SQL is allowed but compiled-plan should still win
 
 ## Non-Goals
 
-- No live LLM integration.
-- No OpenRouter or provider wiring.
-- No frontend UI rendering.
-- No semantic-model redesign.
-- No widening of the restricted SQL subset beyond what is already validated.
+- No frontend chat UI.
+- No provider lock-in.
+- No secret values in the repo.
+- No broad semantic-model redesign.
+- No widening of the restricted SQL subset beyond the existing governed validation.
 
 ## Repo Facts Observed
 
-- The repo already has a deterministic planner, SQL compiler, execution harness, answer pipeline, restricted SQL gateway, and stdlib HTTP surface.
-- `/answer` currently always uses the compiled-plan lane.
-- The repo already has row-aware chart fallback and restricted SQL hardening.
-- `DataVisualizer_ROADMAP.md` exists in the repo root and Phase 1 is still unchecked.
+- The repo already has explicit tool contracts, stable envelopes, routing controls, and a separate restricted-SQL capability.
+- Environment variables currently available include:
+  - `OPENROUTER_API_KEY`
+  - `OPENROUTER_BASE_URL`
+  - `OPENROUTER_MODEL`
+  - `ANTHROPIC_MODEL`
+  - `MAX_ITERATIONS`
+  - `TIMEOUT_SECONDS`
+- Existing backend contracts are already machine-friendly enough to be exposed directly as tools.
 
 ## Design Choices For This Pass
 
-- Keep the tool contract additive and explicit rather than replacing the current answer payload wholesale.
-- Introduce stable request contracts for routing controls instead of implicit behavior.
-- Introduce stable success/error envelopes so a future orchestrator can parse results deterministically.
-- Keep compiled-plan execution the default and preferred answer route.
-- Keep restricted SQL separate and explicit so future model tooling must opt into it.
-
-## Planned Contract Changes
-
-- `AnswerRequest` gains a routing block with explicit controls.
-- Answer responses expose:
-  - tool identity
-  - routing policy
-  - query mode
-  - stable query metadata
-  - structured warnings
-- Backend errors expose:
-  - `error_type`
-  - `error_code`
-  - `message`
-  - optional structured details
+- Keep orchestration separate from the governed analytics backend.
+- Use an OpenAI-style tool-calling envelope at the provider boundary, while keeping the transport adapter generic.
+- Register restricted SQL only when the routing policy allows it.
+- Keep compiled-plan as the default tool lane even when restricted SQL is available.
+- Use deterministic follow-up handling helpers around existing analysis state for:
+  - `go deeper`
+  - `just enterprise`
+  - `top 5`
+  - `show as table`
+- Keep most orchestration tests on the fake client; gate live smoke tests behind environment checks.
 
 ## Verification Plan
 
 | Requirement | Proof Method |
 |---|---|
-| `/answer` remains compiled-plan default | Unit and HTTP tests assert routing defaults and `query_mode` |
-| Routing flags are explicit and stable | Unit tests for request parsing and route behavior |
-| Error payloads are machine-friendly | Unit and HTTP tests assert stable error envelopes |
-| Answer payload is normalized for model use | Unit and HTTP tests assert stable top-level fields, routing metadata, warnings, and chart spec |
-| Restricted SQL remains separate and governed | Service tests use the explicit restricted SQL lane and assert compiled-plan is still default |
-| Phase 1 roadmap tracking is accurate | `DataVisualizer_ROADMAP.md` updated only for truly completed items |
+| Provider adapter reads env config safely | Unit tests for env parsing and graceful missing-credential behavior |
+| Tool schemas are explicit and stable | Unit tests on tool registration payloads |
+| Compiled-plan remains default | Unit tests and fake-client orchestration tests |
+| Restricted SQL stays secondary | Unit tests where restricted SQL is allowed but not chosen for normal analytics |
+| Conversation state supports follow-ups | Orchestrator tests for `go deeper`, `just enterprise`, `top 5`, and `show as table` |
+| Chat endpoint works end-to-end | HTTP tests for `/chat` |
+| Live model path exists but is optional | Env-gated smoke tests using the real adapter |

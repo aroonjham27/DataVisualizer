@@ -8,7 +8,8 @@ from pathlib import Path
 from typing import Any
 
 from .answer import AnswerService
-from .contracts import AnalysisRequest, AnswerRequest, RestrictedSqlRequest
+from .chat_orchestrator import ChatOrchestrator
+from .contracts import AnalysisRequest, AnswerRequest, ChatRequest, RestrictedSqlRequest
 from .errors import error_envelope, normalize_error, success_envelope
 from .planner import DEFAULT_MODEL_PATH, SemanticPlanner
 from .semantic_model import load_semantic_model
@@ -17,6 +18,11 @@ from .semantic_model import load_semantic_model
 def build_planner(model_path: str | None = None) -> SemanticPlanner:
     target = Path(model_path).resolve() if model_path else DEFAULT_MODEL_PATH
     return SemanticPlanner(load_semantic_model(target))
+
+
+def build_chat_orchestrator(model_path: str | None = None) -> ChatOrchestrator:
+    target = Path(model_path).resolve() if model_path else DEFAULT_MODEL_PATH
+    return ChatOrchestrator.from_env(target)
 
 
 def handle_plan_request(payload: dict[str, Any], planner: SemanticPlanner | None = None) -> dict[str, Any]:
@@ -38,12 +44,19 @@ def handle_restricted_sql_request(payload: dict[str, Any], service: AnswerServic
     return success_envelope("restricted_sql", active_service.restricted_sql_request(request).to_dict())
 
 
+def handle_chat_request(payload: dict[str, Any], orchestrator: ChatOrchestrator | None = None) -> dict[str, Any]:
+    request = ChatRequest.from_dict(payload)
+    active_orchestrator = orchestrator or build_chat_orchestrator(request.semantic_model_path)
+    return success_envelope("chat", active_orchestrator.chat_request(request).to_dict())
+
+
 class PlanningRequestHandler(BaseHTTPRequestHandler):
     planner = build_planner()
     answer_service = AnswerService.from_default_model()
+    chat_orchestrator = build_chat_orchestrator()
 
     def do_POST(self) -> None:  # noqa: N802
-        if self.path not in {"/analysis-plan", "/answer", "/restricted-sql"}:
+        if self.path not in {"/analysis-plan", "/answer", "/restricted-sql", "/chat"}:
             self.send_error(HTTPStatus.NOT_FOUND, "Unsupported route")
             return
         content_length = int(self.headers.get("Content-Length", "0"))
@@ -56,12 +69,22 @@ class PlanningRequestHandler(BaseHTTPRequestHandler):
             elif self.path == "/restricted-sql":
                 response = handle_restricted_sql_request(payload, self.answer_service)
                 status = HTTPStatus.OK
+            elif self.path == "/chat":
+                response = handle_chat_request(payload, self.chat_orchestrator)
+                status = HTTPStatus.OK
             else:
                 response = handle_answer_request(payload, self.answer_service)
                 status = HTTPStatus.OK
         except Exception as exc:  # noqa: BLE001
             payload = normalize_error(exc)
-            tool_name = "analysis_plan" if self.path == "/analysis-plan" else "restricted_sql" if self.path == "/restricted-sql" else "answer"
+            if self.path == "/analysis-plan":
+                tool_name = "analysis_plan"
+            elif self.path == "/restricted-sql":
+                tool_name = "restricted_sql"
+            elif self.path == "/chat":
+                tool_name = "chat"
+            else:
+                tool_name = "answer"
             response = error_envelope(tool_name, payload)
             status = HTTPStatus.BAD_REQUEST if payload.error_type in {"validation_error", "unsupported_query_shape"} else HTTPStatus.INTERNAL_SERVER_ERROR
 
@@ -85,6 +108,7 @@ def main() -> None:
 
     PlanningRequestHandler.planner = build_planner(args.semantic_model_path)
     PlanningRequestHandler.answer_service = AnswerService.from_model_path(args.semantic_model_path)
+    PlanningRequestHandler.chat_orchestrator = build_chat_orchestrator(args.semantic_model_path)
     server = ThreadingHTTPServer((args.host, args.port), PlanningRequestHandler)
     try:
         print(f"Serving semantic planner API on http://{args.host}:{args.port}")

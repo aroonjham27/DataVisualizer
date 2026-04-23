@@ -1,0 +1,324 @@
+from __future__ import annotations
+
+import json
+import os
+import threading
+import unittest
+import urllib.request
+from http.server import ThreadingHTTPServer
+from unittest.mock import patch
+
+from datavisualizer.answer import AnswerService
+from datavisualizer.api import PlanningRequestHandler, handle_chat_request
+from datavisualizer.chat_orchestrator import ChatOrchestrator
+from datavisualizer.contracts import ChatMessage, ChatRequest, ConversationState, RoutingControls
+from datavisualizer.llm_client import (
+    FakeLlmClient,
+    LlmAssistantMessage,
+    LlmResponse,
+    LlmToolCall,
+    OpenAiCompatibleLlmClient,
+    ProviderConfig,
+)
+from datavisualizer.tool_registry import ToolRegistry
+
+
+class ProviderConfigTests(unittest.TestCase):
+    def test_provider_config_uses_openrouter_fallbacks(self) -> None:
+        with patch.dict(
+            os.environ,
+            {
+                "OPENROUTER_API_KEY": "test-key",
+                "OPENROUTER_BASE_URL": "https://openrouter.example/api/v1",
+                "OPENROUTER_MODEL": "anthropic/test-model",
+                "TIMEOUT_SECONDS": "11",
+                "MAX_ITERATIONS": "7",
+            },
+            clear=False,
+        ):
+            config = ProviderConfig.from_env()
+
+        self.assertEqual(config.base_url, "https://openrouter.example/api/v1")
+        self.assertEqual(config.model, "anthropic/test-model")
+        self.assertEqual(config.timeout_seconds, 11)
+        self.assertEqual(config.default_max_iterations, 7)
+
+    def test_provider_config_requires_credentials(self) -> None:
+        with patch.dict(os.environ, {}, clear=True):
+            with self.assertRaises(Exception):
+                ProviderConfig.from_env()
+
+
+class ToolRegistryTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.registry = ToolRegistry(AnswerService.from_default_model())
+
+    def test_registry_keeps_answer_as_default_tool(self) -> None:
+        tools = self.registry.tools_for_chat(
+            "What is win rate by close month, account segment, sales region, and lifecycle type?",
+            RoutingControls(),
+        )
+
+        self.assertEqual([tool.name for tool in tools], ["answer"])
+
+    def test_registry_only_offers_restricted_sql_when_justified(self) -> None:
+        tools = self.registry.tools_for_chat(
+            "Write restricted SQL to count opportunities by segment",
+            RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True),
+        )
+
+        self.assertEqual([tool.name for tool in tools], ["answer", "restricted_sql"])
+        self.assertIn("question", self.registry.answer_tool.input_schema["properties"])
+        self.assertIn("sql", self.registry.restricted_sql_tool.input_schema["properties"])
+
+
+class ChatOrchestratorTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.answer_service = AnswerService.from_default_model()
+
+    def _scripted_orchestrator(self, responses: list[LlmResponse]) -> ChatOrchestrator:
+        return ChatOrchestrator(self.answer_service, FakeLlmClient(responses), max_iterations=4)
+
+    def test_chat_executes_answer_tool_for_normal_question(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Win rate by month is ready.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month, account segment, sales region, and lifecycle type?"),))
+        )
+
+        self.assertEqual(response.executed_tool_name, "answer")
+        self.assertEqual(response.tool_result["tool_name"], "answer")
+        self.assertEqual(response.conversation_state.last_tool_name, "answer")
+        self.assertEqual(response.conversation_state.last_query_mode, "compiled_plan")
+        self.assertIsNotNone(response.conversation_state.current_analysis_state)
+
+    def test_chat_carries_state_for_go_deeper_follow_up(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Initial answer ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Drilled one level deeper.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="How do quoted discount rates and annualized quote amounts vary by product family and line role?"),))
+        )
+
+        second = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="Go one level deeper"),),
+                conversation_state=first.conversation_state,
+            )
+        )
+
+        self.assertEqual(second.executed_tool_name, "answer")
+        self.assertIn("products.product_name", [field.field_id for field in second.conversation_state.current_analysis_state.dimensions])
+
+    def test_chat_supports_top_five_follow_up(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Initial answer ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Showing the top 5 rows.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="Which competitors appear most often in lost enterprise opportunities, and how are they positioned on price?"),))
+        )
+
+        second = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="top 5"),), conversation_state=first.conversation_state)
+        )
+
+        self.assertEqual(second.tool_result["data"]["limit"]["row_limit"], 5)
+
+    def test_chat_supports_show_as_table_follow_up(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Initial answer ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Showing the table view.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="How do quoted discount rates and annualized quote amounts vary by product family and line role?"),))
+        )
+
+        second = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="show as table"),), conversation_state=first.conversation_state)
+        )
+
+        self.assertEqual(second.tool_result["data"]["chart_spec"]["chart_type"], "table")
+
+    def test_chat_supports_just_enterprise_follow_up(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Initial answer ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Filtered to enterprise.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),))
+        )
+
+        second = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="just enterprise"),), conversation_state=first.conversation_state)
+        )
+
+        filters = second.conversation_state.current_analysis_state.filters
+        self.assertTrue(any(item.value == "enterprise" for item in filters))
+
+    def test_chat_keeps_compiled_plan_default_when_restricted_sql_allowed(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Compiled plan stayed selected.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),),
+                routing=RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True),
+            )
+        )
+
+        self.assertEqual(response.executed_tool_name, "answer")
+        self.assertEqual(response.tool_result["data"]["query_mode"], "compiled_plan")
+
+    def test_chat_can_execute_restricted_sql_when_clearly_requested(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(
+                    LlmAssistantMessage(
+                        "",
+                        (
+                            LlmToolCall(
+                                "call-1",
+                                "restricted_sql",
+                                {
+                                    "sql": "SELECT segment, COUNT(DISTINCT opportunity_id) AS opportunity_count "
+                                    "FROM opportunities GROUP BY segment ORDER BY opportunity_count DESC"
+                                },
+                            ),
+                        ),
+                    )
+                ),
+                LlmResponse(LlmAssistantMessage("SQL result ready.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="Write restricted SQL to count opportunities by segment"),),
+                routing=RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True),
+            )
+        )
+
+        self.assertEqual(response.executed_tool_name, "restricted_sql")
+        self.assertEqual(response.tool_result["data"]["query_mode"], "restricted_sql")
+
+
+class ChatApiTests(unittest.TestCase):
+    def setUp(self) -> None:
+        fake_client = FakeLlmClient(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Chat response ready.")),
+            ]
+        )
+        self.orchestrator = ChatOrchestrator(AnswerService.from_default_model(), fake_client)
+
+    def test_handle_chat_request_returns_chat_envelope(self) -> None:
+        response = handle_chat_request(
+            {"messages": [{"role": "user", "content": "What is win rate by close month and account segment?"}]},
+            orchestrator=self.orchestrator,
+        )
+
+        self.assertTrue(response["ok"])
+        self.assertEqual(response["tool_name"], "chat")
+        self.assertEqual(response["data"]["executed_tool_name"], "answer")
+
+    def test_http_chat_round_trip(self) -> None:
+        PlanningRequestHandler.chat_orchestrator = self.orchestrator
+        PlanningRequestHandler.answer_service = self.orchestrator.answer_service
+        PlanningRequestHandler.planner = self.orchestrator.answer_service.planner
+        server = ThreadingHTTPServer(("127.0.0.1", 0), PlanningRequestHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            request = urllib.request.Request(
+                f"http://127.0.0.1:{server.server_port}/chat",
+                data=json.dumps({"messages": [{"role": "user", "content": "What is win rate by close month and account segment?"}]}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=5) as response:
+                payload = json.loads(response.read().decode("utf-8"))
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+        self.assertTrue(payload["ok"])
+        self.assertEqual(payload["tool_name"], "chat")
+        self.assertEqual(payload["data"]["executed_tool_name"], "answer")
+
+
+LIVE_SMOKE_ENABLED = (
+    os.getenv("DATAVISUALIZER_RUN_LIVE_SMOKE") == "1"
+    and bool(os.getenv("OPENROUTER_API_KEY"))
+    and bool(os.getenv("OPENROUTER_MODEL") or os.getenv("ANTHROPIC_MODEL"))
+)
+
+
+@unittest.skipUnless(LIVE_SMOKE_ENABLED, "Live LLM smoke tests require DATAVISUALIZER_RUN_LIVE_SMOKE=1 and model credentials.")
+class LiveChatSmokeTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.orchestrator = ChatOrchestrator.from_env()
+
+    def test_live_normal_analytics_question(self) -> None:
+        response = self.orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),))
+        )
+
+        self.assertEqual(response.executed_tool_name, "answer")
+        self.assertEqual(response.tool_result["data"]["query_mode"], "compiled_plan")
+
+    def test_live_drill_follow_up(self) -> None:
+        first = self.orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="How do quoted discount rates and annualized quote amounts vary by product family and line role?"),))
+        )
+        second = self.orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="go deeper"),), conversation_state=first.conversation_state)
+        )
+
+        self.assertEqual(second.executed_tool_name, "answer")
+        self.assertIsNotNone(second.conversation_state.current_analysis_state)
+
+    def test_live_restricted_sql_allowed_but_compiled_plan_chosen(self) -> None:
+        response = self.orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),),
+                routing=RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True),
+            )
+        )
+
+        self.assertEqual(response.executed_tool_name, "answer")
+        self.assertEqual(response.tool_result["data"]["query_mode"], "compiled_plan")
+
+
+if __name__ == "__main__":
+    unittest.main()

@@ -19,6 +19,7 @@ This roadmap tracks the path from the current pilot backend to a chat-first visu
 - [x] Stable tool-facing success/error envelopes added
 - [x] Explicit routing controls added
 - [x] Phase 1 tool boundary completed
+- [x] Phase 2 chat orchestration completed
 
 ---
 
@@ -52,20 +53,20 @@ Goal: make the backend clean and stable for future model tool-calling.
 
 Goal: let the model interpret user intent, choose governed tools, and manage multi-turn analytics conversation.
 
-- [ ] Add a chat orchestrator service
-- [ ] Register the governed tools the model can call
-- [ ] Route normal analytics questions to `/answer`
-- [ ] Route only eligible advanced cases to restricted SQL
-- [ ] Preserve conversational context across turns
-- [ ] Handle follow-ups such as:
-  - [ ] "go deeper"
-  - [ ] "just enterprise"
-  - [ ] "top 5"
-  - [ ] "show as table"
-- [ ] Add structured-output schemas for tool calls and results
-- [ ] Add provider configuration behind a small adapter
-- [ ] Keep API key in env only, never repo
-- [ ] Keep orchestration provider-agnostic so OpenRouter is a transport choice, not an app architecture choice
+- [x] Add a chat orchestrator service
+- [x] Register the governed tools the model can call
+- [x] Route normal analytics questions to `/answer`
+- [x] Route only eligible advanced cases to restricted SQL
+- [x] Preserve conversational context across turns
+- [x] Handle follow-ups such as:
+  - [x] "go deeper"
+  - [x] "just enterprise"
+  - [x] "top 5"
+  - [x] "show as table"
+- [x] Add structured-output schemas for tool calls and results
+- [x] Add provider configuration behind a small adapter
+- [x] Keep API key in env only, never repo
+- [x] Keep orchestration provider-agnostic so OpenRouter is a transport choice, not an app architecture choice
 
 ---
 
@@ -164,8 +165,8 @@ MVP is complete when all of the following are true:
 
 ## Suggested immediate next task
 
-Phase 1 is complete. Move next to **Phase 2**, where the live LLM begins:
+Phase 2 is complete. Move next to **Phase 3**, where the user-facing chat product begins:
 
-- [ ] chat orchestrator service
-- [ ] governed tool registration
-- [ ] safe routing between compiled-plan and restricted SQL
+- [ ] chat thread UI
+- [ ] rendered chart + table + explanation surface
+- [ ] chart interaction hooks wired back to backend drill state

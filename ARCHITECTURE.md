@@ -31,9 +31,15 @@ For the current repository, the system boundary is:
    The governed execution boundary with a default compiled-plan path and a restricted-SQL fallback service
 7. `datavisualizer.answer`
    The end-to-end answer service that plans, compiles, executes, shapes results, and emits chart metadata
-8. `datavisualizer.api`
-   The tool-facing HTTP boundary that exposes stable success/error envelopes for planning, default answer generation, and restricted SQL
-9. Future visualization layer
+8. `datavisualizer.llm_client`
+   A provider-agnostic live-model adapter plus a fake test client for deterministic orchestration tests
+9. `datavisualizer.tool_registry`
+   Explicit governed tool definitions and schemas for the default answer tool and the restricted-SQL tool
+10. `datavisualizer.chat_orchestrator`
+   The chat-layer coordinator that maintains conversation state, exposes governed tools to the model, executes tool calls deterministically, and returns structured assistant responses
+11. `datavisualizer.api`
+   The tool-facing HTTP boundary that exposes stable success/error envelopes for planning, default answer generation, restricted SQL, and chat orchestration
+12. Future visualization layer
    Downstream components that should consume result data and chart intent rather than bypass the semantic model
 
 The semantic layer and planner sit between raw data files and any automated analysis behavior. That keeps the first version reviewable by humans and reduces the risk of the agent inventing joins, measures, or drill paths.
@@ -54,6 +60,10 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Restricted SQL is intentionally narrow: tokenized `SELECT` validation, semantic-model entities only, approved join edges only, read-only statements only, no direct file access, and gateway-enforced row limits.
 - Query execution uses one-extra-row probing so answer metadata distinguishes returned rows from true truncation.
 - API success and error envelopes are machine-friendly and stable for future tool-calling integration.
+- The live-model layer is adapter-based: provider configuration comes from environment variables, the transport uses an OpenAI-compatible tool-calling shape, and OpenRouter is treated as a deploy-time endpoint choice rather than an architecture dependency.
+- Tool registration is explicit: the model sees the governed `answer` tool and only sees `restricted_sql` when routing allows it and the user request is clearly SQL-oriented.
+- Orchestration remains deterministic around tool execution: the model may choose among offered tools, but argument enrichment, execution, state updates, and response shaping stay backend-controlled.
+- Conversation state is first-class: the orchestrator carries forward prior analysis context so follow-ups such as `go deeper`, `just enterprise`, `top 5`, and `show as table` can reuse governed state instead of reinterpreting the full task from scratch.
 
 ## Boundaries And Guardrails
 
@@ -64,6 +74,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Restricted SQL should not be used when the compiled-plan path already supports the request.
 - Restricted SQL does not support CTEs, subqueries, comma joins, cross joins, unions, arbitrary operators, or direct table-function/file access.
 - Validation, unsupported-shape, and execution failures are normalized into distinct backend error types.
+- Missing live-model credentials should fail gracefully at the orchestration boundary rather than crashing the backend or exposing secrets.
 
 ## Review Model
 

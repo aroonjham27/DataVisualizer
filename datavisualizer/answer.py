@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import date, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -10,6 +11,7 @@ from .contracts import (
     AnalysisPlan,
     AnswerRequest,
     AnswerResponse,
+    ChartSpec,
     DrillSelection,
     RestrictedSqlRequest,
     RestrictedSqlResponse,
@@ -47,6 +49,8 @@ class AnswerService:
             selected_member=request.selected_member,
             row_limit=request.row_limit,
             routing=request.routing,
+            reuse_current_plan=request.reuse_current_plan,
+            chart_type_override=request.chart_type_override,
         )
 
     def answer(
@@ -56,12 +60,24 @@ class AnswerService:
         selected_member: DrillSelection | None = None,
         row_limit: int | None = None,
         routing: RoutingControls | None = None,
+        reuse_current_plan: bool = False,
+        chart_type_override: str | None = None,
     ) -> AnswerResponse:
-        plan = self.planner.plan(question, current_state=current_analysis_state, selected_member=selected_member)
+        if reuse_current_plan:
+            if current_analysis_state is None:
+                raise ValueError("reuse_current_plan requires current_analysis_state.")
+            plan = replace(
+                current_analysis_state,
+                question=question,
+                notes=current_analysis_state.notes + ("Reused prior analysis plan for conversational follow-up.",),
+            )
+        else:
+            plan = self.planner.plan(question, current_state=current_analysis_state, selected_member=selected_member)
         execution = self.gateway.execute_compiled_plan(plan, row_limit=row_limit)
         rows = tuple(tuple(self._json_safe(value) for value in row) for row in execution.result.rows)
         columns = self._result_columns(plan, execution.result.columns)
         chart_spec = self.chart_specs.generate(plan, columns, rows)
+        chart_spec = self._override_chart(chart_spec, columns, chart_type_override)
         warnings = self._warning_items(plan.warnings, chart_spec.warnings)
         query_metadata = execution.metadata
         if routing is not None and routing.restricted_sql_allowed:
@@ -204,3 +220,17 @@ class AnswerService:
         slug = "".join(character if character.isalnum() else "_" for character in message.lower()).strip("_")
         slug = "_".join(part for part in slug.split("_") if part)
         return f"{source}_{slug}"[:80]
+
+    def _override_chart(
+        self,
+        chart_spec: ChartSpec,
+        columns: tuple[ResultColumn, ...],
+        chart_type_override: str | None,
+    ) -> ChartSpec:
+        if chart_type_override is None:
+            return chart_spec
+        if chart_type_override not in {"line", "bar", "grouped_bar", "table"}:
+            raise ValueError(f"Unsupported chart_type_override: {chart_type_override}")
+        if chart_type_override == "table":
+            return replace(chart_spec, chart_type="table", x=None, y=(), series=None, columns=tuple(column.name for column in columns))
+        return replace(chart_spec, chart_type=chart_type_override)

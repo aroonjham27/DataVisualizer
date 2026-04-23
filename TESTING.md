@@ -36,6 +36,12 @@ py -3 -m unittest discover -s tests -t .
 - stable API success and error envelopes
 - routing flag behavior and compiled-plan-default routing metadata
 - restricted SQL tool contract round trips
+- provider adapter env parsing and graceful missing-credential behavior
+- governed tool registration and schema shape for model tool-calling
+- chat orchestration tool-call execution with a fake LLM client
+- conversational carry-forward for `go deeper`, `just enterprise`, `top 5`, and `show as table`
+- true HTTP `/chat` round trips
+- env-gated live-model smoke tests for normal analytics, drill follow-up, and compiled-plan-default routing
 
 ## Expectations
 
@@ -46,3 +52,20 @@ py -3 -m unittest discover -s tests -t .
 - Keep restricted SQL tests focused on governed validation boundaries; it is a fallback tool surface, not the default answer path.
 - When chart heuristics change, test both the intended chart and the table fallback reason.
 - Keep tool-facing payload tests explicit about `ok`, `tool_name`, `data`, `error`, routing metadata, and structured warnings.
+- Keep most orchestration tests on the fake client so behavior stays deterministic.
+- Gate live-model smoke tests behind environment checks so they are optional for normal local runs.
+
+## Live Smoke Tests
+
+Live chat smoke coverage is intentionally optional. Run it only when provider credentials are configured in the environment:
+
+```powershell
+$env:DATAVISUALIZER_RUN_LIVE_SMOKE="1"
+py -3 -m unittest tests.test_chat.LiveChatSmokeTests
+```
+
+The live smoke path currently checks:
+
+- a normal analytics question
+- a drill follow-up
+- a case where restricted SQL is allowed but compiled-plan should still be chosen
