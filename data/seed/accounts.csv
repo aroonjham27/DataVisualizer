@@ -1,0 +1,1001 @@
+account_id,account_external_id,account_name,parent_account_id,segment,industry,sales_region,country_code,employee_band,annual_revenue_band,customer_status
+1,ACC-0001,Harbor Supply Co,,enterprise,Manufacturing,apac,AU,1000-4999,$250M-$1B,customer
+2,ACC-0002,Atlas Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,customer
+3,ACC-0003,Summit Operations,,mid_market,Consumer Goods,apac,IN,250-999,$50M-$250M,former_customer
+4,ACC-0004,Granite Distribution,,mid_market,Automotive,emea,AE,250-999,$50M-$250M,customer
+5,ACC-0005,Meridian Cargo Systems,,smb,Industrial Equipment,apac,AU,50-249,$10M-$50M,prospect
+6,ACC-0006,Apex Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,customer
+7,ACC-0007,Bluewave Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+8,ACC-0008,Ironwood Global Freight,,strategic,Freight Brokerage,emea,FR,5000+,$1B+,customer
+9,ACC-0009,Crescent Industrial,,smb,Third-Party Logistics,apac,AU,50-249,$10M-$50M,prospect
+10,ACC-0010,Pioneer Logistics,,strategic,Logistics,latam,CO,5000+,$1B+,prospect
+11,ACC-0011,Vector Supply Co,,smb,Manufacturing,na,MX,50-249,$10M-$50M,customer
+12,ACC-0012,Northstar Commerce Partners,,mid_market,Retail,apac,SG,250-999,$50M-$250M,prospect
+13,ACC-0013,Harbor Operations,,enterprise,Consumer Goods,apac,AU,1000-4999,$250M-$1B,customer
+14,ACC-0014,Atlas Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,customer
+15,ACC-0015,Summit Cargo Systems,,mid_market,Industrial Equipment,apac,IN,250-999,$50M-$250M,customer
+16,ACC-0016,Granite Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,prospect
+17,ACC-0017,Meridian Trade Group,,enterprise,Food & Beverage,na,MX,1000-4999,$250M-$1B,prospect
+18,ACC-0018,Apex Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,prospect
+19,ACC-0019,Bluewave Industrial,,enterprise,Third-Party Logistics,na,CA,1000-4999,$250M-$1B,prospect
+20,ACC-0020,Ironwood Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,former_customer
+21,ACC-0021,Crescent Supply Co,,mid_market,Manufacturing,na,US,250-999,$50M-$250M,prospect
+22,ACC-0022,Pioneer Commerce Partners,,mid_market,Retail,na,CA,250-999,$50M-$250M,customer
+23,ACC-0023,Vector Operations,,mid_market,Consumer Goods,na,MX,250-999,$50M-$250M,customer
+24,ACC-0024,Northstar Distribution,,smb,Automotive,emea,AE,50-249,$10M-$50M,customer
+25,ACC-0025,Harbor Cargo Systems,,smb,Industrial Equipment,apac,AU,50-249,$10M-$50M,prospect
+26,ACC-0026,Atlas Retail Holdings,,enterprise,Pharma,latam,CO,1000-4999,$250M-$1B,prospect
+27,ACC-0027,Summit Trade Group,,strategic,Food & Beverage,apac,IN,5000+,$1B+,customer
+28,ACC-0028,Granite Global Freight,,mid_market,Freight Brokerage,na,CA,250-999,$50M-$250M,prospect
+29,ACC-0029,Meridian Industrial,,enterprise,Third-Party Logistics,na,MX,1000-4999,$250M-$1B,prospect
+30,ACC-0030,Apex Logistics,,strategic,Logistics,latam,CO,5000+,$1B+,prospect
+31,ACC-0031,Bluewave Supply Co,,strategic,Manufacturing,emea,DE,5000+,$1B+,customer
+32,ACC-0032,Ironwood Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,customer
+33,ACC-0033,Crescent Operations,,smb,Consumer Goods,apac,AU,50-249,$10M-$50M,prospect
+34,ACC-0034,Pioneer Distribution,,smb,Automotive,apac,JP,50-249,$10M-$50M,customer
+35,ACC-0035,Vector Cargo Systems,,mid_market,Industrial Equipment,apac,IN,250-999,$50M-$250M,prospect
+36,ACC-0036,Northstar Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,customer
+37,ACC-0037,Harbor Trade Group,,enterprise,Food & Beverage,apac,AU,1000-4999,$250M-$1B,customer
+38,ACC-0038,Atlas Global Freight,,smb,Freight Brokerage,latam,CO,50-249,$10M-$50M,prospect
+39,ACC-0039,Summit Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,customer
+40,ACC-0040,Granite Logistics,,strategic,Logistics,na,CA,5000+,$1B+,customer
+41,ACC-0041,Meridian Supply Co,,smb,Manufacturing,apac,AU,50-249,$10M-$50M,customer
+42,ACC-0042,Apex Commerce Partners,,smb,Retail,latam,CO,50-249,$10M-$50M,prospect
+43,ACC-0043,Bluewave Operations,,smb,Consumer Goods,latam,PE,50-249,$10M-$50M,customer
+44,ACC-0044,Ironwood Distribution,,strategic,Automotive,na,MX,5000+,$1B+,customer
+45,ACC-0045,Crescent Cargo Systems,,enterprise,Industrial Equipment,na,US,1000-4999,$250M-$1B,customer
+46,ACC-0046,Pioneer Retail Holdings,,mid_market,Pharma,na,CA,250-999,$50M-$250M,prospect
+47,ACC-0047,Vector Trade Group,,enterprise,Food & Beverage,apac,IN,1000-4999,$250M-$1B,customer
+48,ACC-0048,Northstar Global Freight,,smb,Freight Brokerage,na,US,50-249,$10M-$50M,former_customer
+49,ACC-0049,Harbor Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,prospect
+50,ACC-0050,Atlas Logistics,,strategic,Logistics,apac,JP,5000+,$1B+,customer
+51,ACC-0051,Summit Supply Co,,smb,Manufacturing,na,US,50-249,$10M-$50M,prospect
+52,ACC-0052,Granite Commerce Partners,,smb,Retail,apac,SG,50-249,$10M-$50M,customer
+53,ACC-0053,Meridian Operations,,strategic,Consumer Goods,emea,FR,5000+,$1B+,former_customer
+54,ACC-0054,Apex Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,prospect
+55,ACC-0055,Bluewave Cargo Systems,,mid_market,Industrial Equipment,apac,IN,250-999,$50M-$250M,customer
+56,ACC-0056,Ironwood Retail Holdings,,strategic,Pharma,na,MX,5000+,$1B+,prospect
+57,ACC-0057,Crescent Trade Group,,smb,Food & Beverage,na,US,50-249,$10M-$50M,prospect
+58,ACC-0058,Pioneer Global Freight,,enterprise,Freight Brokerage,apac,JP,1000-4999,$250M-$1B,customer
+59,ACC-0059,Vector Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,prospect
+60,ACC-0060,Northstar Logistics,,enterprise,Logistics,emea,GB,1000-4999,$250M-$1B,customer
+61,ACC-0061,Harbor Supply Co,,enterprise,Manufacturing,emea,DE,1000-4999,$250M-$1B,prospect
+62,ACC-0062,Atlas Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,prospect
+63,ACC-0063,Summit Operations,,mid_market,Consumer Goods,na,US,250-999,$50M-$250M,prospect
+64,ACC-0064,Granite Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,prospect
+65,ACC-0065,Meridian Cargo Systems,,smb,Industrial Equipment,na,MX,50-249,$10M-$50M,prospect
+66,ACC-0066,Apex Retail Holdings,,smb,Pharma,na,US,50-249,$10M-$50M,customer
+67,ACC-0067,Bluewave Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+68,ACC-0068,Ironwood Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,customer
+69,ACC-0069,Crescent Industrial,,smb,Third-Party Logistics,latam,CL,50-249,$10M-$50M,prospect
+70,ACC-0070,Pioneer Logistics,,strategic,Logistics,na,CA,5000+,$1B+,customer
+71,ACC-0071,Vector Supply Co,,enterprise,Manufacturing,apac,IN,1000-4999,$250M-$1B,customer
+72,ACC-0072,Northstar Commerce Partners,,strategic,Retail,apac,SG,5000+,$1B+,customer
+73,ACC-0073,Harbor Operations,,smb,Consumer Goods,na,CA,50-249,$10M-$50M,customer
+74,ACC-0074,Atlas Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,prospect
+75,ACC-0075,Summit Cargo Systems,,mid_market,Industrial Equipment,apac,IN,250-999,$50M-$250M,prospect
+76,ACC-0076,Granite Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,former_customer
+77,ACC-0077,Meridian Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,prospect
+78,ACC-0078,Apex Global Freight,,smb,Freight Brokerage,na,US,50-249,$10M-$50M,prospect
+79,ACC-0079,Bluewave Industrial,,enterprise,Third-Party Logistics,apac,IN,1000-4999,$250M-$1B,prospect
+80,ACC-0080,Ironwood Logistics,,mid_market,Logistics,apac,SG,250-999,$50M-$250M,prospect
+81,ACC-0081,Crescent Supply Co,,mid_market,Manufacturing,latam,CL,250-999,$50M-$250M,customer
+82,ACC-0082,Pioneer Commerce Partners,,enterprise,Retail,na,CA,1000-4999,$250M-$1B,prospect
+83,ACC-0083,Vector Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,prospect
+84,ACC-0084,Northstar Distribution,,enterprise,Automotive,na,US,1000-4999,$250M-$1B,customer
+85,ACC-0085,Harbor Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,customer
+86,ACC-0086,Atlas Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,customer
+87,ACC-0087,Summit Trade Group,,mid_market,Food & Beverage,na,US,250-999,$50M-$250M,customer
+88,ACC-0088,Granite Global Freight,,mid_market,Freight Brokerage,na,CA,250-999,$50M-$250M,prospect
+89,ACC-0089,Meridian Industrial,,smb,Third-Party Logistics,apac,AU,50-249,$10M-$50M,prospect
+90,ACC-0090,Apex Logistics,,smb,Logistics,apac,JP,50-249,$10M-$50M,prospect
+91,ACC-0091,Bluewave Supply Co,,strategic,Manufacturing,na,CA,5000+,$1B+,customer
+92,ACC-0092,Ironwood Commerce Partners,,strategic,Retail,na,MX,5000+,$1B+,customer
+93,ACC-0093,Crescent Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,customer
+94,ACC-0094,Pioneer Distribution,,smb,Automotive,apac,JP,50-249,$10M-$50M,prospect
+95,ACC-0095,Vector Cargo Systems,,mid_market,Industrial Equipment,emea,GB,250-999,$50M-$250M,prospect
+96,ACC-0096,Northstar Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,customer
+97,ACC-0097,Harbor Trade Group,,enterprise,Food & Beverage,na,CA,1000-4999,$250M-$1B,customer
+98,ACC-0098,Atlas Global Freight,,enterprise,Freight Brokerage,apac,JP,1000-4999,$250M-$1B,prospect
+99,ACC-0099,Summit Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,customer
+100,ACC-0100,Granite Logistics,,smb,Logistics,latam,BR,50-249,$10M-$50M,prospect
+101,ACC-0101,Meridian Supply Co,,smb,Manufacturing,latam,CL,50-249,$10M-$50M,prospect
+102,ACC-0102,Apex Commerce Partners,,strategic,Retail,emea,NL,5000+,$1B+,former_customer
+103,ACC-0103,Bluewave Operations,,enterprise,Consumer Goods,na,CA,1000-4999,$250M-$1B,prospect
+104,ACC-0104,Ironwood Distribution,,smb,Automotive,apac,SG,50-249,$10M-$50M,prospect
+105,ACC-0105,Crescent Cargo Systems,,mid_market,Industrial Equipment,na,US,250-999,$50M-$250M,prospect
+106,ACC-0106,Pioneer Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,customer
+107,ACC-0107,Vector Trade Group,,enterprise,Food & Beverage,apac,IN,1000-4999,$250M-$1B,customer
+108,ACC-0108,Northstar Global Freight,,mid_market,Freight Brokerage,latam,BR,250-999,$50M-$250M,prospect
+109,ACC-0109,Harbor Industrial,,enterprise,Third-Party Logistics,emea,AE,1000-4999,$250M-$1B,prospect
+110,ACC-0110,Atlas Logistics,,mid_market,Logistics,apac,JP,250-999,$50M-$250M,customer
+111,ACC-0111,Summit Supply Co,,smb,Manufacturing,na,US,50-249,$10M-$50M,customer
+112,ACC-0112,Granite Commerce Partners,,enterprise,Retail,na,CA,1000-4999,$250M-$1B,former_customer
+113,ACC-0113,Meridian Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,former_customer
+114,ACC-0114,Apex Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,customer
+115,ACC-0115,Bluewave Cargo Systems,,mid_market,Industrial Equipment,na,CA,250-999,$50M-$250M,former_customer
+116,ACC-0116,Ironwood Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,customer
+117,ACC-0117,Crescent Trade Group,,mid_market,Food & Beverage,na,US,250-999,$50M-$250M,prospect
+118,ACC-0118,Pioneer Global Freight,,smb,Freight Brokerage,na,CA,50-249,$10M-$50M,prospect
+119,ACC-0119,Vector Industrial,,mid_market,Third-Party Logistics,apac,IN,250-999,$50M-$250M,prospect
+120,ACC-0120,Northstar Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+121,ACC-0121,Harbor Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,customer
+122,ACC-0122,Atlas Commerce Partners,,smb,Retail,na,MX,50-249,$10M-$50M,customer
+123,ACC-0123,Summit Operations,,mid_market,Consumer Goods,na,US,250-999,$50M-$250M,customer
+124,ACC-0124,Granite Distribution,,mid_market,Automotive,na,CA,250-999,$50M-$250M,customer
+125,ACC-0125,Meridian Cargo Systems,,enterprise,Industrial Equipment,na,MX,1000-4999,$250M-$1B,customer
+126,ACC-0126,Apex Retail Holdings,,mid_market,Pharma,na,US,250-999,$50M-$250M,former_customer
+127,ACC-0127,Bluewave Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,customer
+128,ACC-0128,Ironwood Global Freight,,mid_market,Freight Brokerage,apac,SG,250-999,$50M-$250M,prospect
+129,ACC-0129,Crescent Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,prospect
+130,ACC-0130,Pioneer Logistics,,mid_market,Logistics,latam,CO,250-999,$50M-$250M,former_customer
+131,ACC-0131,Vector Supply Co,,smb,Manufacturing,na,MX,50-249,$10M-$50M,customer
+132,ACC-0132,Northstar Commerce Partners,,smb,Retail,na,US,50-249,$10M-$50M,prospect
+133,ACC-0133,Harbor Operations,,smb,Consumer Goods,apac,AU,50-249,$10M-$50M,customer
+134,ACC-0134,Atlas Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,customer
+135,ACC-0135,Summit Cargo Systems,,mid_market,Industrial Equipment,apac,IN,250-999,$50M-$250M,prospect
+136,ACC-0136,Granite Retail Holdings,,strategic,Pharma,na,CA,5000+,$1B+,prospect
+137,ACC-0137,Meridian Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,prospect
+138,ACC-0138,Apex Global Freight,,mid_market,Freight Brokerage,latam,CO,250-999,$50M-$250M,customer
+139,ACC-0139,Bluewave Industrial,,strategic,Third-Party Logistics,na,CA,5000+,$1B+,customer
+140,ACC-0140,Ironwood Logistics,,enterprise,Logistics,apac,SG,1000-4999,$250M-$1B,customer
+141,ACC-0141,Crescent Supply Co,,strategic,Manufacturing,na,US,5000+,$1B+,prospect
+142,ACC-0142,Pioneer Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,prospect
+143,ACC-0143,Vector Operations,,smb,Consumer Goods,na,MX,50-249,$10M-$50M,customer
+144,ACC-0144,Northstar Distribution,,enterprise,Automotive,na,US,1000-4999,$250M-$1B,customer
+145,ACC-0145,Harbor Cargo Systems,,smb,Industrial Equipment,na,CA,50-249,$10M-$50M,prospect
+146,ACC-0146,Atlas Retail Holdings,,mid_market,Pharma,na,MX,250-999,$50M-$250M,prospect
+147,ACC-0147,Summit Trade Group,,enterprise,Food & Beverage,na,US,1000-4999,$250M-$1B,prospect
+148,ACC-0148,Granite Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,prospect
+149,ACC-0149,Meridian Industrial,,smb,Third-Party Logistics,na,MX,50-249,$10M-$50M,prospect
+150,ACC-0150,Apex Logistics,,enterprise,Logistics,apac,JP,1000-4999,$250M-$1B,prospect
+151,ACC-0151,Bluewave Supply Co,,mid_market,Manufacturing,na,CA,250-999,$50M-$250M,prospect
+152,ACC-0152,Ironwood Commerce Partners,,smb,Retail,latam,BR,50-249,$10M-$50M,prospect
+153,ACC-0153,Crescent Operations,,smb,Consumer Goods,apac,AU,50-249,$10M-$50M,prospect
+154,ACC-0154,Pioneer Distribution,,smb,Automotive,latam,CO,50-249,$10M-$50M,customer
+155,ACC-0155,Vector Cargo Systems,,mid_market,Industrial Equipment,na,MX,250-999,$50M-$250M,prospect
+156,ACC-0156,Northstar Retail Holdings,,mid_market,Pharma,na,US,250-999,$50M-$250M,customer
+157,ACC-0157,Harbor Trade Group,,strategic,Food & Beverage,na,CA,5000+,$1B+,customer
+158,ACC-0158,Atlas Global Freight,,smb,Freight Brokerage,na,MX,50-249,$10M-$50M,prospect
+159,ACC-0159,Summit Industrial,,smb,Third-Party Logistics,apac,IN,50-249,$10M-$50M,prospect
+160,ACC-0160,Granite Logistics,,smb,Logistics,apac,SG,50-249,$10M-$50M,customer
+161,ACC-0161,Meridian Supply Co,,enterprise,Manufacturing,apac,AU,1000-4999,$250M-$1B,prospect
+162,ACC-0162,Apex Commerce Partners,,mid_market,Retail,na,US,250-999,$50M-$250M,prospect
+163,ACC-0163,Bluewave Operations,,enterprise,Consumer Goods,emea,FR,1000-4999,$250M-$1B,customer
+164,ACC-0164,Ironwood Distribution,,mid_market,Automotive,emea,AE,250-999,$50M-$250M,prospect
+165,ACC-0165,Crescent Cargo Systems,,enterprise,Industrial Equipment,emea,GB,1000-4999,$250M-$1B,customer
+166,ACC-0166,Pioneer Retail Holdings,,strategic,Pharma,emea,DE,5000+,$1B+,prospect
+167,ACC-0167,Vector Trade Group,,smb,Food & Beverage,latam,PE,50-249,$10M-$50M,customer
+168,ACC-0168,Northstar Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,customer
+169,ACC-0169,Harbor Industrial,,mid_market,Third-Party Logistics,na,CA,250-999,$50M-$250M,customer
+170,ACC-0170,Atlas Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,prospect
+171,ACC-0171,Summit Supply Co,,enterprise,Manufacturing,emea,DE,1000-4999,$250M-$1B,prospect
+172,ACC-0172,Granite Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,prospect
+173,ACC-0173,Meridian Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,customer
+174,ACC-0174,Apex Distribution,,enterprise,Automotive,apac,JP,1000-4999,$250M-$1B,customer
+175,ACC-0175,Bluewave Cargo Systems,,mid_market,Industrial Equipment,na,CA,250-999,$50M-$250M,customer
+176,ACC-0176,Ironwood Retail Holdings,,smb,Pharma,apac,SG,50-249,$10M-$50M,former_customer
+177,ACC-0177,Crescent Trade Group,,enterprise,Food & Beverage,emea,NL,1000-4999,$250M-$1B,prospect
+178,ACC-0178,Pioneer Global Freight,,smb,Freight Brokerage,na,CA,50-249,$10M-$50M,prospect
+179,ACC-0179,Vector Industrial,,enterprise,Third-Party Logistics,apac,IN,1000-4999,$250M-$1B,prospect
+180,ACC-0180,Northstar Logistics,,mid_market,Logistics,na,US,250-999,$50M-$250M,former_customer
+181,ACC-0181,Harbor Supply Co,,strategic,Manufacturing,latam,CL,5000+,$1B+,prospect
+182,ACC-0182,Atlas Commerce Partners,,smb,Retail,na,MX,50-249,$10M-$50M,customer
+183,ACC-0183,Summit Operations,,mid_market,Consumer Goods,apac,IN,250-999,$50M-$250M,prospect
+184,ACC-0184,Granite Distribution,,mid_market,Automotive,apac,SG,250-999,$50M-$250M,prospect
+185,ACC-0185,Meridian Cargo Systems,,strategic,Industrial Equipment,na,MX,5000+,$1B+,former_customer
+186,ACC-0186,Apex Retail Holdings,,smb,Pharma,na,US,50-249,$10M-$50M,customer
+187,ACC-0187,Bluewave Trade Group,,strategic,Food & Beverage,na,CA,5000+,$1B+,customer
+188,ACC-0188,Ironwood Global Freight,,enterprise,Freight Brokerage,na,MX,1000-4999,$250M-$1B,customer
+189,ACC-0189,Crescent Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,prospect
+190,ACC-0190,Pioneer Logistics,,enterprise,Logistics,apac,JP,1000-4999,$250M-$1B,former_customer
+191,ACC-0191,Vector Supply Co,,smb,Manufacturing,na,MX,50-249,$10M-$50M,former_customer
+192,ACC-0192,Northstar Commerce Partners,,enterprise,Retail,latam,BR,1000-4999,$250M-$1B,prospect
+193,ACC-0193,Harbor Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,prospect
+194,ACC-0194,Atlas Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,customer
+195,ACC-0195,Summit Cargo Systems,,mid_market,Industrial Equipment,apac,IN,250-999,$50M-$250M,customer
+196,ACC-0196,Granite Retail Holdings,,enterprise,Pharma,na,CA,1000-4999,$250M-$1B,customer
+197,ACC-0197,Meridian Trade Group,,smb,Food & Beverage,na,MX,50-249,$10M-$50M,prospect
+198,ACC-0198,Apex Global Freight,,enterprise,Freight Brokerage,na,US,1000-4999,$250M-$1B,customer
+199,ACC-0199,Bluewave Industrial,,enterprise,Third-Party Logistics,na,CA,1000-4999,$250M-$1B,customer
+200,ACC-0200,Ironwood Logistics,,smb,Logistics,latam,BR,50-249,$10M-$50M,prospect
+201,ACC-0201,Crescent Supply Co,,smb,Manufacturing,na,US,50-249,$10M-$50M,prospect
+202,ACC-0202,Pioneer Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,prospect
+203,ACC-0203,Vector Operations,,mid_market,Consumer Goods,na,MX,250-999,$50M-$250M,prospect
+204,ACC-0204,Northstar Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,prospect
+205,ACC-0205,Harbor Cargo Systems,,enterprise,Industrial Equipment,na,CA,1000-4999,$250M-$1B,prospect
+206,ACC-0206,Atlas Retail Holdings,,enterprise,Pharma,na,MX,1000-4999,$250M-$1B,prospect
+207,ACC-0207,Summit Trade Group,,strategic,Food & Beverage,apac,IN,5000+,$1B+,customer
+208,ACC-0208,Granite Global Freight,,smb,Freight Brokerage,emea,FR,50-249,$10M-$50M,customer
+209,ACC-0209,Meridian Industrial,,mid_market,Third-Party Logistics,na,MX,250-999,$50M-$250M,customer
+210,ACC-0210,Apex Logistics,,smb,Logistics,apac,JP,50-249,$10M-$50M,prospect
+211,ACC-0211,Bluewave Supply Co,,enterprise,Manufacturing,na,CA,1000-4999,$250M-$1B,customer
+212,ACC-0212,Ironwood Commerce Partners,,mid_market,Retail,na,MX,250-999,$50M-$250M,customer
+213,ACC-0213,Crescent Operations,,strategic,Consumer Goods,na,US,5000+,$1B+,customer
+214,ACC-0214,Pioneer Distribution,,enterprise,Automotive,na,CA,1000-4999,$250M-$1B,customer
+215,ACC-0215,Vector Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,prospect
+216,ACC-0216,Northstar Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,customer
+217,ACC-0217,Harbor Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+218,ACC-0218,Atlas Global Freight,,strategic,Freight Brokerage,na,MX,5000+,$1B+,customer
+219,ACC-0219,Summit Industrial,,enterprise,Third-Party Logistics,latam,PE,1000-4999,$250M-$1B,customer
+220,ACC-0220,Granite Logistics,,smb,Logistics,emea,GB,50-249,$10M-$50M,prospect
+221,ACC-0221,Meridian Supply Co,,smb,Manufacturing,apac,AU,50-249,$10M-$50M,customer
+222,ACC-0222,Apex Commerce Partners,,strategic,Retail,na,US,5000+,$1B+,customer
+223,ACC-0223,Bluewave Operations,,enterprise,Consumer Goods,emea,FR,1000-4999,$250M-$1B,customer
+224,ACC-0224,Ironwood Distribution,,smb,Automotive,emea,AE,50-249,$10M-$50M,customer
+225,ACC-0225,Crescent Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,customer
+226,ACC-0226,Pioneer Retail Holdings,,smb,Pharma,na,CA,50-249,$10M-$50M,former_customer
+227,ACC-0227,Vector Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+228,ACC-0228,Northstar Global Freight,,smb,Freight Brokerage,emea,FR,50-249,$10M-$50M,former_customer
+229,ACC-0229,Harbor Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,customer
+230,ACC-0230,Atlas Logistics,,smb,Logistics,emea,GB,50-249,$10M-$50M,customer
+231,ACC-0231,Summit Supply Co,,mid_market,Manufacturing,apac,IN,250-999,$50M-$250M,customer
+232,ACC-0232,Granite Commerce Partners,,mid_market,Retail,na,CA,250-999,$50M-$250M,customer
+233,ACC-0233,Meridian Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,customer
+234,ACC-0234,Apex Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,customer
+235,ACC-0235,Bluewave Cargo Systems,,enterprise,Industrial Equipment,na,CA,1000-4999,$250M-$1B,customer
+236,ACC-0236,Ironwood Retail Holdings,,smb,Pharma,latam,BR,50-249,$10M-$50M,customer
+237,ACC-0237,Crescent Trade Group,,enterprise,Food & Beverage,apac,AU,1000-4999,$250M-$1B,customer
+238,ACC-0238,Pioneer Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,prospect
+239,ACC-0239,Vector Industrial,,mid_market,Third-Party Logistics,emea,AE,250-999,$50M-$250M,prospect
+240,ACC-0240,Northstar Logistics,,enterprise,Logistics,latam,BR,1000-4999,$250M-$1B,customer
+241,ACC-0241,Harbor Supply Co,,enterprise,Manufacturing,na,CA,1000-4999,$250M-$1B,customer
+242,ACC-0242,Atlas Commerce Partners,,mid_market,Retail,latam,CO,250-999,$50M-$250M,prospect
+243,ACC-0243,Summit Operations,,smb,Consumer Goods,na,US,50-249,$10M-$50M,customer
+244,ACC-0244,Granite Distribution,,smb,Automotive,na,CA,50-249,$10M-$50M,customer
+245,ACC-0245,Meridian Cargo Systems,,smb,Industrial Equipment,na,MX,50-249,$10M-$50M,customer
+246,ACC-0246,Apex Retail Holdings,,mid_market,Pharma,latam,CO,250-999,$50M-$250M,customer
+247,ACC-0247,Bluewave Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,prospect
+248,ACC-0248,Ironwood Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,customer
+249,ACC-0249,Crescent Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,customer
+250,ACC-0250,Pioneer Logistics,,mid_market,Logistics,na,CA,250-999,$50M-$250M,prospect
+251,ACC-0251,Vector Supply Co,,smb,Manufacturing,latam,PE,50-249,$10M-$50M,customer
+252,ACC-0252,Northstar Commerce Partners,,strategic,Retail,na,US,5000+,$1B+,customer
+253,ACC-0253,Harbor Operations,,smb,Consumer Goods,na,CA,50-249,$10M-$50M,customer
+254,ACC-0254,Atlas Distribution,,mid_market,Automotive,latam,CO,250-999,$50M-$250M,former_customer
+255,ACC-0255,Summit Cargo Systems,,mid_market,Industrial Equipment,na,US,250-999,$50M-$250M,prospect
+256,ACC-0256,Granite Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,former_customer
+257,ACC-0257,Meridian Trade Group,,mid_market,Food & Beverage,latam,CL,250-999,$50M-$250M,customer
+258,ACC-0258,Apex Global Freight,,mid_market,Freight Brokerage,na,US,250-999,$50M-$250M,former_customer
+259,ACC-0259,Bluewave Industrial,,smb,Third-Party Logistics,na,CA,50-249,$10M-$50M,customer
+260,ACC-0260,Ironwood Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,prospect
+261,ACC-0261,Crescent Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,customer
+262,ACC-0262,Pioneer Commerce Partners,,enterprise,Retail,na,CA,1000-4999,$250M-$1B,prospect
+263,ACC-0263,Vector Operations,,strategic,Consumer Goods,na,MX,5000+,$1B+,customer
+264,ACC-0264,Northstar Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,customer
+265,ACC-0265,Harbor Cargo Systems,,enterprise,Industrial Equipment,emea,GB,1000-4999,$250M-$1B,customer
+266,ACC-0266,Atlas Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,prospect
+267,ACC-0267,Summit Trade Group,,enterprise,Food & Beverage,na,US,1000-4999,$250M-$1B,former_customer
+268,ACC-0268,Granite Global Freight,,smb,Freight Brokerage,na,CA,50-249,$10M-$50M,prospect
+269,ACC-0269,Meridian Industrial,,enterprise,Third-Party Logistics,na,MX,1000-4999,$250M-$1B,customer
+270,ACC-0270,Apex Logistics,,strategic,Logistics,emea,GB,5000+,$1B+,customer
+271,ACC-0271,Bluewave Supply Co,,enterprise,Manufacturing,na,CA,1000-4999,$250M-$1B,customer
+272,ACC-0272,Ironwood Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,prospect
+273,ACC-0273,Crescent Operations,,mid_market,Consumer Goods,apac,AU,250-999,$50M-$250M,prospect
+274,ACC-0274,Pioneer Distribution,,mid_market,Automotive,na,CA,250-999,$50M-$250M,customer
+275,ACC-0275,Vector Cargo Systems,,mid_market,Industrial Equipment,na,MX,250-999,$50M-$250M,prospect
+276,ACC-0276,Northstar Retail Holdings,,mid_market,Pharma,na,US,250-999,$50M-$250M,former_customer
+277,ACC-0277,Harbor Trade Group,,mid_market,Food & Beverage,emea,NL,250-999,$50M-$250M,customer
+278,ACC-0278,Atlas Global Freight,,smb,Freight Brokerage,emea,FR,50-249,$10M-$50M,customer
+279,ACC-0279,Summit Industrial,,smb,Third-Party Logistics,apac,IN,50-249,$10M-$50M,customer
+280,ACC-0280,Granite Logistics,,smb,Logistics,na,CA,50-249,$10M-$50M,customer
+281,ACC-0281,Meridian Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,prospect
+282,ACC-0282,Apex Commerce Partners,,strategic,Retail,emea,NL,5000+,$1B+,customer
+283,ACC-0283,Bluewave Operations,,smb,Consumer Goods,na,CA,50-249,$10M-$50M,customer
+284,ACC-0284,Ironwood Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,customer
+285,ACC-0285,Crescent Cargo Systems,,smb,Industrial Equipment,apac,AU,50-249,$10M-$50M,customer
+286,ACC-0286,Pioneer Retail Holdings,,enterprise,Pharma,na,CA,1000-4999,$250M-$1B,customer
+287,ACC-0287,Vector Trade Group,,enterprise,Food & Beverage,latam,PE,1000-4999,$250M-$1B,former_customer
+288,ACC-0288,Northstar Global Freight,,smb,Freight Brokerage,emea,FR,50-249,$10M-$50M,prospect
+289,ACC-0289,Harbor Industrial,,enterprise,Third-Party Logistics,na,CA,1000-4999,$250M-$1B,customer
+290,ACC-0290,Atlas Logistics,,enterprise,Logistics,apac,JP,1000-4999,$250M-$1B,prospect
+291,ACC-0291,Summit Supply Co,,smb,Manufacturing,latam,PE,50-249,$10M-$50M,prospect
+292,ACC-0292,Granite Commerce Partners,,mid_market,Retail,na,CA,250-999,$50M-$250M,customer
+293,ACC-0293,Meridian Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,customer
+294,ACC-0294,Apex Distribution,,mid_market,Automotive,emea,AE,250-999,$50M-$250M,prospect
+295,ACC-0295,Bluewave Cargo Systems,,smb,Industrial Equipment,na,CA,50-249,$10M-$50M,customer
+296,ACC-0296,Ironwood Retail Holdings,,smb,Pharma,latam,BR,50-249,$10M-$50M,prospect
+297,ACC-0297,Crescent Trade Group,,mid_market,Food & Beverage,apac,AU,250-999,$50M-$250M,prospect
+298,ACC-0298,Pioneer Global Freight,,enterprise,Freight Brokerage,na,CA,1000-4999,$250M-$1B,customer
+299,ACC-0299,Vector Industrial,,smb,Third-Party Logistics,latam,PE,50-249,$10M-$50M,customer
+300,ACC-0300,Northstar Logistics,,mid_market,Logistics,na,US,250-999,$50M-$250M,prospect
+301,ACC-0301,Harbor Supply Co,,strategic,Manufacturing,na,CA,5000+,$1B+,customer
+302,ACC-0302,Atlas Commerce Partners,,smb,Retail,na,MX,50-249,$10M-$50M,customer
+303,ACC-0303,Summit Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,customer
+304,ACC-0304,Granite Distribution,,mid_market,Automotive,apac,SG,250-999,$50M-$250M,customer
+305,ACC-0305,Meridian Cargo Systems,,mid_market,Industrial Equipment,apac,AU,250-999,$50M-$250M,customer
+306,ACC-0306,Apex Retail Holdings,,enterprise,Pharma,na,US,1000-4999,$250M-$1B,prospect
+307,ACC-0307,Bluewave Trade Group,,smb,Food & Beverage,apac,IN,50-249,$10M-$50M,prospect
+308,ACC-0308,Ironwood Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,prospect
+309,ACC-0309,Crescent Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,customer
+310,ACC-0310,Pioneer Logistics,,smb,Logistics,na,CA,50-249,$10M-$50M,prospect
+311,ACC-0311,Vector Supply Co,,smb,Manufacturing,emea,DE,50-249,$10M-$50M,prospect
+312,ACC-0312,Northstar Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,customer
+313,ACC-0313,Harbor Operations,,smb,Consumer Goods,apac,AU,50-249,$10M-$50M,prospect
+314,ACC-0314,Atlas Distribution,,enterprise,Automotive,latam,CO,1000-4999,$250M-$1B,customer
+315,ACC-0315,Summit Cargo Systems,,mid_market,Industrial Equipment,na,US,250-999,$50M-$250M,customer
+316,ACC-0316,Granite Retail Holdings,,enterprise,Pharma,latam,BR,1000-4999,$250M-$1B,prospect
+317,ACC-0317,Meridian Trade Group,,enterprise,Food & Beverage,na,MX,1000-4999,$250M-$1B,prospect
+318,ACC-0318,Apex Global Freight,,smb,Freight Brokerage,na,US,50-249,$10M-$50M,prospect
+319,ACC-0319,Bluewave Industrial,,smb,Third-Party Logistics,apac,IN,50-249,$10M-$50M,customer
+320,ACC-0320,Ironwood Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,customer
+321,ACC-0321,Crescent Supply Co,,enterprise,Manufacturing,na,US,1000-4999,$250M-$1B,customer
+322,ACC-0322,Pioneer Commerce Partners,,strategic,Retail,emea,NL,5000+,$1B+,customer
+323,ACC-0323,Vector Operations,,smb,Consumer Goods,latam,PE,50-249,$10M-$50M,customer
+324,ACC-0324,Northstar Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,customer
+325,ACC-0325,Harbor Cargo Systems,,strategic,Industrial Equipment,emea,GB,5000+,$1B+,customer
+326,ACC-0326,Atlas Retail Holdings,,enterprise,Pharma,na,MX,1000-4999,$250M-$1B,prospect
+327,ACC-0327,Summit Trade Group,,enterprise,Food & Beverage,na,US,1000-4999,$250M-$1B,customer
+328,ACC-0328,Granite Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,former_customer
+329,ACC-0329,Meridian Industrial,,strategic,Third-Party Logistics,apac,AU,5000+,$1B+,prospect
+330,ACC-0330,Apex Logistics,,enterprise,Logistics,na,US,1000-4999,$250M-$1B,customer
+331,ACC-0331,Bluewave Supply Co,,mid_market,Manufacturing,latam,PE,250-999,$50M-$250M,prospect
+332,ACC-0332,Ironwood Commerce Partners,,smb,Retail,latam,BR,50-249,$10M-$50M,customer
+333,ACC-0333,Crescent Operations,,mid_market,Consumer Goods,na,US,250-999,$50M-$250M,customer
+334,ACC-0334,Pioneer Distribution,,enterprise,Automotive,na,CA,1000-4999,$250M-$1B,customer
+335,ACC-0335,Vector Cargo Systems,,smb,Industrial Equipment,na,MX,50-249,$10M-$50M,prospect
+336,ACC-0336,Northstar Retail Holdings,,smb,Pharma,na,US,50-249,$10M-$50M,customer
+337,ACC-0337,Harbor Trade Group,,mid_market,Food & Beverage,na,CA,250-999,$50M-$250M,prospect
+338,ACC-0338,Atlas Global Freight,,smb,Freight Brokerage,emea,FR,50-249,$10M-$50M,prospect
+339,ACC-0339,Summit Industrial,,mid_market,Third-Party Logistics,na,US,250-999,$50M-$250M,customer
+340,ACC-0340,Granite Logistics,,enterprise,Logistics,apac,SG,1000-4999,$250M-$1B,former_customer
+341,ACC-0341,Meridian Supply Co,,smb,Manufacturing,emea,DE,50-249,$10M-$50M,customer
+342,ACC-0342,Apex Commerce Partners,,strategic,Retail,apac,JP,5000+,$1B+,prospect
+343,ACC-0343,Bluewave Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,customer
+344,ACC-0344,Ironwood Distribution,,smb,Automotive,na,MX,50-249,$10M-$50M,customer
+345,ACC-0345,Crescent Cargo Systems,,smb,Industrial Equipment,na,US,50-249,$10M-$50M,customer
+346,ACC-0346,Pioneer Retail Holdings,,smb,Pharma,na,CA,50-249,$10M-$50M,prospect
+347,ACC-0347,Vector Trade Group,,mid_market,Food & Beverage,apac,IN,250-999,$50M-$250M,customer
+348,ACC-0348,Northstar Global Freight,,mid_market,Freight Brokerage,na,US,250-999,$50M-$250M,customer
+349,ACC-0349,Harbor Industrial,,mid_market,Third-Party Logistics,na,CA,250-999,$50M-$250M,prospect
+350,ACC-0350,Atlas Logistics,,enterprise,Logistics,emea,GB,1000-4999,$250M-$1B,customer
+351,ACC-0351,Summit Supply Co,,strategic,Manufacturing,emea,DE,5000+,$1B+,former_customer
+352,ACC-0352,Granite Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,prospect
+353,ACC-0353,Meridian Operations,,smb,Consumer Goods,na,MX,50-249,$10M-$50M,prospect
+354,ACC-0354,Apex Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,prospect
+355,ACC-0355,Bluewave Cargo Systems,,mid_market,Industrial Equipment,apac,IN,250-999,$50M-$250M,prospect
+356,ACC-0356,Ironwood Retail Holdings,,smb,Pharma,apac,SG,50-249,$10M-$50M,customer
+357,ACC-0357,Crescent Trade Group,,mid_market,Food & Beverage,emea,NL,250-999,$50M-$250M,prospect
+358,ACC-0358,Pioneer Global Freight,,mid_market,Freight Brokerage,apac,JP,250-999,$50M-$250M,customer
+359,ACC-0359,Vector Industrial,,enterprise,Third-Party Logistics,na,MX,1000-4999,$250M-$1B,customer
+360,ACC-0360,Northstar Logistics,,smb,Logistics,apac,SG,50-249,$10M-$50M,customer
+361,ACC-0361,Harbor Supply Co,,mid_market,Manufacturing,na,CA,250-999,$50M-$250M,prospect
+362,ACC-0362,Atlas Commerce Partners,,enterprise,Retail,latam,CO,1000-4999,$250M-$1B,customer
+363,ACC-0363,Summit Operations,,enterprise,Consumer Goods,na,US,1000-4999,$250M-$1B,prospect
+364,ACC-0364,Granite Distribution,,enterprise,Automotive,na,CA,1000-4999,$250M-$1B,prospect
+365,ACC-0365,Meridian Cargo Systems,,enterprise,Industrial Equipment,apac,AU,1000-4999,$250M-$1B,prospect
+366,ACC-0366,Apex Retail Holdings,,mid_market,Pharma,apac,JP,250-999,$50M-$250M,prospect
+367,ACC-0367,Bluewave Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,customer
+368,ACC-0368,Ironwood Global Freight,,enterprise,Freight Brokerage,apac,SG,1000-4999,$250M-$1B,customer
+369,ACC-0369,Crescent Industrial,,strategic,Third-Party Logistics,apac,AU,5000+,$1B+,customer
+370,ACC-0370,Pioneer Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+371,ACC-0371,Vector Supply Co,,enterprise,Manufacturing,emea,DE,1000-4999,$250M-$1B,customer
+372,ACC-0372,Northstar Commerce Partners,,enterprise,Retail,na,US,1000-4999,$250M-$1B,customer
+373,ACC-0373,Harbor Operations,,enterprise,Consumer Goods,na,CA,1000-4999,$250M-$1B,prospect
+374,ACC-0374,Atlas Distribution,,mid_market,Automotive,na,MX,250-999,$50M-$250M,prospect
+375,ACC-0375,Summit Cargo Systems,,enterprise,Industrial Equipment,na,US,1000-4999,$250M-$1B,prospect
+376,ACC-0376,Granite Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,prospect
+377,ACC-0377,Meridian Trade Group,,enterprise,Food & Beverage,emea,NL,1000-4999,$250M-$1B,customer
+378,ACC-0378,Apex Global Freight,,smb,Freight Brokerage,latam,CO,50-249,$10M-$50M,prospect
+379,ACC-0379,Bluewave Industrial,,smb,Third-Party Logistics,latam,PE,50-249,$10M-$50M,former_customer
+380,ACC-0380,Ironwood Logistics,,enterprise,Logistics,na,MX,1000-4999,$250M-$1B,customer
+381,ACC-0381,Crescent Supply Co,,mid_market,Manufacturing,apac,AU,250-999,$50M-$250M,prospect
+382,ACC-0382,Pioneer Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,customer
+383,ACC-0383,Vector Operations,,smb,Consumer Goods,latam,PE,50-249,$10M-$50M,customer
+384,ACC-0384,Northstar Distribution,,strategic,Automotive,emea,AE,5000+,$1B+,customer
+385,ACC-0385,Harbor Cargo Systems,,smb,Industrial Equipment,apac,AU,50-249,$10M-$50M,customer
+386,ACC-0386,Atlas Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,customer
+387,ACC-0387,Summit Trade Group,,smb,Food & Beverage,na,US,50-249,$10M-$50M,customer
+388,ACC-0388,Granite Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,customer
+389,ACC-0389,Meridian Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,customer
+390,ACC-0390,Apex Logistics,,mid_market,Logistics,na,US,250-999,$50M-$250M,customer
+391,ACC-0391,Bluewave Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,customer
+392,ACC-0392,Ironwood Commerce Partners,,smb,Retail,na,MX,50-249,$10M-$50M,customer
+393,ACC-0393,Crescent Operations,,enterprise,Consumer Goods,na,US,1000-4999,$250M-$1B,prospect
+394,ACC-0394,Pioneer Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,prospect
+395,ACC-0395,Vector Cargo Systems,,enterprise,Industrial Equipment,emea,GB,1000-4999,$250M-$1B,customer
+396,ACC-0396,Northstar Retail Holdings,,mid_market,Pharma,na,US,250-999,$50M-$250M,customer
+397,ACC-0397,Harbor Trade Group,,mid_market,Food & Beverage,emea,NL,250-999,$50M-$250M,customer
+398,ACC-0398,Atlas Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,customer
+399,ACC-0399,Summit Industrial,,smb,Third-Party Logistics,apac,IN,50-249,$10M-$50M,prospect
+400,ACC-0400,Granite Logistics,,mid_market,Logistics,apac,SG,250-999,$50M-$250M,customer
+401,ACC-0401,Meridian Supply Co,,mid_market,Manufacturing,na,MX,250-999,$50M-$250M,prospect
+402,ACC-0402,Apex Commerce Partners,,enterprise,Retail,latam,CO,1000-4999,$250M-$1B,customer
+403,ACC-0403,Bluewave Operations,,mid_market,Consumer Goods,na,CA,250-999,$50M-$250M,customer
+404,ACC-0404,Ironwood Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,customer
+405,ACC-0405,Crescent Cargo Systems,,strategic,Industrial Equipment,emea,GB,5000+,$1B+,customer
+406,ACC-0406,Pioneer Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,prospect
+407,ACC-0407,Vector Trade Group,,enterprise,Food & Beverage,latam,PE,1000-4999,$250M-$1B,customer
+408,ACC-0408,Northstar Global Freight,,enterprise,Freight Brokerage,na,US,1000-4999,$250M-$1B,customer
+409,ACC-0409,Harbor Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,customer
+410,ACC-0410,Atlas Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,customer
+411,ACC-0411,Summit Supply Co,,mid_market,Manufacturing,na,US,250-999,$50M-$250M,prospect
+412,ACC-0412,Granite Commerce Partners,,mid_market,Retail,na,CA,250-999,$50M-$250M,customer
+413,ACC-0413,Meridian Operations,,enterprise,Consumer Goods,na,MX,1000-4999,$250M-$1B,prospect
+414,ACC-0414,Apex Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,customer
+415,ACC-0415,Bluewave Cargo Systems,,mid_market,Industrial Equipment,emea,GB,250-999,$50M-$250M,prospect
+416,ACC-0416,Ironwood Retail Holdings,,enterprise,Pharma,na,MX,1000-4999,$250M-$1B,prospect
+417,ACC-0417,Crescent Trade Group,,smb,Food & Beverage,latam,CL,50-249,$10M-$50M,customer
+418,ACC-0418,Pioneer Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,customer
+419,ACC-0419,Vector Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,prospect
+420,ACC-0420,Northstar Logistics,,strategic,Logistics,latam,BR,5000+,$1B+,prospect
+421,ACC-0421,Harbor Supply Co,,mid_market,Manufacturing,na,CA,250-999,$50M-$250M,prospect
+422,ACC-0422,Atlas Commerce Partners,,strategic,Retail,emea,NL,5000+,$1B+,former_customer
+423,ACC-0423,Summit Operations,,strategic,Consumer Goods,na,US,5000+,$1B+,customer
+424,ACC-0424,Granite Distribution,,smb,Automotive,na,CA,50-249,$10M-$50M,prospect
+425,ACC-0425,Meridian Cargo Systems,,strategic,Industrial Equipment,apac,AU,5000+,$1B+,customer
+426,ACC-0426,Apex Retail Holdings,,enterprise,Pharma,na,US,1000-4999,$250M-$1B,customer
+427,ACC-0427,Bluewave Trade Group,,strategic,Food & Beverage,emea,NL,5000+,$1B+,customer
+428,ACC-0428,Ironwood Global Freight,,enterprise,Freight Brokerage,apac,SG,1000-4999,$250M-$1B,customer
+429,ACC-0429,Crescent Industrial,,mid_market,Third-Party Logistics,emea,AE,250-999,$50M-$250M,prospect
+430,ACC-0430,Pioneer Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+431,ACC-0431,Vector Supply Co,,smb,Manufacturing,na,MX,50-249,$10M-$50M,prospect
+432,ACC-0432,Northstar Commerce Partners,,mid_market,Retail,apac,SG,250-999,$50M-$250M,customer
+433,ACC-0433,Harbor Operations,,smb,Consumer Goods,na,CA,50-249,$10M-$50M,prospect
+434,ACC-0434,Atlas Distribution,,smb,Automotive,na,MX,50-249,$10M-$50M,customer
+435,ACC-0435,Summit Cargo Systems,,mid_market,Industrial Equipment,na,US,250-999,$50M-$250M,customer
+436,ACC-0436,Granite Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,customer
+437,ACC-0437,Meridian Trade Group,,enterprise,Food & Beverage,latam,CL,1000-4999,$250M-$1B,former_customer
+438,ACC-0438,Apex Global Freight,,smb,Freight Brokerage,na,US,50-249,$10M-$50M,prospect
+439,ACC-0439,Bluewave Industrial,,enterprise,Third-Party Logistics,emea,AE,1000-4999,$250M-$1B,customer
+440,ACC-0440,Ironwood Logistics,,mid_market,Logistics,apac,SG,250-999,$50M-$250M,prospect
+441,ACC-0441,Crescent Supply Co,,smb,Manufacturing,emea,DE,50-249,$10M-$50M,prospect
+442,ACC-0442,Pioneer Commerce Partners,,mid_market,Retail,na,CA,250-999,$50M-$250M,customer
+443,ACC-0443,Vector Operations,,enterprise,Consumer Goods,na,MX,1000-4999,$250M-$1B,prospect
+444,ACC-0444,Northstar Distribution,,enterprise,Automotive,latam,BR,1000-4999,$250M-$1B,prospect
+445,ACC-0445,Harbor Cargo Systems,,mid_market,Industrial Equipment,na,CA,250-999,$50M-$250M,customer
+446,ACC-0446,Atlas Retail Holdings,,mid_market,Pharma,na,MX,250-999,$50M-$250M,prospect
+447,ACC-0447,Summit Trade Group,,mid_market,Food & Beverage,emea,NL,250-999,$50M-$250M,customer
+448,ACC-0448,Granite Global Freight,,smb,Freight Brokerage,apac,SG,50-249,$10M-$50M,former_customer
+449,ACC-0449,Meridian Industrial,,smb,Third-Party Logistics,na,MX,50-249,$10M-$50M,prospect
+450,ACC-0450,Apex Logistics,,smb,Logistics,latam,CO,50-249,$10M-$50M,customer
+451,ACC-0451,Bluewave Supply Co,,mid_market,Manufacturing,latam,PE,250-999,$50M-$250M,customer
+452,ACC-0452,Ironwood Commerce Partners,,enterprise,Retail,latam,BR,1000-4999,$250M-$1B,customer
+453,ACC-0453,Crescent Operations,,strategic,Consumer Goods,emea,FR,5000+,$1B+,customer
+454,ACC-0454,Pioneer Distribution,,mid_market,Automotive,latam,CO,250-999,$50M-$250M,prospect
+455,ACC-0455,Vector Cargo Systems,,smb,Industrial Equipment,latam,PE,50-249,$10M-$50M,customer
+456,ACC-0456,Northstar Retail Holdings,,enterprise,Pharma,latam,BR,1000-4999,$250M-$1B,customer
+457,ACC-0457,Harbor Trade Group,,strategic,Food & Beverage,na,CA,5000+,$1B+,customer
+458,ACC-0458,Atlas Global Freight,,mid_market,Freight Brokerage,na,MX,250-999,$50M-$250M,customer
+459,ACC-0459,Summit Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,customer
+460,ACC-0460,Granite Logistics,,mid_market,Logistics,na,CA,250-999,$50M-$250M,customer
+461,ACC-0461,Meridian Supply Co,,smb,Manufacturing,na,MX,50-249,$10M-$50M,prospect
+462,ACC-0462,Apex Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,customer
+463,ACC-0463,Bluewave Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,customer
+464,ACC-0464,Ironwood Distribution,,strategic,Automotive,emea,AE,5000+,$1B+,customer
+465,ACC-0465,Crescent Cargo Systems,,mid_market,Industrial Equipment,apac,AU,250-999,$50M-$250M,customer
+466,ACC-0466,Pioneer Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,prospect
+467,ACC-0467,Vector Trade Group,,enterprise,Food & Beverage,apac,IN,1000-4999,$250M-$1B,customer
+468,ACC-0468,Northstar Global Freight,,smb,Freight Brokerage,latam,BR,50-249,$10M-$50M,customer
+469,ACC-0469,Harbor Industrial,,smb,Third-Party Logistics,latam,CL,50-249,$10M-$50M,prospect
+470,ACC-0470,Atlas Logistics,,strategic,Logistics,emea,GB,5000+,$1B+,customer
+471,ACC-0471,Summit Supply Co,,mid_market,Manufacturing,apac,IN,250-999,$50M-$250M,former_customer
+472,ACC-0472,Granite Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,prospect
+473,ACC-0473,Meridian Operations,,strategic,Consumer Goods,na,MX,5000+,$1B+,prospect
+474,ACC-0474,Apex Distribution,,strategic,Automotive,emea,AE,5000+,$1B+,prospect
+475,ACC-0475,Bluewave Cargo Systems,,smb,Industrial Equipment,na,CA,50-249,$10M-$50M,customer
+476,ACC-0476,Ironwood Retail Holdings,,enterprise,Pharma,na,MX,1000-4999,$250M-$1B,prospect
+477,ACC-0477,Crescent Trade Group,,smb,Food & Beverage,latam,CL,50-249,$10M-$50M,customer
+478,ACC-0478,Pioneer Global Freight,,smb,Freight Brokerage,latam,CO,50-249,$10M-$50M,prospect
+479,ACC-0479,Vector Industrial,,mid_market,Third-Party Logistics,na,MX,250-999,$50M-$250M,prospect
+480,ACC-0480,Northstar Logistics,,enterprise,Logistics,na,US,1000-4999,$250M-$1B,former_customer
+481,ACC-0481,Harbor Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,customer
+482,ACC-0482,Atlas Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,prospect
+483,ACC-0483,Summit Operations,,smb,Consumer Goods,na,US,50-249,$10M-$50M,prospect
+484,ACC-0484,Granite Distribution,,smb,Automotive,emea,AE,50-249,$10M-$50M,prospect
+485,ACC-0485,Meridian Cargo Systems,,strategic,Industrial Equipment,emea,GB,5000+,$1B+,customer
+486,ACC-0486,Apex Retail Holdings,,enterprise,Pharma,apac,JP,1000-4999,$250M-$1B,prospect
+487,ACC-0487,Bluewave Trade Group,,smb,Food & Beverage,latam,PE,50-249,$10M-$50M,customer
+488,ACC-0488,Ironwood Global Freight,,mid_market,Freight Brokerage,apac,SG,250-999,$50M-$250M,customer
+489,ACC-0489,Crescent Industrial,,enterprise,Third-Party Logistics,apac,AU,1000-4999,$250M-$1B,customer
+490,ACC-0490,Pioneer Logistics,,strategic,Logistics,na,CA,5000+,$1B+,customer
+491,ACC-0491,Vector Supply Co,,mid_market,Manufacturing,na,MX,250-999,$50M-$250M,customer
+492,ACC-0492,Northstar Commerce Partners,,smb,Retail,na,US,50-249,$10M-$50M,customer
+493,ACC-0493,Harbor Operations,,strategic,Consumer Goods,na,CA,5000+,$1B+,customer
+494,ACC-0494,Atlas Distribution,,mid_market,Automotive,apac,JP,250-999,$50M-$250M,former_customer
+495,ACC-0495,Summit Cargo Systems,,smb,Industrial Equipment,apac,IN,50-249,$10M-$50M,customer
+496,ACC-0496,Granite Retail Holdings,,smb,Pharma,na,CA,50-249,$10M-$50M,prospect
+497,ACC-0497,Meridian Trade Group,,mid_market,Food & Beverage,na,MX,250-999,$50M-$250M,prospect
+498,ACC-0498,Apex Global Freight,,smb,Freight Brokerage,apac,JP,50-249,$10M-$50M,customer
+499,ACC-0499,Bluewave Industrial,,smb,Third-Party Logistics,na,CA,50-249,$10M-$50M,customer
+500,ACC-0500,Ironwood Logistics,,mid_market,Logistics,na,MX,250-999,$50M-$250M,prospect
+501,ACC-0501,Crescent Supply Co,,strategic,Manufacturing,emea,DE,5000+,$1B+,customer
+502,ACC-0502,Pioneer Commerce Partners,,smb,Retail,apac,JP,50-249,$10M-$50M,customer
+503,ACC-0503,Vector Operations,,enterprise,Consumer Goods,na,MX,1000-4999,$250M-$1B,customer
+504,ACC-0504,Northstar Distribution,,enterprise,Automotive,na,US,1000-4999,$250M-$1B,prospect
+505,ACC-0505,Harbor Cargo Systems,,enterprise,Industrial Equipment,na,CA,1000-4999,$250M-$1B,customer
+506,ACC-0506,Atlas Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,customer
+507,ACC-0507,Summit Trade Group,,smb,Food & Beverage,latam,PE,50-249,$10M-$50M,prospect
+508,ACC-0508,Granite Global Freight,,enterprise,Freight Brokerage,na,CA,1000-4999,$250M-$1B,customer
+509,ACC-0509,Meridian Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,prospect
+510,ACC-0510,Apex Logistics,,smb,Logistics,na,US,50-249,$10M-$50M,prospect
+511,ACC-0511,Bluewave Supply Co,,strategic,Manufacturing,latam,PE,5000+,$1B+,prospect
+512,ACC-0512,Ironwood Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,prospect
+513,ACC-0513,Crescent Operations,,mid_market,Consumer Goods,apac,AU,250-999,$50M-$250M,prospect
+514,ACC-0514,Pioneer Distribution,,strategic,Automotive,emea,AE,5000+,$1B+,customer
+515,ACC-0515,Vector Cargo Systems,,smb,Industrial Equipment,na,MX,50-249,$10M-$50M,customer
+516,ACC-0516,Northstar Retail Holdings,,smb,Pharma,na,US,50-249,$10M-$50M,prospect
+517,ACC-0517,Harbor Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,customer
+518,ACC-0518,Atlas Global Freight,,enterprise,Freight Brokerage,na,MX,1000-4999,$250M-$1B,prospect
+519,ACC-0519,Summit Industrial,,mid_market,Third-Party Logistics,apac,IN,250-999,$50M-$250M,customer
+520,ACC-0520,Granite Logistics,,mid_market,Logistics,na,CA,250-999,$50M-$250M,prospect
+521,ACC-0521,Meridian Supply Co,,enterprise,Manufacturing,na,MX,1000-4999,$250M-$1B,former_customer
+522,ACC-0522,Apex Commerce Partners,,mid_market,Retail,na,US,250-999,$50M-$250M,customer
+523,ACC-0523,Bluewave Operations,,mid_market,Consumer Goods,na,CA,250-999,$50M-$250M,customer
+524,ACC-0524,Ironwood Distribution,,smb,Automotive,latam,BR,50-249,$10M-$50M,prospect
+525,ACC-0525,Crescent Cargo Systems,,smb,Industrial Equipment,apac,AU,50-249,$10M-$50M,customer
+526,ACC-0526,Pioneer Retail Holdings,,enterprise,Pharma,latam,CO,1000-4999,$250M-$1B,customer
+527,ACC-0527,Vector Trade Group,,mid_market,Food & Beverage,na,MX,250-999,$50M-$250M,prospect
+528,ACC-0528,Northstar Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,customer
+529,ACC-0529,Harbor Industrial,,mid_market,Third-Party Logistics,apac,AU,250-999,$50M-$250M,customer
+530,ACC-0530,Atlas Logistics,,enterprise,Logistics,na,MX,1000-4999,$250M-$1B,former_customer
+531,ACC-0531,Summit Supply Co,,strategic,Manufacturing,na,US,5000+,$1B+,customer
+532,ACC-0532,Granite Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,customer
+533,ACC-0533,Meridian Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,customer
+534,ACC-0534,Apex Distribution,,smb,Automotive,latam,CO,50-249,$10M-$50M,customer
+535,ACC-0535,Bluewave Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,prospect
+536,ACC-0536,Ironwood Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,prospect
+537,ACC-0537,Crescent Trade Group,,mid_market,Food & Beverage,latam,CL,250-999,$50M-$250M,customer
+538,ACC-0538,Pioneer Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,customer
+539,ACC-0539,Vector Industrial,,smb,Third-Party Logistics,apac,IN,50-249,$10M-$50M,customer
+540,ACC-0540,Northstar Logistics,,enterprise,Logistics,apac,SG,1000-4999,$250M-$1B,customer
+541,ACC-0541,Harbor Supply Co,,mid_market,Manufacturing,na,CA,250-999,$50M-$250M,prospect
+542,ACC-0542,Atlas Commerce Partners,,mid_market,Retail,na,MX,250-999,$50M-$250M,prospect
+543,ACC-0543,Summit Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,customer
+544,ACC-0544,Granite Distribution,,smb,Automotive,latam,BR,50-249,$10M-$50M,customer
+545,ACC-0545,Meridian Cargo Systems,,mid_market,Industrial Equipment,na,MX,250-999,$50M-$250M,customer
+546,ACC-0546,Apex Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,customer
+547,ACC-0547,Bluewave Trade Group,,mid_market,Food & Beverage,apac,IN,250-999,$50M-$250M,customer
+548,ACC-0548,Ironwood Global Freight,,smb,Freight Brokerage,na,MX,50-249,$10M-$50M,prospect
+549,ACC-0549,Crescent Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,prospect
+550,ACC-0550,Pioneer Logistics,,enterprise,Logistics,na,CA,1000-4999,$250M-$1B,prospect
+551,ACC-0551,Vector Supply Co,,mid_market,Manufacturing,na,MX,250-999,$50M-$250M,prospect
+552,ACC-0552,Northstar Commerce Partners,,strategic,Retail,apac,SG,5000+,$1B+,customer
+553,ACC-0553,Harbor Operations,,mid_market,Consumer Goods,latam,CL,250-999,$50M-$250M,customer
+554,ACC-0554,Atlas Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,prospect
+555,ACC-0555,Summit Cargo Systems,,smb,Industrial Equipment,latam,PE,50-249,$10M-$50M,customer
+556,ACC-0556,Granite Retail Holdings,,enterprise,Pharma,apac,SG,1000-4999,$250M-$1B,prospect
+557,ACC-0557,Meridian Trade Group,,mid_market,Food & Beverage,apac,AU,250-999,$50M-$250M,prospect
+558,ACC-0558,Apex Global Freight,,mid_market,Freight Brokerage,na,US,250-999,$50M-$250M,customer
+559,ACC-0559,Bluewave Industrial,,enterprise,Third-Party Logistics,apac,IN,1000-4999,$250M-$1B,customer
+560,ACC-0560,Ironwood Logistics,,smb,Logistics,latam,BR,50-249,$10M-$50M,prospect
+561,ACC-0561,Crescent Supply Co,,enterprise,Manufacturing,na,US,1000-4999,$250M-$1B,customer
+562,ACC-0562,Pioneer Commerce Partners,,enterprise,Retail,apac,JP,1000-4999,$250M-$1B,customer
+563,ACC-0563,Vector Operations,,strategic,Consumer Goods,emea,FR,5000+,$1B+,customer
+564,ACC-0564,Northstar Distribution,,strategic,Automotive,apac,SG,5000+,$1B+,customer
+565,ACC-0565,Harbor Cargo Systems,,strategic,Industrial Equipment,apac,AU,5000+,$1B+,customer
+566,ACC-0566,Atlas Retail Holdings,,smb,Pharma,na,MX,50-249,$10M-$50M,prospect
+567,ACC-0567,Summit Trade Group,,mid_market,Food & Beverage,apac,IN,250-999,$50M-$250M,customer
+568,ACC-0568,Granite Global Freight,,smb,Freight Brokerage,apac,SG,50-249,$10M-$50M,prospect
+569,ACC-0569,Meridian Industrial,,smb,Third-Party Logistics,na,MX,50-249,$10M-$50M,prospect
+570,ACC-0570,Apex Logistics,,smb,Logistics,apac,JP,50-249,$10M-$50M,former_customer
+571,ACC-0571,Bluewave Supply Co,,enterprise,Manufacturing,na,CA,1000-4999,$250M-$1B,customer
+572,ACC-0572,Ironwood Commerce Partners,,strategic,Retail,na,MX,5000+,$1B+,customer
+573,ACC-0573,Crescent Operations,,smb,Consumer Goods,apac,AU,50-249,$10M-$50M,prospect
+574,ACC-0574,Pioneer Distribution,,strategic,Automotive,apac,JP,5000+,$1B+,prospect
+575,ACC-0575,Vector Cargo Systems,,strategic,Industrial Equipment,apac,IN,5000+,$1B+,customer
+576,ACC-0576,Northstar Retail Holdings,,strategic,Pharma,emea,DE,5000+,$1B+,customer
+577,ACC-0577,Harbor Trade Group,,mid_market,Food & Beverage,na,CA,250-999,$50M-$250M,customer
+578,ACC-0578,Atlas Global Freight,,mid_market,Freight Brokerage,na,MX,250-999,$50M-$250M,customer
+579,ACC-0579,Summit Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,prospect
+580,ACC-0580,Granite Logistics,,strategic,Logistics,apac,SG,5000+,$1B+,customer
+581,ACC-0581,Meridian Supply Co,,enterprise,Manufacturing,apac,AU,1000-4999,$250M-$1B,customer
+582,ACC-0582,Apex Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,customer
+583,ACC-0583,Bluewave Operations,,smb,Consumer Goods,na,CA,50-249,$10M-$50M,prospect
+584,ACC-0584,Ironwood Distribution,,smb,Automotive,latam,BR,50-249,$10M-$50M,prospect
+585,ACC-0585,Crescent Cargo Systems,,smb,Industrial Equipment,na,US,50-249,$10M-$50M,prospect
+586,ACC-0586,Pioneer Retail Holdings,,strategic,Pharma,na,CA,5000+,$1B+,customer
+587,ACC-0587,Vector Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+588,ACC-0588,Northstar Global Freight,,enterprise,Freight Brokerage,na,US,1000-4999,$250M-$1B,prospect
+589,ACC-0589,Harbor Industrial,,enterprise,Third-Party Logistics,emea,AE,1000-4999,$250M-$1B,customer
+590,ACC-0590,Atlas Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,prospect
+591,ACC-0591,Summit Supply Co,,enterprise,Manufacturing,apac,IN,1000-4999,$250M-$1B,customer
+592,ACC-0592,Granite Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,former_customer
+593,ACC-0593,Meridian Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,customer
+594,ACC-0594,Apex Distribution,,mid_market,Automotive,na,US,250-999,$50M-$250M,prospect
+595,ACC-0595,Bluewave Cargo Systems,,smb,Industrial Equipment,na,CA,50-249,$10M-$50M,prospect
+596,ACC-0596,Ironwood Retail Holdings,,smb,Pharma,na,MX,50-249,$10M-$50M,prospect
+597,ACC-0597,Crescent Trade Group,,smb,Food & Beverage,na,US,50-249,$10M-$50M,customer
+598,ACC-0598,Pioneer Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,customer
+599,ACC-0599,Vector Industrial,,mid_market,Third-Party Logistics,apac,IN,250-999,$50M-$250M,customer
+600,ACC-0600,Northstar Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+601,ACC-0601,Harbor Supply Co,,mid_market,Manufacturing,apac,AU,250-999,$50M-$250M,prospect
+602,ACC-0602,Atlas Commerce Partners,,enterprise,Retail,emea,NL,1000-4999,$250M-$1B,customer
+603,ACC-0603,Summit Operations,,mid_market,Consumer Goods,na,US,250-999,$50M-$250M,customer
+604,ACC-0604,Granite Distribution,,enterprise,Automotive,na,CA,1000-4999,$250M-$1B,customer
+605,ACC-0605,Meridian Cargo Systems,,smb,Industrial Equipment,latam,CL,50-249,$10M-$50M,prospect
+606,ACC-0606,Apex Retail Holdings,,mid_market,Pharma,apac,JP,250-999,$50M-$250M,prospect
+607,ACC-0607,Bluewave Trade Group,,strategic,Food & Beverage,latam,PE,5000+,$1B+,prospect
+608,ACC-0608,Ironwood Global Freight,,mid_market,Freight Brokerage,na,MX,250-999,$50M-$250M,prospect
+609,ACC-0609,Crescent Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,customer
+610,ACC-0610,Pioneer Logistics,,strategic,Logistics,apac,JP,5000+,$1B+,customer
+611,ACC-0611,Vector Supply Co,,enterprise,Manufacturing,emea,DE,1000-4999,$250M-$1B,customer
+612,ACC-0612,Northstar Commerce Partners,,strategic,Retail,na,US,5000+,$1B+,prospect
+613,ACC-0613,Harbor Operations,,smb,Consumer Goods,apac,AU,50-249,$10M-$50M,customer
+614,ACC-0614,Atlas Distribution,,smb,Automotive,emea,AE,50-249,$10M-$50M,former_customer
+615,ACC-0615,Summit Cargo Systems,,strategic,Industrial Equipment,na,US,5000+,$1B+,former_customer
+616,ACC-0616,Granite Retail Holdings,,smb,Pharma,apac,SG,50-249,$10M-$50M,customer
+617,ACC-0617,Meridian Trade Group,,strategic,Food & Beverage,na,MX,5000+,$1B+,customer
+618,ACC-0618,Apex Global Freight,,smb,Freight Brokerage,na,US,50-249,$10M-$50M,prospect
+619,ACC-0619,Bluewave Industrial,,enterprise,Third-Party Logistics,apac,IN,1000-4999,$250M-$1B,customer
+620,ACC-0620,Ironwood Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,prospect
+621,ACC-0621,Crescent Supply Co,,smb,Manufacturing,na,US,50-249,$10M-$50M,customer
+622,ACC-0622,Pioneer Commerce Partners,,enterprise,Retail,na,CA,1000-4999,$250M-$1B,prospect
+623,ACC-0623,Vector Operations,,strategic,Consumer Goods,latam,PE,5000+,$1B+,customer
+624,ACC-0624,Northstar Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,prospect
+625,ACC-0625,Harbor Cargo Systems,,enterprise,Industrial Equipment,emea,GB,1000-4999,$250M-$1B,customer
+626,ACC-0626,Atlas Retail Holdings,,smb,Pharma,na,MX,50-249,$10M-$50M,customer
+627,ACC-0627,Summit Trade Group,,enterprise,Food & Beverage,na,US,1000-4999,$250M-$1B,prospect
+628,ACC-0628,Granite Global Freight,,smb,Freight Brokerage,na,CA,50-249,$10M-$50M,prospect
+629,ACC-0629,Meridian Industrial,,mid_market,Third-Party Logistics,emea,AE,250-999,$50M-$250M,customer
+630,ACC-0630,Apex Logistics,,strategic,Logistics,na,US,5000+,$1B+,customer
+631,ACC-0631,Bluewave Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,prospect
+632,ACC-0632,Ironwood Commerce Partners,,smb,Retail,na,MX,50-249,$10M-$50M,customer
+633,ACC-0633,Crescent Operations,,strategic,Consumer Goods,emea,FR,5000+,$1B+,customer
+634,ACC-0634,Pioneer Distribution,,strategic,Automotive,apac,JP,5000+,$1B+,customer
+635,ACC-0635,Vector Cargo Systems,,enterprise,Industrial Equipment,na,MX,1000-4999,$250M-$1B,prospect
+636,ACC-0636,Northstar Retail Holdings,,smb,Pharma,na,US,50-249,$10M-$50M,prospect
+637,ACC-0637,Harbor Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,prospect
+638,ACC-0638,Atlas Global Freight,,mid_market,Freight Brokerage,latam,CO,250-999,$50M-$250M,customer
+639,ACC-0639,Summit Industrial,,strategic,Third-Party Logistics,emea,AE,5000+,$1B+,customer
+640,ACC-0640,Granite Logistics,,mid_market,Logistics,apac,SG,250-999,$50M-$250M,former_customer
+641,ACC-0641,Meridian Supply Co,,smb,Manufacturing,na,MX,50-249,$10M-$50M,prospect
+642,ACC-0642,Apex Commerce Partners,,enterprise,Retail,latam,CO,1000-4999,$250M-$1B,prospect
+643,ACC-0643,Bluewave Operations,,smb,Consumer Goods,na,CA,50-249,$10M-$50M,customer
+644,ACC-0644,Ironwood Distribution,,mid_market,Automotive,emea,AE,250-999,$50M-$250M,prospect
+645,ACC-0645,Crescent Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,customer
+646,ACC-0646,Pioneer Retail Holdings,,enterprise,Pharma,na,CA,1000-4999,$250M-$1B,customer
+647,ACC-0647,Vector Trade Group,,enterprise,Food & Beverage,na,MX,1000-4999,$250M-$1B,prospect
+648,ACC-0648,Northstar Global Freight,,mid_market,Freight Brokerage,na,US,250-999,$50M-$250M,customer
+649,ACC-0649,Harbor Industrial,,smb,Third-Party Logistics,apac,AU,50-249,$10M-$50M,customer
+650,ACC-0650,Atlas Logistics,,strategic,Logistics,apac,JP,5000+,$1B+,customer
+651,ACC-0651,Summit Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,customer
+652,ACC-0652,Granite Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,prospect
+653,ACC-0653,Meridian Operations,,strategic,Consumer Goods,emea,FR,5000+,$1B+,prospect
+654,ACC-0654,Apex Distribution,,smb,Automotive,apac,JP,50-249,$10M-$50M,prospect
+655,ACC-0655,Bluewave Cargo Systems,,mid_market,Industrial Equipment,na,CA,250-999,$50M-$250M,prospect
+656,ACC-0656,Ironwood Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,prospect
+657,ACC-0657,Crescent Trade Group,,smb,Food & Beverage,na,US,50-249,$10M-$50M,customer
+658,ACC-0658,Pioneer Global Freight,,enterprise,Freight Brokerage,na,CA,1000-4999,$250M-$1B,customer
+659,ACC-0659,Vector Industrial,,enterprise,Third-Party Logistics,na,MX,1000-4999,$250M-$1B,customer
+660,ACC-0660,Northstar Logistics,,strategic,Logistics,na,US,5000+,$1B+,customer
+661,ACC-0661,Harbor Supply Co,,mid_market,Manufacturing,na,CA,250-999,$50M-$250M,former_customer
+662,ACC-0662,Atlas Commerce Partners,,enterprise,Retail,na,MX,1000-4999,$250M-$1B,prospect
+663,ACC-0663,Summit Operations,,mid_market,Consumer Goods,latam,PE,250-999,$50M-$250M,prospect
+664,ACC-0664,Granite Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,prospect
+665,ACC-0665,Meridian Cargo Systems,,mid_market,Industrial Equipment,na,MX,250-999,$50M-$250M,customer
+666,ACC-0666,Apex Retail Holdings,,mid_market,Pharma,na,US,250-999,$50M-$250M,prospect
+667,ACC-0667,Bluewave Trade Group,,enterprise,Food & Beverage,na,CA,1000-4999,$250M-$1B,customer
+668,ACC-0668,Ironwood Global Freight,,enterprise,Freight Brokerage,emea,FR,1000-4999,$250M-$1B,customer
+669,ACC-0669,Crescent Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,prospect
+670,ACC-0670,Pioneer Logistics,,strategic,Logistics,na,CA,5000+,$1B+,customer
+671,ACC-0671,Vector Supply Co,,enterprise,Manufacturing,na,MX,1000-4999,$250M-$1B,customer
+672,ACC-0672,Northstar Commerce Partners,,smb,Retail,apac,SG,50-249,$10M-$50M,prospect
+673,ACC-0673,Harbor Operations,,strategic,Consumer Goods,na,CA,5000+,$1B+,customer
+674,ACC-0674,Atlas Distribution,,strategic,Automotive,emea,AE,5000+,$1B+,customer
+675,ACC-0675,Summit Cargo Systems,,enterprise,Industrial Equipment,na,US,1000-4999,$250M-$1B,former_customer
+676,ACC-0676,Granite Retail Holdings,,mid_market,Pharma,na,CA,250-999,$50M-$250M,customer
+677,ACC-0677,Meridian Trade Group,,smb,Food & Beverage,na,MX,50-249,$10M-$50M,former_customer
+678,ACC-0678,Apex Global Freight,,enterprise,Freight Brokerage,na,US,1000-4999,$250M-$1B,customer
+679,ACC-0679,Bluewave Industrial,,mid_market,Third-Party Logistics,na,CA,250-999,$50M-$250M,customer
+680,ACC-0680,Ironwood Logistics,,mid_market,Logistics,na,MX,250-999,$50M-$250M,prospect
+681,ACC-0681,Crescent Supply Co,,mid_market,Manufacturing,latam,CL,250-999,$50M-$250M,prospect
+682,ACC-0682,Pioneer Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,customer
+683,ACC-0683,Vector Operations,,enterprise,Consumer Goods,emea,FR,1000-4999,$250M-$1B,customer
+684,ACC-0684,Northstar Distribution,,strategic,Automotive,emea,AE,5000+,$1B+,customer
+685,ACC-0685,Harbor Cargo Systems,,smb,Industrial Equipment,na,CA,50-249,$10M-$50M,prospect
+686,ACC-0686,Atlas Retail Holdings,,strategic,Pharma,na,MX,5000+,$1B+,former_customer
+687,ACC-0687,Summit Trade Group,,mid_market,Food & Beverage,emea,NL,250-999,$50M-$250M,customer
+688,ACC-0688,Granite Global Freight,,enterprise,Freight Brokerage,na,CA,1000-4999,$250M-$1B,prospect
+689,ACC-0689,Meridian Industrial,,mid_market,Third-Party Logistics,na,MX,250-999,$50M-$250M,customer
+690,ACC-0690,Apex Logistics,,smb,Logistics,apac,JP,50-249,$10M-$50M,prospect
+691,ACC-0691,Bluewave Supply Co,,smb,Manufacturing,na,CA,50-249,$10M-$50M,prospect
+692,ACC-0692,Ironwood Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,prospect
+693,ACC-0693,Crescent Operations,,smb,Consumer Goods,na,US,50-249,$10M-$50M,prospect
+694,ACC-0694,Pioneer Distribution,,strategic,Automotive,na,CA,5000+,$1B+,prospect
+695,ACC-0695,Vector Cargo Systems,,enterprise,Industrial Equipment,apac,IN,1000-4999,$250M-$1B,customer
+696,ACC-0696,Northstar Retail Holdings,,smb,Pharma,na,US,50-249,$10M-$50M,former_customer
+697,ACC-0697,Harbor Trade Group,,strategic,Food & Beverage,na,CA,5000+,$1B+,former_customer
+698,ACC-0698,Atlas Global Freight,,smb,Freight Brokerage,na,MX,50-249,$10M-$50M,customer
+699,ACC-0699,Summit Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,customer
+700,ACC-0700,Granite Logistics,,smb,Logistics,na,CA,50-249,$10M-$50M,prospect
+701,ACC-0701,Meridian Supply Co,,smb,Manufacturing,na,MX,50-249,$10M-$50M,customer
+702,ACC-0702,Apex Commerce Partners,,enterprise,Retail,apac,JP,1000-4999,$250M-$1B,former_customer
+703,ACC-0703,Bluewave Operations,,enterprise,Consumer Goods,apac,IN,1000-4999,$250M-$1B,prospect
+704,ACC-0704,Ironwood Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,customer
+705,ACC-0705,Crescent Cargo Systems,,strategic,Industrial Equipment,na,US,5000+,$1B+,customer
+706,ACC-0706,Pioneer Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,customer
+707,ACC-0707,Vector Trade Group,,strategic,Food & Beverage,na,MX,5000+,$1B+,customer
+708,ACC-0708,Northstar Global Freight,,strategic,Freight Brokerage,na,US,5000+,$1B+,customer
+709,ACC-0709,Harbor Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,former_customer
+710,ACC-0710,Atlas Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,prospect
+711,ACC-0711,Summit Supply Co,,smb,Manufacturing,apac,IN,50-249,$10M-$50M,customer
+712,ACC-0712,Granite Commerce Partners,,enterprise,Retail,apac,SG,1000-4999,$250M-$1B,customer
+713,ACC-0713,Meridian Operations,,enterprise,Consumer Goods,na,MX,1000-4999,$250M-$1B,prospect
+714,ACC-0714,Apex Distribution,,smb,Automotive,emea,AE,50-249,$10M-$50M,prospect
+715,ACC-0715,Bluewave Cargo Systems,,smb,Industrial Equipment,na,CA,50-249,$10M-$50M,prospect
+716,ACC-0716,Ironwood Retail Holdings,,mid_market,Pharma,apac,SG,250-999,$50M-$250M,prospect
+717,ACC-0717,Crescent Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+718,ACC-0718,Pioneer Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,prospect
+719,ACC-0719,Vector Industrial,,mid_market,Third-Party Logistics,apac,IN,250-999,$50M-$250M,prospect
+720,ACC-0720,Northstar Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+721,ACC-0721,Harbor Supply Co,,smb,Manufacturing,latam,CL,50-249,$10M-$50M,prospect
+722,ACC-0722,Atlas Commerce Partners,,strategic,Retail,latam,CO,5000+,$1B+,former_customer
+723,ACC-0723,Summit Operations,,enterprise,Consumer Goods,apac,IN,1000-4999,$250M-$1B,customer
+724,ACC-0724,Granite Distribution,,smb,Automotive,apac,SG,50-249,$10M-$50M,prospect
+725,ACC-0725,Meridian Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,customer
+726,ACC-0726,Apex Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,customer
+727,ACC-0727,Bluewave Trade Group,,smb,Food & Beverage,apac,IN,50-249,$10M-$50M,customer
+728,ACC-0728,Ironwood Global Freight,,mid_market,Freight Brokerage,na,MX,250-999,$50M-$250M,prospect
+729,ACC-0729,Crescent Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,prospect
+730,ACC-0730,Pioneer Logistics,,mid_market,Logistics,apac,JP,250-999,$50M-$250M,customer
+731,ACC-0731,Vector Supply Co,,smb,Manufacturing,latam,PE,50-249,$10M-$50M,former_customer
+732,ACC-0732,Northstar Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,prospect
+733,ACC-0733,Harbor Operations,,enterprise,Consumer Goods,na,CA,1000-4999,$250M-$1B,customer
+734,ACC-0734,Atlas Distribution,,smb,Automotive,na,MX,50-249,$10M-$50M,prospect
+735,ACC-0735,Summit Cargo Systems,,strategic,Industrial Equipment,emea,GB,5000+,$1B+,customer
+736,ACC-0736,Granite Retail Holdings,,mid_market,Pharma,na,CA,250-999,$50M-$250M,prospect
+737,ACC-0737,Meridian Trade Group,,enterprise,Food & Beverage,na,MX,1000-4999,$250M-$1B,former_customer
+738,ACC-0738,Apex Global Freight,,enterprise,Freight Brokerage,na,US,1000-4999,$250M-$1B,customer
+739,ACC-0739,Bluewave Industrial,,enterprise,Third-Party Logistics,na,CA,1000-4999,$250M-$1B,customer
+740,ACC-0740,Ironwood Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+741,ACC-0741,Crescent Supply Co,,strategic,Manufacturing,na,US,5000+,$1B+,customer
+742,ACC-0742,Pioneer Commerce Partners,,mid_market,Retail,na,CA,250-999,$50M-$250M,customer
+743,ACC-0743,Vector Operations,,strategic,Consumer Goods,na,MX,5000+,$1B+,customer
+744,ACC-0744,Northstar Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,former_customer
+745,ACC-0745,Harbor Cargo Systems,,smb,Industrial Equipment,apac,AU,50-249,$10M-$50M,customer
+746,ACC-0746,Atlas Retail Holdings,,enterprise,Pharma,na,MX,1000-4999,$250M-$1B,customer
+747,ACC-0747,Summit Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+748,ACC-0748,Granite Global Freight,,mid_market,Freight Brokerage,na,CA,250-999,$50M-$250M,customer
+749,ACC-0749,Meridian Industrial,,smb,Third-Party Logistics,na,MX,50-249,$10M-$50M,former_customer
+750,ACC-0750,Apex Logistics,,strategic,Logistics,emea,GB,5000+,$1B+,customer
+751,ACC-0751,Bluewave Supply Co,,smb,Manufacturing,emea,DE,50-249,$10M-$50M,prospect
+752,ACC-0752,Ironwood Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,customer
+753,ACC-0753,Crescent Operations,,smb,Consumer Goods,na,US,50-249,$10M-$50M,customer
+754,ACC-0754,Pioneer Distribution,,smb,Automotive,apac,JP,50-249,$10M-$50M,customer
+755,ACC-0755,Vector Cargo Systems,,smb,Industrial Equipment,na,MX,50-249,$10M-$50M,customer
+756,ACC-0756,Northstar Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,prospect
+757,ACC-0757,Harbor Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,customer
+758,ACC-0758,Atlas Global Freight,,smb,Freight Brokerage,na,MX,50-249,$10M-$50M,customer
+759,ACC-0759,Summit Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,customer
+760,ACC-0760,Granite Logistics,,strategic,Logistics,apac,SG,5000+,$1B+,customer
+761,ACC-0761,Meridian Supply Co,,smb,Manufacturing,latam,CL,50-249,$10M-$50M,customer
+762,ACC-0762,Apex Commerce Partners,,strategic,Retail,na,US,5000+,$1B+,customer
+763,ACC-0763,Bluewave Operations,,mid_market,Consumer Goods,apac,IN,250-999,$50M-$250M,former_customer
+764,ACC-0764,Ironwood Distribution,,mid_market,Automotive,apac,SG,250-999,$50M-$250M,customer
+765,ACC-0765,Crescent Cargo Systems,,smb,Industrial Equipment,latam,CL,50-249,$10M-$50M,prospect
+766,ACC-0766,Pioneer Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,prospect
+767,ACC-0767,Vector Trade Group,,mid_market,Food & Beverage,na,MX,250-999,$50M-$250M,customer
+768,ACC-0768,Northstar Global Freight,,smb,Freight Brokerage,latam,BR,50-249,$10M-$50M,customer
+769,ACC-0769,Harbor Industrial,,mid_market,Third-Party Logistics,apac,AU,250-999,$50M-$250M,prospect
+770,ACC-0770,Atlas Logistics,,mid_market,Logistics,na,MX,250-999,$50M-$250M,customer
+771,ACC-0771,Summit Supply Co,,smb,Manufacturing,na,US,50-249,$10M-$50M,prospect
+772,ACC-0772,Granite Commerce Partners,,mid_market,Retail,apac,SG,250-999,$50M-$250M,prospect
+773,ACC-0773,Meridian Operations,,enterprise,Consumer Goods,apac,AU,1000-4999,$250M-$1B,prospect
+774,ACC-0774,Apex Distribution,,mid_market,Automotive,na,US,250-999,$50M-$250M,customer
+775,ACC-0775,Bluewave Cargo Systems,,smb,Industrial Equipment,apac,IN,50-249,$10M-$50M,customer
+776,ACC-0776,Ironwood Retail Holdings,,mid_market,Pharma,latam,BR,250-999,$50M-$250M,prospect
+777,ACC-0777,Crescent Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,prospect
+778,ACC-0778,Pioneer Global Freight,,mid_market,Freight Brokerage,na,CA,250-999,$50M-$250M,customer
+779,ACC-0779,Vector Industrial,,smb,Third-Party Logistics,na,MX,50-249,$10M-$50M,customer
+780,ACC-0780,Northstar Logistics,,smb,Logistics,emea,GB,50-249,$10M-$50M,customer
+781,ACC-0781,Harbor Supply Co,,enterprise,Manufacturing,apac,AU,1000-4999,$250M-$1B,customer
+782,ACC-0782,Atlas Commerce Partners,,mid_market,Retail,apac,JP,250-999,$50M-$250M,customer
+783,ACC-0783,Summit Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,prospect
+784,ACC-0784,Granite Distribution,,smb,Automotive,latam,BR,50-249,$10M-$50M,customer
+785,ACC-0785,Meridian Cargo Systems,,smb,Industrial Equipment,na,MX,50-249,$10M-$50M,prospect
+786,ACC-0786,Apex Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,former_customer
+787,ACC-0787,Bluewave Trade Group,,enterprise,Food & Beverage,latam,PE,1000-4999,$250M-$1B,customer
+788,ACC-0788,Ironwood Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,prospect
+789,ACC-0789,Crescent Industrial,,mid_market,Third-Party Logistics,na,US,250-999,$50M-$250M,customer
+790,ACC-0790,Pioneer Logistics,,enterprise,Logistics,emea,GB,1000-4999,$250M-$1B,customer
+791,ACC-0791,Vector Supply Co,,smb,Manufacturing,emea,DE,50-249,$10M-$50M,customer
+792,ACC-0792,Northstar Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,prospect
+793,ACC-0793,Harbor Operations,,enterprise,Consumer Goods,latam,CL,1000-4999,$250M-$1B,customer
+794,ACC-0794,Atlas Distribution,,smb,Automotive,emea,AE,50-249,$10M-$50M,customer
+795,ACC-0795,Summit Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,customer
+796,ACC-0796,Granite Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,prospect
+797,ACC-0797,Meridian Trade Group,,mid_market,Food & Beverage,latam,CL,250-999,$50M-$250M,prospect
+798,ACC-0798,Apex Global Freight,,smb,Freight Brokerage,apac,JP,50-249,$10M-$50M,customer
+799,ACC-0799,Bluewave Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,prospect
+800,ACC-0800,Ironwood Logistics,,strategic,Logistics,latam,BR,5000+,$1B+,prospect
+801,ACC-0801,Crescent Supply Co,,mid_market,Manufacturing,na,US,250-999,$50M-$250M,customer
+802,ACC-0802,Pioneer Commerce Partners,,strategic,Retail,apac,JP,5000+,$1B+,customer
+803,ACC-0803,Vector Operations,,strategic,Consumer Goods,na,MX,5000+,$1B+,former_customer
+804,ACC-0804,Northstar Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,prospect
+805,ACC-0805,Harbor Cargo Systems,,enterprise,Industrial Equipment,emea,GB,1000-4999,$250M-$1B,customer
+806,ACC-0806,Atlas Retail Holdings,,mid_market,Pharma,na,MX,250-999,$50M-$250M,customer
+807,ACC-0807,Summit Trade Group,,enterprise,Food & Beverage,na,US,1000-4999,$250M-$1B,prospect
+808,ACC-0808,Granite Global Freight,,mid_market,Freight Brokerage,na,CA,250-999,$50M-$250M,customer
+809,ACC-0809,Meridian Industrial,,smb,Third-Party Logistics,na,MX,50-249,$10M-$50M,customer
+810,ACC-0810,Apex Logistics,,mid_market,Logistics,apac,JP,250-999,$50M-$250M,customer
+811,ACC-0811,Bluewave Supply Co,,smb,Manufacturing,na,CA,50-249,$10M-$50M,prospect
+812,ACC-0812,Ironwood Commerce Partners,,smb,Retail,na,MX,50-249,$10M-$50M,customer
+813,ACC-0813,Crescent Operations,,strategic,Consumer Goods,emea,FR,5000+,$1B+,customer
+814,ACC-0814,Pioneer Distribution,,mid_market,Automotive,na,CA,250-999,$50M-$250M,prospect
+815,ACC-0815,Vector Cargo Systems,,strategic,Industrial Equipment,na,MX,5000+,$1B+,prospect
+816,ACC-0816,Northstar Retail Holdings,,mid_market,Pharma,na,US,250-999,$50M-$250M,customer
+817,ACC-0817,Harbor Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,customer
+818,ACC-0818,Atlas Global Freight,,strategic,Freight Brokerage,na,MX,5000+,$1B+,prospect
+819,ACC-0819,Summit Industrial,,strategic,Third-Party Logistics,na,US,5000+,$1B+,customer
+820,ACC-0820,Granite Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+821,ACC-0821,Meridian Supply Co,,smb,Manufacturing,emea,DE,50-249,$10M-$50M,customer
+822,ACC-0822,Apex Commerce Partners,,smb,Retail,apac,JP,50-249,$10M-$50M,customer
+823,ACC-0823,Bluewave Operations,,enterprise,Consumer Goods,emea,FR,1000-4999,$250M-$1B,customer
+824,ACC-0824,Ironwood Distribution,,smb,Automotive,na,MX,50-249,$10M-$50M,prospect
+825,ACC-0825,Crescent Cargo Systems,,smb,Industrial Equipment,latam,CL,50-249,$10M-$50M,former_customer
+826,ACC-0826,Pioneer Retail Holdings,,enterprise,Pharma,na,CA,1000-4999,$250M-$1B,customer
+827,ACC-0827,Vector Trade Group,,strategic,Food & Beverage,apac,IN,5000+,$1B+,prospect
+828,ACC-0828,Northstar Global Freight,,mid_market,Freight Brokerage,emea,FR,250-999,$50M-$250M,prospect
+829,ACC-0829,Harbor Industrial,,strategic,Third-Party Logistics,apac,AU,5000+,$1B+,prospect
+830,ACC-0830,Atlas Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,prospect
+831,ACC-0831,Summit Supply Co,,mid_market,Manufacturing,na,US,250-999,$50M-$250M,customer
+832,ACC-0832,Granite Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,customer
+833,ACC-0833,Meridian Operations,,mid_market,Consumer Goods,na,MX,250-999,$50M-$250M,customer
+834,ACC-0834,Apex Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,customer
+835,ACC-0835,Bluewave Cargo Systems,,enterprise,Industrial Equipment,na,CA,1000-4999,$250M-$1B,prospect
+836,ACC-0836,Ironwood Retail Holdings,,strategic,Pharma,na,MX,5000+,$1B+,former_customer
+837,ACC-0837,Crescent Trade Group,,smb,Food & Beverage,na,US,50-249,$10M-$50M,customer
+838,ACC-0838,Pioneer Global Freight,,enterprise,Freight Brokerage,na,CA,1000-4999,$250M-$1B,customer
+839,ACC-0839,Vector Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,prospect
+840,ACC-0840,Northstar Logistics,,strategic,Logistics,latam,BR,5000+,$1B+,prospect
+841,ACC-0841,Harbor Supply Co,,strategic,Manufacturing,latam,CL,5000+,$1B+,customer
+842,ACC-0842,Atlas Commerce Partners,,smb,Retail,na,MX,50-249,$10M-$50M,customer
+843,ACC-0843,Summit Operations,,enterprise,Consumer Goods,emea,FR,1000-4999,$250M-$1B,prospect
+844,ACC-0844,Granite Distribution,,strategic,Automotive,apac,SG,5000+,$1B+,customer
+845,ACC-0845,Meridian Cargo Systems,,mid_market,Industrial Equipment,emea,GB,250-999,$50M-$250M,customer
+846,ACC-0846,Apex Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,customer
+847,ACC-0847,Bluewave Trade Group,,mid_market,Food & Beverage,na,CA,250-999,$50M-$250M,customer
+848,ACC-0848,Ironwood Global Freight,,strategic,Freight Brokerage,emea,FR,5000+,$1B+,customer
+849,ACC-0849,Crescent Industrial,,smb,Third-Party Logistics,na,US,50-249,$10M-$50M,customer
+850,ACC-0850,Pioneer Logistics,,strategic,Logistics,na,CA,5000+,$1B+,prospect
+851,ACC-0851,Vector Supply Co,,mid_market,Manufacturing,latam,PE,250-999,$50M-$250M,prospect
+852,ACC-0852,Northstar Commerce Partners,,strategic,Retail,apac,SG,5000+,$1B+,customer
+853,ACC-0853,Harbor Operations,,enterprise,Consumer Goods,na,CA,1000-4999,$250M-$1B,prospect
+854,ACC-0854,Atlas Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,customer
+855,ACC-0855,Summit Cargo Systems,,smb,Industrial Equipment,na,US,50-249,$10M-$50M,customer
+856,ACC-0856,Granite Retail Holdings,,strategic,Pharma,latam,BR,5000+,$1B+,customer
+857,ACC-0857,Meridian Trade Group,,mid_market,Food & Beverage,na,MX,250-999,$50M-$250M,prospect
+858,ACC-0858,Apex Global Freight,,smb,Freight Brokerage,emea,FR,50-249,$10M-$50M,prospect
+859,ACC-0859,Bluewave Industrial,,enterprise,Third-Party Logistics,na,CA,1000-4999,$250M-$1B,prospect
+860,ACC-0860,Ironwood Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+861,ACC-0861,Crescent Supply Co,,strategic,Manufacturing,na,US,5000+,$1B+,prospect
+862,ACC-0862,Pioneer Commerce Partners,,enterprise,Retail,na,CA,1000-4999,$250M-$1B,customer
+863,ACC-0863,Vector Operations,,enterprise,Consumer Goods,apac,IN,1000-4999,$250M-$1B,customer
+864,ACC-0864,Northstar Distribution,,smb,Automotive,na,US,50-249,$10M-$50M,customer
+865,ACC-0865,Harbor Cargo Systems,,enterprise,Industrial Equipment,na,CA,1000-4999,$250M-$1B,former_customer
+866,ACC-0866,Atlas Retail Holdings,,strategic,Pharma,na,MX,5000+,$1B+,prospect
+867,ACC-0867,Summit Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,prospect
+868,ACC-0868,Granite Global Freight,,smb,Freight Brokerage,na,CA,50-249,$10M-$50M,customer
+869,ACC-0869,Meridian Industrial,,smb,Third-Party Logistics,emea,AE,50-249,$10M-$50M,former_customer
+870,ACC-0870,Apex Logistics,,smb,Logistics,na,US,50-249,$10M-$50M,former_customer
+871,ACC-0871,Bluewave Supply Co,,enterprise,Manufacturing,emea,DE,1000-4999,$250M-$1B,customer
+872,ACC-0872,Ironwood Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,customer
+873,ACC-0873,Crescent Operations,,mid_market,Consumer Goods,na,US,250-999,$50M-$250M,customer
+874,ACC-0874,Pioneer Distribution,,smb,Automotive,apac,JP,50-249,$10M-$50M,prospect
+875,ACC-0875,Vector Cargo Systems,,strategic,Industrial Equipment,emea,GB,5000+,$1B+,customer
+876,ACC-0876,Northstar Retail Holdings,,mid_market,Pharma,na,US,250-999,$50M-$250M,customer
+877,ACC-0877,Harbor Trade Group,,mid_market,Food & Beverage,emea,NL,250-999,$50M-$250M,prospect
+878,ACC-0878,Atlas Global Freight,,smb,Freight Brokerage,apac,JP,50-249,$10M-$50M,customer
+879,ACC-0879,Summit Industrial,,enterprise,Third-Party Logistics,emea,AE,1000-4999,$250M-$1B,customer
+880,ACC-0880,Granite Logistics,,smb,Logistics,na,CA,50-249,$10M-$50M,prospect
+881,ACC-0881,Meridian Supply Co,,mid_market,Manufacturing,apac,AU,250-999,$50M-$250M,prospect
+882,ACC-0882,Apex Commerce Partners,,enterprise,Retail,apac,JP,1000-4999,$250M-$1B,customer
+883,ACC-0883,Bluewave Operations,,enterprise,Consumer Goods,na,CA,1000-4999,$250M-$1B,customer
+884,ACC-0884,Ironwood Distribution,,smb,Automotive,na,MX,50-249,$10M-$50M,former_customer
+885,ACC-0885,Crescent Cargo Systems,,smb,Industrial Equipment,apac,AU,50-249,$10M-$50M,customer
+886,ACC-0886,Pioneer Retail Holdings,,enterprise,Pharma,apac,JP,1000-4999,$250M-$1B,customer
+887,ACC-0887,Vector Trade Group,,strategic,Food & Beverage,na,MX,5000+,$1B+,customer
+888,ACC-0888,Northstar Global Freight,,smb,Freight Brokerage,apac,SG,50-249,$10M-$50M,customer
+889,ACC-0889,Harbor Industrial,,enterprise,Third-Party Logistics,emea,AE,1000-4999,$250M-$1B,customer
+890,ACC-0890,Atlas Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,customer
+891,ACC-0891,Summit Supply Co,,smb,Manufacturing,na,US,50-249,$10M-$50M,customer
+892,ACC-0892,Granite Commerce Partners,,smb,Retail,apac,SG,50-249,$10M-$50M,former_customer
+893,ACC-0893,Meridian Operations,,smb,Consumer Goods,na,MX,50-249,$10M-$50M,prospect
+894,ACC-0894,Apex Distribution,,enterprise,Automotive,apac,JP,1000-4999,$250M-$1B,customer
+895,ACC-0895,Bluewave Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,prospect
+896,ACC-0896,Ironwood Retail Holdings,,strategic,Pharma,emea,DE,5000+,$1B+,customer
+897,ACC-0897,Crescent Trade Group,,enterprise,Food & Beverage,emea,NL,1000-4999,$250M-$1B,customer
+898,ACC-0898,Pioneer Global Freight,,enterprise,Freight Brokerage,na,CA,1000-4999,$250M-$1B,customer
+899,ACC-0899,Vector Industrial,,mid_market,Third-Party Logistics,na,MX,250-999,$50M-$250M,customer
+900,ACC-0900,Northstar Logistics,,strategic,Logistics,apac,SG,5000+,$1B+,former_customer
+901,ACC-0901,Harbor Supply Co,,enterprise,Manufacturing,emea,DE,1000-4999,$250M-$1B,prospect
+902,ACC-0902,Atlas Commerce Partners,,mid_market,Retail,na,MX,250-999,$50M-$250M,customer
+903,ACC-0903,Summit Operations,,enterprise,Consumer Goods,na,US,1000-4999,$250M-$1B,customer
+904,ACC-0904,Granite Distribution,,enterprise,Automotive,emea,AE,1000-4999,$250M-$1B,customer
+905,ACC-0905,Meridian Cargo Systems,,enterprise,Industrial Equipment,na,MX,1000-4999,$250M-$1B,prospect
+906,ACC-0906,Apex Retail Holdings,,mid_market,Pharma,emea,DE,250-999,$50M-$250M,prospect
+907,ACC-0907,Bluewave Trade Group,,smb,Food & Beverage,na,CA,50-249,$10M-$50M,customer
+908,ACC-0908,Ironwood Global Freight,,mid_market,Freight Brokerage,na,MX,250-999,$50M-$250M,former_customer
+909,ACC-0909,Crescent Industrial,,enterprise,Third-Party Logistics,emea,AE,1000-4999,$250M-$1B,prospect
+910,ACC-0910,Pioneer Logistics,,enterprise,Logistics,na,CA,1000-4999,$250M-$1B,customer
+911,ACC-0911,Vector Supply Co,,enterprise,Manufacturing,na,MX,1000-4999,$250M-$1B,prospect
+912,ACC-0912,Northstar Commerce Partners,,enterprise,Retail,na,US,1000-4999,$250M-$1B,customer
+913,ACC-0913,Harbor Operations,,enterprise,Consumer Goods,latam,CL,1000-4999,$250M-$1B,prospect
+914,ACC-0914,Atlas Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,customer
+915,ACC-0915,Summit Cargo Systems,,enterprise,Industrial Equipment,apac,IN,1000-4999,$250M-$1B,customer
+916,ACC-0916,Granite Retail Holdings,,enterprise,Pharma,na,CA,1000-4999,$250M-$1B,prospect
+917,ACC-0917,Meridian Trade Group,,strategic,Food & Beverage,apac,AU,5000+,$1B+,customer
+918,ACC-0918,Apex Global Freight,,strategic,Freight Brokerage,latam,CO,5000+,$1B+,customer
+919,ACC-0919,Bluewave Industrial,,mid_market,Third-Party Logistics,na,CA,250-999,$50M-$250M,prospect
+920,ACC-0920,Ironwood Logistics,,smb,Logistics,emea,GB,50-249,$10M-$50M,prospect
+921,ACC-0921,Crescent Supply Co,,strategic,Manufacturing,emea,DE,5000+,$1B+,former_customer
+922,ACC-0922,Pioneer Commerce Partners,,strategic,Retail,na,CA,5000+,$1B+,customer
+923,ACC-0923,Vector Operations,,smb,Consumer Goods,na,MX,50-249,$10M-$50M,customer
+924,ACC-0924,Northstar Distribution,,mid_market,Automotive,emea,AE,250-999,$50M-$250M,customer
+925,ACC-0925,Harbor Cargo Systems,,mid_market,Industrial Equipment,emea,GB,250-999,$50M-$250M,customer
+926,ACC-0926,Atlas Retail Holdings,,smb,Pharma,apac,JP,50-249,$10M-$50M,customer
+927,ACC-0927,Summit Trade Group,,enterprise,Food & Beverage,na,US,1000-4999,$250M-$1B,prospect
+928,ACC-0928,Granite Global Freight,,strategic,Freight Brokerage,na,CA,5000+,$1B+,customer
+929,ACC-0929,Meridian Industrial,,smb,Third-Party Logistics,na,MX,50-249,$10M-$50M,customer
+930,ACC-0930,Apex Logistics,,mid_market,Logistics,na,US,250-999,$50M-$250M,customer
+931,ACC-0931,Bluewave Supply Co,,strategic,Manufacturing,apac,IN,5000+,$1B+,customer
+932,ACC-0932,Ironwood Commerce Partners,,strategic,Retail,na,MX,5000+,$1B+,customer
+933,ACC-0933,Crescent Operations,,mid_market,Consumer Goods,emea,FR,250-999,$50M-$250M,prospect
+934,ACC-0934,Pioneer Distribution,,smb,Automotive,apac,JP,50-249,$10M-$50M,customer
+935,ACC-0935,Vector Cargo Systems,,strategic,Industrial Equipment,na,MX,5000+,$1B+,prospect
+936,ACC-0936,Northstar Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,customer
+937,ACC-0937,Harbor Trade Group,,smb,Food & Beverage,apac,AU,50-249,$10M-$50M,prospect
+938,ACC-0938,Atlas Global Freight,,strategic,Freight Brokerage,apac,JP,5000+,$1B+,customer
+939,ACC-0939,Summit Industrial,,mid_market,Third-Party Logistics,na,US,250-999,$50M-$250M,prospect
+940,ACC-0940,Granite Logistics,,mid_market,Logistics,apac,SG,250-999,$50M-$250M,customer
+941,ACC-0941,Meridian Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,prospect
+942,ACC-0942,Apex Commerce Partners,,enterprise,Retail,na,US,1000-4999,$250M-$1B,customer
+943,ACC-0943,Bluewave Operations,,smb,Consumer Goods,na,CA,50-249,$10M-$50M,customer
+944,ACC-0944,Ironwood Distribution,,enterprise,Automotive,na,MX,1000-4999,$250M-$1B,customer
+945,ACC-0945,Crescent Cargo Systems,,smb,Industrial Equipment,na,US,50-249,$10M-$50M,prospect
+946,ACC-0946,Pioneer Retail Holdings,,smb,Pharma,emea,DE,50-249,$10M-$50M,customer
+947,ACC-0947,Vector Trade Group,,strategic,Food & Beverage,na,MX,5000+,$1B+,customer
+948,ACC-0948,Northstar Global Freight,,enterprise,Freight Brokerage,latam,BR,1000-4999,$250M-$1B,prospect
+949,ACC-0949,Harbor Industrial,,mid_market,Third-Party Logistics,apac,AU,250-999,$50M-$250M,customer
+950,ACC-0950,Atlas Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,customer
+951,ACC-0951,Summit Supply Co,,smb,Manufacturing,emea,DE,50-249,$10M-$50M,prospect
+952,ACC-0952,Granite Commerce Partners,,smb,Retail,emea,NL,50-249,$10M-$50M,former_customer
+953,ACC-0953,Meridian Operations,,smb,Consumer Goods,na,MX,50-249,$10M-$50M,customer
+954,ACC-0954,Apex Distribution,,smb,Automotive,emea,AE,50-249,$10M-$50M,prospect
+955,ACC-0955,Bluewave Cargo Systems,,smb,Industrial Equipment,emea,GB,50-249,$10M-$50M,prospect
+956,ACC-0956,Ironwood Retail Holdings,,enterprise,Pharma,na,MX,1000-4999,$250M-$1B,former_customer
+957,ACC-0957,Crescent Trade Group,,enterprise,Food & Beverage,emea,NL,1000-4999,$250M-$1B,customer
+958,ACC-0958,Pioneer Global Freight,,smb,Freight Brokerage,emea,FR,50-249,$10M-$50M,prospect
+959,ACC-0959,Vector Industrial,,smb,Third-Party Logistics,apac,IN,50-249,$10M-$50M,customer
+960,ACC-0960,Northstar Logistics,,strategic,Logistics,na,US,5000+,$1B+,prospect
+961,ACC-0961,Harbor Supply Co,,mid_market,Manufacturing,emea,DE,250-999,$50M-$250M,customer
+962,ACC-0962,Atlas Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,prospect
+963,ACC-0963,Summit Operations,,strategic,Consumer Goods,emea,FR,5000+,$1B+,customer
+964,ACC-0964,Granite Distribution,,smb,Automotive,apac,SG,50-249,$10M-$50M,prospect
+965,ACC-0965,Meridian Cargo Systems,,strategic,Industrial Equipment,emea,GB,5000+,$1B+,customer
+966,ACC-0966,Apex Retail Holdings,,strategic,Pharma,latam,CO,5000+,$1B+,customer
+967,ACC-0967,Bluewave Trade Group,,strategic,Food & Beverage,na,CA,5000+,$1B+,prospect
+968,ACC-0968,Ironwood Global Freight,,strategic,Freight Brokerage,apac,SG,5000+,$1B+,former_customer
+969,ACC-0969,Crescent Industrial,,enterprise,Third-Party Logistics,na,US,1000-4999,$250M-$1B,customer
+970,ACC-0970,Pioneer Logistics,,mid_market,Logistics,emea,GB,250-999,$50M-$250M,former_customer
+971,ACC-0971,Vector Supply Co,,mid_market,Manufacturing,apac,IN,250-999,$50M-$250M,prospect
+972,ACC-0972,Northstar Commerce Partners,,enterprise,Retail,emea,NL,1000-4999,$250M-$1B,prospect
+973,ACC-0973,Harbor Operations,,smb,Consumer Goods,emea,FR,50-249,$10M-$50M,customer
+974,ACC-0974,Atlas Distribution,,mid_market,Automotive,apac,JP,250-999,$50M-$250M,prospect
+975,ACC-0975,Summit Cargo Systems,,enterprise,Industrial Equipment,emea,GB,1000-4999,$250M-$1B,customer
+976,ACC-0976,Granite Retail Holdings,,mid_market,Pharma,apac,SG,250-999,$50M-$250M,customer
+977,ACC-0977,Meridian Trade Group,,enterprise,Food & Beverage,na,MX,1000-4999,$250M-$1B,prospect
+978,ACC-0978,Apex Global Freight,,smb,Freight Brokerage,apac,JP,50-249,$10M-$50M,prospect
+979,ACC-0979,Bluewave Industrial,,enterprise,Third-Party Logistics,apac,IN,1000-4999,$250M-$1B,prospect
+980,ACC-0980,Ironwood Logistics,,smb,Logistics,na,MX,50-249,$10M-$50M,customer
+981,ACC-0981,Crescent Supply Co,,smb,Manufacturing,na,US,50-249,$10M-$50M,prospect
+982,ACC-0982,Pioneer Commerce Partners,,smb,Retail,na,CA,50-249,$10M-$50M,prospect
+983,ACC-0983,Vector Operations,,enterprise,Consumer Goods,latam,PE,1000-4999,$250M-$1B,customer
+984,ACC-0984,Northstar Distribution,,strategic,Automotive,latam,BR,5000+,$1B+,prospect
+985,ACC-0985,Harbor Cargo Systems,,mid_market,Industrial Equipment,na,CA,250-999,$50M-$250M,customer
+986,ACC-0986,Atlas Retail Holdings,,enterprise,Pharma,emea,DE,1000-4999,$250M-$1B,customer
+987,ACC-0987,Summit Trade Group,,smb,Food & Beverage,emea,NL,50-249,$10M-$50M,customer
+988,ACC-0988,Granite Global Freight,,mid_market,Freight Brokerage,na,CA,250-999,$50M-$250M,prospect
+989,ACC-0989,Meridian Industrial,,mid_market,Third-Party Logistics,na,MX,250-999,$50M-$250M,former_customer
+990,ACC-0990,Apex Logistics,,mid_market,Logistics,na,US,250-999,$50M-$250M,prospect
+991,ACC-0991,Bluewave Supply Co,,smb,Manufacturing,na,CA,50-249,$10M-$50M,prospect
+992,ACC-0992,Ironwood Commerce Partners,,mid_market,Retail,emea,NL,250-999,$50M-$250M,prospect
+993,ACC-0993,Crescent Operations,,strategic,Consumer Goods,na,US,5000+,$1B+,customer
+994,ACC-0994,Pioneer Distribution,,strategic,Automotive,na,CA,5000+,$1B+,former_customer
+995,ACC-0995,Vector Cargo Systems,,smb,Industrial Equipment,apac,IN,50-249,$10M-$50M,customer
+996,ACC-0996,Northstar Retail Holdings,,strategic,Pharma,apac,SG,5000+,$1B+,customer
+997,ACC-0997,Harbor Trade Group,,mid_market,Food & Beverage,na,CA,250-999,$50M-$250M,customer
+998,ACC-0998,Atlas Global Freight,,enterprise,Freight Brokerage,na,MX,1000-4999,$250M-$1B,customer
+999,ACC-0999,Summit Industrial,,enterprise,Third-Party Logistics,apac,IN,1000-4999,$250M-$1B,customer
+1000,ACC-1000,Granite Logistics,,mid_market,Logistics,na,CA,250-999,$50M-$250M,customer

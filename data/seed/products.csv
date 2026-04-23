@@ -1,0 +1,11 @@
+product_id,product_sku,product_name,product_family,pricing_model,is_bundle,is_active,launch_date,retire_date
+1,GT-CORE,Trade Control Tower,visibility,subscription,false,true,2020-01-01,
+2,GT-CUST,Customs Compliance Manager,compliance,subscription,false,true,2020-01-01,
+3,GT-SCOL,Supplier Collaboration Hub,collaboration,subscription,false,true,2020-01-01,
+4,GT-AI,Shipment Exception AI,automation,transactional,false,true,2020-01-01,
+5,GT-ANLY,Procurement Analytics Studio,analytics,subscription,false,true,2020-01-01,
+6,GT-API,API Integration Pack,integration,services,false,true,2020-01-01,
+7,GT-SUP,Premium Support,support,support,false,true,2020-01-01,
+8,GT-IMP,Implementation Services,services,services,false,true,2020-01-01,
+9,GT-BNDL,Global Trade Suite Bundle,bundle,subscription,true,true,2022-06-01,
+10,GT-RENEW,Renewal Optimization Add-On,analytics,subscription,false,true,2022-06-01,

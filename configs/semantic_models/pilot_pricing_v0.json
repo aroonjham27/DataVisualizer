@@ -1,0 +1,1269 @@
+{
+  "semantic_model": {
+    "name": "pilot_pricing_v0",
+    "version": "v0",
+    "status": "bootstrap_reviewed",
+    "purpose": "Reviewed bootstrap semantic contract for the imported pilot pricing seed. This model is intended to guide a visualization agent before any raw-SQL-first query generation is introduced.",
+    "source_dataset": {
+      "root": "data/seed",
+      "manifest_file": "data/seed/manifest.json",
+      "approval_manifest_file": "data/seed/approval_manifest.json",
+      "dataset_version": "module3_seed_v1",
+      "generation_seed": 20260414
+    },
+    "evidence": [
+      "data/seed/*.csv",
+      "data/seed/manifest.json",
+      "data/seed/approval_manifest.json",
+      "../PricingProject/src/pricing_foundation/schema.py",
+      "../PricingProject/docs/schema.md"
+    ],
+    "modeling_principles": [
+      "Prefer explicit entity grain and approved joins over inferred shortcuts.",
+      "Keep business labels friendly, but preserve source-field traceability.",
+      "Mark ambiguous fields for review instead of asserting strong semantics.",
+      "Treat this as a pilot semantic contract, not a permanent warehouse model."
+    ],
+    "entities": {
+      "accounts": {
+        "label": "Accounts",
+        "synonyms": [
+          "customers",
+          "companies"
+        ],
+        "role": "dimension",
+        "grain": "one row per account",
+        "source_file": "data/seed/accounts.csv",
+        "primary_key": "account_id",
+        "default_label": "account_name",
+        "identifiers": [
+          "account_id",
+          "account_external_id"
+        ],
+        "dimensions": [
+          {
+            "name": "account_name",
+            "label": "Account",
+            "type": "string",
+            "synonyms": [
+              "customer name",
+              "company name"
+            ]
+          },
+          {
+            "name": "segment",
+            "label": "Account Segment",
+            "type": "string"
+          },
+          {
+            "name": "industry",
+            "label": "Industry",
+            "type": "string"
+          },
+          {
+            "name": "sales_region",
+            "label": "Account Sales Region",
+            "type": "string",
+            "synonyms": [
+              "region"
+            ]
+          },
+          {
+            "name": "country_code",
+            "label": "Country Code",
+            "type": "string"
+          },
+          {
+            "name": "employee_band",
+            "label": "Employee Band",
+            "type": "string"
+          },
+          {
+            "name": "annual_revenue_band",
+            "label": "Revenue Band",
+            "type": "string"
+          },
+          {
+            "name": "customer_status",
+            "label": "Customer Status",
+            "type": "string"
+          }
+        ],
+        "measures": [
+          {
+            "name": "account_count",
+            "label": "Accounts",
+            "aggregation": "count_distinct",
+            "field": "account_id"
+          }
+        ],
+        "time_dimensions": [],
+        "ambiguity_flags": [
+          "parent_account_id is present in the source schema but is unpopulated in the pilot seed, so parent-child account hierarchy is excluded from v0."
+        ]
+      },
+      "products": {
+        "label": "Products",
+        "synonyms": [
+          "catalog"
+        ],
+        "role": "dimension",
+        "grain": "one row per product",
+        "source_file": "data/seed/products.csv",
+        "primary_key": "product_id",
+        "default_label": "product_name",
+        "identifiers": [
+          "product_id",
+          "product_sku"
+        ],
+        "dimensions": [
+          {
+            "name": "product_name",
+            "label": "Product",
+            "type": "string"
+          },
+          {
+            "name": "product_family",
+            "label": "Product Family",
+            "type": "string"
+          },
+          {
+            "name": "pricing_model",
+            "label": "Pricing Model",
+            "type": "string"
+          },
+          {
+            "name": "is_bundle",
+            "label": "Is Bundle",
+            "type": "boolean"
+          },
+          {
+            "name": "is_active",
+            "label": "Is Active Product",
+            "type": "boolean"
+          }
+        ],
+        "measures": [
+          {
+            "name": "product_count",
+            "label": "Products",
+            "aggregation": "count_distinct",
+            "field": "product_id"
+          }
+        ],
+        "time_dimensions": [
+          {
+            "name": "launch_date",
+            "label": "Launch Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          },
+          {
+            "name": "retire_date",
+            "label": "Retire Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          }
+        ],
+        "ambiguity_flags": []
+      },
+      "opportunities": {
+        "label": "Opportunities",
+        "synonyms": [
+          "deals",
+          "pipeline records"
+        ],
+        "role": "fact",
+        "grain": "one row per opportunity",
+        "source_file": "data/seed/opportunities.csv",
+        "primary_key": "opportunity_id",
+        "default_label": "opportunity_name",
+        "identifiers": [
+          "opportunity_id",
+          "opportunity_external_id"
+        ],
+        "dimensions": [
+          {
+            "name": "opportunity_name",
+            "label": "Opportunity",
+            "type": "string"
+          },
+          {
+            "name": "stage_name",
+            "label": "Stage",
+            "type": "string"
+          },
+          {
+            "name": "outcome",
+            "label": "Outcome",
+            "type": "string"
+          },
+          {
+            "name": "lifecycle_type",
+            "label": "Lifecycle Type",
+            "type": "string"
+          },
+          {
+            "name": "segment",
+            "label": "Deal Segment",
+            "type": "string"
+          },
+          {
+            "name": "sales_region",
+            "label": "Deal Sales Region",
+            "type": "string"
+          },
+          {
+            "name": "currency_code",
+            "label": "Currency",
+            "type": "string"
+          },
+          {
+            "name": "implementation_complexity",
+            "label": "Implementation Complexity",
+            "type": "string"
+          },
+          {
+            "name": "support_tier_requested",
+            "label": "Requested Support Tier",
+            "type": "string"
+          }
+        ],
+        "measures": [
+          {
+            "name": "opportunity_count",
+            "label": "Opportunities",
+            "aggregation": "count_distinct",
+            "field": "opportunity_id"
+          },
+          {
+            "name": "won_opportunity_count",
+            "label": "Won Opportunities",
+            "aggregation": "count_distinct",
+            "field": "opportunity_id",
+            "filter": "outcome = won"
+          },
+          {
+            "name": "lost_opportunity_count",
+            "label": "Lost Opportunities",
+            "aggregation": "count_distinct",
+            "field": "opportunity_id",
+            "filter": "outcome = lost"
+          },
+          {
+            "name": "win_rate",
+            "label": "Win Rate",
+            "aggregation": "ratio",
+            "definition": "won_opportunity_count / opportunity_count",
+            "non_additive": true
+          },
+          {
+            "name": "total_quote_amount",
+            "label": "Quoted Amount",
+            "aggregation": "sum",
+            "field": "total_quote_amount"
+          },
+          {
+            "name": "average_quote_amount",
+            "label": "Average Quoted Amount",
+            "aggregation": "average",
+            "field": "total_quote_amount",
+            "non_additive": true
+          },
+          {
+            "name": "estimated_users",
+            "label": "Estimated Users",
+            "aggregation": "sum",
+            "field": "estimated_users"
+          },
+          {
+            "name": "annual_transaction_estimate",
+            "label": "Estimated Annual Transactions",
+            "aggregation": "sum",
+            "field": "annual_transaction_estimate"
+          },
+          {
+            "name": "average_competitor_pressure_score",
+            "label": "Average Competitor Pressure Score",
+            "aggregation": "average",
+            "field": "competitor_pressure_score",
+            "non_additive": true
+          }
+        ],
+        "time_dimensions": [
+          {
+            "name": "created_date",
+            "label": "Created Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          },
+          {
+            "name": "close_date",
+            "label": "Close Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          },
+          {
+            "name": "expected_start_date",
+            "label": "Expected Start Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          }
+        ],
+        "ambiguity_flags": [
+          "The pilot seed contains only closed opportunities even though the source schema also allows open opportunities.",
+          "segment and sales_region also exist on accounts; in v0 they should be treated as deal-time attributes rather than a conformed account dimension.",
+          "total_quote_amount is sparsely populated and may not reconcile exactly to line-item totals or price snapshot totals."
+        ]
+      },
+      "opportunity_line_items": {
+        "label": "Opportunity Line Items",
+        "synonyms": [
+          "quote lines",
+          "deal line items"
+        ],
+        "role": "fact",
+        "grain": "one row per opportunity line item",
+        "source_file": "data/seed/opportunity_line_items.csv",
+        "primary_key": "line_item_id",
+        "default_label": "line_number",
+        "identifiers": [
+          "line_item_id"
+        ],
+        "dimensions": [
+          {
+            "name": "line_number",
+            "label": "Line Number",
+            "type": "integer"
+          },
+          {
+            "name": "line_role",
+            "label": "Line Role",
+            "type": "string"
+          },
+          {
+            "name": "included_in_bundle",
+            "label": "Included In Bundle",
+            "type": "boolean"
+          }
+        ],
+        "measures": [
+          {
+            "name": "line_item_count",
+            "label": "Line Items",
+            "aggregation": "count_distinct",
+            "field": "line_item_id"
+          },
+          {
+            "name": "quantity",
+            "label": "Quantity",
+            "aggregation": "sum",
+            "field": "quantity"
+          },
+          {
+            "name": "annualized_amount",
+            "label": "Annualized Amount",
+            "aggregation": "sum",
+            "field": "annualized_amount"
+          },
+          {
+            "name": "implementation_fee",
+            "label": "Implementation Fee",
+            "aggregation": "sum",
+            "field": "implementation_fee"
+          },
+          {
+            "name": "average_discount_pct",
+            "label": "Average Discount Percent",
+            "aggregation": "average",
+            "field": "discount_pct",
+            "non_additive": true
+          },
+          {
+            "name": "committed_transaction_volume",
+            "label": "Committed Transaction Volume",
+            "aggregation": "sum",
+            "field": "committed_transaction_volume"
+          },
+          {
+            "name": "average_transaction_fee_per_unit",
+            "label": "Average Transaction Fee Per Unit",
+            "aggregation": "average",
+            "field": "transaction_fee_per_unit",
+            "non_additive": true
+          }
+        ],
+        "time_dimensions": [],
+        "ambiguity_flags": [
+          "quantity is not guaranteed to represent the same business unit across all line roles and pricing models.",
+          "Averaging unit_price or transaction_fee_per_unit is safer than summing them."
+        ]
+      },
+      "price_snapshots": {
+        "label": "Price Snapshots",
+        "synonyms": [
+          "quote versions",
+          "pricing revisions"
+        ],
+        "role": "fact",
+        "grain": "one row per opportunity snapshot version",
+        "source_file": "data/seed/price_snapshots.csv",
+        "primary_key": "price_snapshot_id",
+        "default_label": "snapshot_version",
+        "identifiers": [
+          "price_snapshot_id"
+        ],
+        "dimensions": [
+          {
+            "name": "snapshot_version",
+            "label": "Snapshot Version",
+            "type": "integer"
+          },
+          {
+            "name": "pricing_stage",
+            "label": "Pricing Stage",
+            "type": "string"
+          }
+        ],
+        "measures": [
+          {
+            "name": "snapshot_count",
+            "label": "Price Snapshots",
+            "aggregation": "count_distinct",
+            "field": "price_snapshot_id"
+          },
+          {
+            "name": "total_contract_value",
+            "label": "Snapshot Total Contract Value",
+            "aggregation": "sum",
+            "field": "total_contract_value"
+          },
+          {
+            "name": "annual_subscription_fee",
+            "label": "Snapshot Annual Subscription Fee",
+            "aggregation": "sum",
+            "field": "annual_subscription_fee"
+          },
+          {
+            "name": "implementation_fee",
+            "label": "Snapshot Implementation Fee",
+            "aggregation": "sum",
+            "field": "implementation_fee"
+          },
+          {
+            "name": "support_fee",
+            "label": "Snapshot Support Fee",
+            "aggregation": "sum",
+            "field": "support_fee"
+          },
+          {
+            "name": "average_discount_pct",
+            "label": "Average Snapshot Discount Percent",
+            "aggregation": "average",
+            "field": "discount_pct",
+            "non_additive": true
+          }
+        ],
+        "time_dimensions": [
+          {
+            "name": "snapshot_date",
+            "label": "Snapshot Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          }
+        ],
+        "ambiguity_flags": [
+          "Summing snapshot values across versions answers quote-history questions, not booked revenue questions.",
+          "contract_length_months at snapshot grain may diverge from the signed contract term schedule."
+        ]
+      },
+      "contracts": {
+        "label": "Contracts",
+        "synonyms": [
+          "signed agreements"
+        ],
+        "role": "fact",
+        "grain": "one row per contract header",
+        "source_file": "data/seed/contracts.csv",
+        "primary_key": "contract_id",
+        "default_label": "contract_external_id",
+        "identifiers": [
+          "contract_id",
+          "contract_external_id"
+        ],
+        "dimensions": [
+          {
+            "name": "contract_status",
+            "label": "Contract Status",
+            "type": "string"
+          },
+          {
+            "name": "auto_renewal",
+            "label": "Auto Renewal",
+            "type": "boolean"
+          },
+          {
+            "name": "renewal_notice_days",
+            "label": "Renewal Notice Days",
+            "type": "integer"
+          },
+          {
+            "name": "billing_frequency",
+            "label": "Billing Frequency",
+            "type": "string"
+          },
+          {
+            "name": "currency_code",
+            "label": "Currency",
+            "type": "string"
+          }
+        ],
+        "measures": [
+          {
+            "name": "contract_count",
+            "label": "Contracts",
+            "aggregation": "count_distinct",
+            "field": "contract_id"
+          },
+          {
+            "name": "active_contract_count",
+            "label": "Active Contracts",
+            "aggregation": "count_distinct",
+            "field": "contract_id",
+            "filter": "contract_status = active"
+          },
+          {
+            "name": "expired_contract_count",
+            "label": "Expired Contracts",
+            "aggregation": "count_distinct",
+            "field": "contract_id",
+            "filter": "contract_status = expired"
+          }
+        ],
+        "time_dimensions": [
+          {
+            "name": "signature_date",
+            "label": "Signature Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          },
+          {
+            "name": "start_date",
+            "label": "Contract Start Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          },
+          {
+            "name": "end_date",
+            "label": "Contract End Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          }
+        ],
+        "ambiguity_flags": [
+          "The pilot seed currently has one contract for each contract-linked opportunity, but the source schema allows more than one contract per opportunity."
+        ]
+      },
+      "contract_terms": {
+        "label": "Contract Terms",
+        "synonyms": [
+          "term schedule",
+          "commercial terms"
+        ],
+        "role": "fact",
+        "grain": "one row per contract term sequence",
+        "source_file": "data/seed/contract_terms.csv",
+        "primary_key": "contract_term_id",
+        "default_label": "term_sequence",
+        "identifiers": [
+          "contract_term_id"
+        ],
+        "dimensions": [
+          {
+            "name": "term_sequence",
+            "label": "Term Sequence",
+            "type": "integer"
+          },
+          {
+            "name": "term_length_months",
+            "label": "Term Length Months",
+            "type": "integer"
+          },
+          {
+            "name": "payment_terms_days",
+            "label": "Payment Terms Days",
+            "type": "integer"
+          },
+          {
+            "name": "overage_policy_type",
+            "label": "Overage Policy Type",
+            "type": "string"
+          },
+          {
+            "name": "volume_commitment_type",
+            "label": "Volume Commitment Type",
+            "type": "string"
+          },
+          {
+            "name": "support_tier",
+            "label": "Support Tier",
+            "type": "string"
+          },
+          {
+            "name": "termination_for_convenience_flag",
+            "label": "Termination For Convenience",
+            "type": "boolean"
+          },
+          {
+            "name": "price_hold_months",
+            "label": "Price Hold Months",
+            "type": "integer"
+          },
+          {
+            "name": "service_level_notes",
+            "label": "Service Level Notes",
+            "type": "string",
+            "semantic_status": "review_needed"
+          }
+        ],
+        "measures": [
+          {
+            "name": "contract_term_count",
+            "label": "Contract Terms",
+            "aggregation": "count_distinct",
+            "field": "contract_term_id"
+          },
+          {
+            "name": "annual_subscription_fee",
+            "label": "Term Annual Subscription Fee",
+            "aggregation": "sum",
+            "field": "annual_subscription_fee"
+          },
+          {
+            "name": "implementation_fee",
+            "label": "Term Implementation Fee",
+            "aggregation": "sum",
+            "field": "implementation_fee"
+          },
+          {
+            "name": "support_fee",
+            "label": "Term Support Fee",
+            "aggregation": "sum",
+            "field": "support_fee"
+          },
+          {
+            "name": "committed_transaction_volume",
+            "label": "Term Committed Transaction Volume",
+            "aggregation": "sum",
+            "field": "committed_transaction_volume"
+          },
+          {
+            "name": "average_transaction_fee_per_unit",
+            "label": "Average Term Transaction Fee Per Unit",
+            "aggregation": "average",
+            "field": "transaction_fee_per_unit",
+            "non_additive": true
+          },
+          {
+            "name": "average_ramp_discount_pct",
+            "label": "Average Ramp Discount Percent",
+            "aggregation": "average",
+            "field": "ramp_discount_pct",
+            "non_additive": true
+          },
+          {
+            "name": "average_renewal_uplift_pct",
+            "label": "Average Renewal Uplift Percent",
+            "aggregation": "average",
+            "field": "renewal_uplift_pct",
+            "non_additive": true
+          },
+          {
+            "name": "average_price_escalator_pct",
+            "label": "Average Price Escalator Percent",
+            "aggregation": "average",
+            "field": "price_escalator_pct",
+            "non_additive": true
+          }
+        ],
+        "time_dimensions": [
+          {
+            "name": "effective_start_date",
+            "label": "Term Start Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          },
+          {
+            "name": "effective_end_date",
+            "label": "Term End Date",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          }
+        ],
+        "ambiguity_flags": [
+          "annual_subscription_fee is an annualized amount at the term-sequence grain, not a whole-contract total.",
+          "transaction_fee_per_unit and committed_transaction_volume are sparse and should usually be analyzed only when the underlying values are present."
+        ]
+      },
+      "usage_metrics": {
+        "label": "Usage Metrics",
+        "synonyms": [
+          "consumption",
+          "observed usage"
+        ],
+        "role": "fact",
+        "grain": "one row per account-contract-product metric and period",
+        "source_file": "data/seed/usage_metrics.csv",
+        "primary_key": "usage_metric_id",
+        "default_label": "metric_name",
+        "identifiers": [
+          "usage_metric_id"
+        ],
+        "dimensions": [
+          {
+            "name": "metric_name",
+            "label": "Metric Name",
+            "type": "string"
+          },
+          {
+            "name": "metric_unit",
+            "label": "Metric Unit",
+            "type": "string"
+          },
+          {
+            "name": "data_source",
+            "label": "Data Source",
+            "type": "string"
+          }
+        ],
+        "measures": [
+          {
+            "name": "usage_record_count",
+            "label": "Usage Records",
+            "aggregation": "count_distinct",
+            "field": "usage_metric_id"
+          },
+          {
+            "name": "metric_value",
+            "label": "Metric Value",
+            "aggregation": "sum",
+            "field": "metric_value",
+            "guardrail": "Only aggregate within a fixed metric_name and metric_unit."
+          },
+          {
+            "name": "average_metric_value",
+            "label": "Average Metric Value",
+            "aggregation": "average",
+            "field": "metric_value",
+            "non_additive": true,
+            "guardrail": "Only aggregate within a fixed metric_name and metric_unit."
+          }
+        ],
+        "time_dimensions": [
+          {
+            "name": "metric_period_start",
+            "label": "Metric Period Start",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          },
+          {
+            "name": "metric_period_end",
+            "label": "Metric Period End",
+            "grain": [
+              "year",
+              "quarter",
+              "month",
+              "day"
+            ]
+          }
+        ],
+        "ambiguity_flags": [
+          "metric_value is intentionally generic; the business meaning depends on metric_name and metric_unit.",
+          "The pilot seed currently uses only active_users and processed_transactions, but the source schema allows broader metric coverage."
+        ]
+      },
+      "competitors": {
+        "label": "Competitors",
+        "synonyms": [
+          "competitive set"
+        ],
+        "role": "dimension",
+        "grain": "one row per competitor",
+        "source_file": "data/seed/competitors.csv",
+        "primary_key": "competitor_id",
+        "default_label": "competitor_name",
+        "identifiers": [
+          "competitor_id"
+        ],
+        "dimensions": [
+          {
+            "name": "competitor_name",
+            "label": "Competitor",
+            "type": "string"
+          },
+          {
+            "name": "competitor_category",
+            "label": "Competitor Category",
+            "type": "string"
+          },
+          {
+            "name": "is_active",
+            "label": "Is Active Competitor",
+            "type": "boolean"
+          }
+        ],
+        "measures": [
+          {
+            "name": "competitor_count",
+            "label": "Competitors",
+            "aggregation": "count_distinct",
+            "field": "competitor_id"
+          }
+        ],
+        "time_dimensions": [],
+        "ambiguity_flags": []
+      },
+      "opportunity_competitors": {
+        "label": "Opportunity Competitors",
+        "synonyms": [
+          "competitive mentions"
+        ],
+        "role": "bridge_fact",
+        "grain": "one row per opportunity-competitor relationship",
+        "source_file": "data/seed/opportunity_competitors.csv",
+        "primary_key": "opportunity_competitor_id",
+        "default_label": "competitor_id",
+        "identifiers": [
+          "opportunity_competitor_id"
+        ],
+        "dimensions": [
+          {
+            "name": "is_primary_competitor",
+            "label": "Is Primary Competitor",
+            "type": "boolean"
+          },
+          {
+            "name": "perceived_strength",
+            "label": "Perceived Strength",
+            "type": "string"
+          },
+          {
+            "name": "price_positioning",
+            "label": "Price Positioning",
+            "type": "string",
+            "semantic_status": "review_needed"
+          },
+          {
+            "name": "capture_notes",
+            "label": "Capture Notes",
+            "type": "string",
+            "semantic_status": "review_needed"
+          }
+        ],
+        "measures": [
+          {
+            "name": "competitor_mention_count",
+            "label": "Competitor Mentions",
+            "aggregation": "count_distinct",
+            "field": "opportunity_competitor_id"
+          },
+          {
+            "name": "primary_competitor_count",
+            "label": "Primary Competitor Mentions",
+            "aggregation": "count_distinct",
+            "field": "opportunity_competitor_id",
+            "filter": "is_primary_competitor = true"
+          },
+          {
+            "name": "opportunities_with_competitor",
+            "label": "Opportunities With Competitor",
+            "aggregation": "count_distinct",
+            "field": "opportunity_id"
+          }
+        ],
+        "time_dimensions": [],
+        "ambiguity_flags": [
+          "price_positioning does not explicitly define the comparison baseline in the seed; v0 assumes it is relative to the modeled seller, but this needs human confirmation."
+        ]
+      },
+      "win_loss_details": {
+        "label": "Win Loss Details",
+        "synonyms": [
+          "outcome details"
+        ],
+        "role": "detail_fact",
+        "grain": "one row per closed opportunity with outcome detail",
+        "source_file": "data/seed/win_loss_details.csv",
+        "primary_key": "opportunity_id",
+        "default_label": "outcome",
+        "identifiers": [
+          "opportunity_id"
+        ],
+        "dimensions": [
+          {
+            "name": "outcome",
+            "label": "Outcome",
+            "type": "string"
+          },
+          {
+            "name": "primary_loss_reason",
+            "label": "Primary Loss Reason",
+            "type": "string"
+          },
+          {
+            "name": "primary_win_reason",
+            "label": "Primary Win Reason",
+            "type": "string",
+            "semantic_status": "review_needed"
+          },
+          {
+            "name": "champion_strength",
+            "label": "Champion Strength",
+            "type": "string"
+          },
+          {
+            "name": "procurement_friction_flag",
+            "label": "Procurement Friction",
+            "type": "boolean"
+          },
+          {
+            "name": "competitor_capture_completeness",
+            "label": "Competitor Capture Completeness",
+            "type": "string"
+          },
+          {
+            "name": "decision_process_notes",
+            "label": "Decision Process Notes",
+            "type": "string",
+            "semantic_status": "review_needed"
+          },
+          {
+            "name": "loss_reason_detail",
+            "label": "Loss Reason Detail",
+            "type": "string",
+            "semantic_status": "review_needed"
+          }
+        ],
+        "measures": [
+          {
+            "name": "outcome_detail_count",
+            "label": "Outcome Detail Records",
+            "aggregation": "count_distinct",
+            "field": "opportunity_id"
+          },
+          {
+            "name": "average_record_completeness_score",
+            "label": "Average Record Completeness Score",
+            "aggregation": "average",
+            "field": "record_completeness_score",
+            "non_additive": true
+          }
+        ],
+        "time_dimensions": [],
+        "ambiguity_flags": [
+          "Text fields are useful for drill-through and labeling but are not strong governed dimensions yet.",
+          "The source schema only supports won and lost rows here; open opportunities should not join to this entity in v0."
+        ]
+      }
+    },
+    "allowed_joins": [
+      {
+        "left_entity": "accounts",
+        "right_entity": "opportunities",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "account_id",
+            "right": "account_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Preferred path for customer-to-deal analysis."
+      },
+      {
+        "left_entity": "accounts",
+        "right_entity": "contracts",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "account_id",
+            "right": "account_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Preferred path for customer-to-contract analysis."
+      },
+      {
+        "left_entity": "accounts",
+        "right_entity": "usage_metrics",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "account_id",
+            "right": "account_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Use for account-level usage rollups."
+      },
+      {
+        "left_entity": "opportunities",
+        "right_entity": "opportunity_line_items",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "opportunity_id",
+            "right": "opportunity_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Use for quote composition and product-mix analysis."
+      },
+      {
+        "left_entity": "opportunities",
+        "right_entity": "price_snapshots",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "opportunity_id",
+            "right": "opportunity_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Use only for quote-history analysis."
+      },
+      {
+        "left_entity": "opportunities",
+        "right_entity": "contracts",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "opportunity_id",
+            "right": "opportunity_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Pilot data behaves like one-to-one here, but the source schema does not require that."
+      },
+      {
+        "left_entity": "opportunities",
+        "right_entity": "opportunity_competitors",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "opportunity_id",
+            "right": "opportunity_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Use for competitor presence and pricing-pressure analysis."
+      },
+      {
+        "left_entity": "opportunities",
+        "right_entity": "win_loss_details",
+        "cardinality": "one_to_one_or_zero",
+        "join_keys": [
+          {
+            "left": "opportunity_id",
+            "right": "opportunity_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "In the pilot seed the table fully covers opportunities, but v0 treats the relationship as optional to avoid overclaiming."
+      },
+      {
+        "left_entity": "opportunity_line_items",
+        "right_entity": "products",
+        "cardinality": "many_to_one",
+        "join_keys": [
+          {
+            "left": "product_id",
+            "right": "product_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Preferred product path for quote-line analysis."
+      },
+      {
+        "left_entity": "contracts",
+        "right_entity": "contract_terms",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "contract_id",
+            "right": "contract_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Preferred path for signed commercial terms."
+      },
+      {
+        "left_entity": "contracts",
+        "right_entity": "usage_metrics",
+        "cardinality": "one_to_many",
+        "join_keys": [
+          {
+            "left": "contract_id",
+            "right": "contract_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Preferred path for usage-after-contract analysis."
+      },
+      {
+        "left_entity": "usage_metrics",
+        "right_entity": "products",
+        "cardinality": "many_to_one",
+        "join_keys": [
+          {
+            "left": "product_id",
+            "right": "product_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Use for product-level usage trends."
+      },
+      {
+        "left_entity": "opportunity_competitors",
+        "right_entity": "competitors",
+        "cardinality": "many_to_one",
+        "join_keys": [
+          {
+            "left": "competitor_id",
+            "right": "competitor_id"
+          }
+        ],
+        "status": "approved_for_v0",
+        "notes": "Preferred competitor lookup path."
+      }
+    ],
+    "join_guardrails": [
+      "Do not join usage_metrics directly to opportunities; route through contracts or accounts.",
+      "Do not join opportunity_line_items directly to contracts; route through opportunities and treat signed contracts separately from quoted lines.",
+      "Do not mix price_snapshots with contract_terms in a single additive revenue rollup without an explicit version-selection rule.",
+      "Use accounts as the conformed customer dimension when both account-level and opportunity-level customer attributes exist."
+    ],
+    "drill_hierarchies": [
+      {
+        "name": "account_segmentation",
+        "label": "Account Segmentation",
+        "levels": [
+          "accounts.segment",
+          "accounts.industry",
+          "accounts.account_name"
+        ]
+      },
+      {
+        "name": "account_geography",
+        "label": "Account Geography",
+        "levels": [
+          "accounts.sales_region",
+          "accounts.country_code",
+          "accounts.account_name"
+        ]
+      },
+      {
+        "name": "opportunity_outcome",
+        "label": "Opportunity Outcome",
+        "levels": [
+          "opportunities.close_date",
+          "opportunities.sales_region",
+          "opportunities.segment",
+          "opportunities.lifecycle_type",
+          "opportunities.opportunity_name"
+        ]
+      },
+      {
+        "name": "product_quote_mix",
+        "label": "Product Quote Mix",
+        "levels": [
+          "products.product_family",
+          "products.product_name",
+          "opportunity_line_items.line_role"
+        ]
+      },
+      {
+        "name": "contract_structure",
+        "label": "Contract Structure",
+        "levels": [
+          "contracts.contract_status",
+          "contracts.billing_frequency",
+          "contracts.contract_external_id",
+          "contract_terms.term_sequence"
+        ]
+      },
+      {
+        "name": "usage_by_product",
+        "label": "Usage By Product",
+        "levels": [
+          "usage_metrics.metric_name",
+          "products.product_family",
+          "products.product_name",
+          "usage_metrics.metric_period_start"
+        ]
+      },
+      {
+        "name": "competitive_landscape",
+        "label": "Competitive Landscape",
+        "levels": [
+          "competitors.competitor_category",
+          "competitors.competitor_name",
+          "opportunity_competitors.perceived_strength"
+        ]
+      }
+    ],
+    "global_ambiguity_flags": [
+      "The pilot seed is historical and closed-deal heavy; it should not be treated as a full-funnel semantic model.",
+      "The semantic contract currently blends quote-stage facts, signed-contract facts, and usage facts; analysts should choose the fact table that matches the business question.",
+      "Friendly labels are intentionally conservative because this model is meant for review before broader automation."
+    ]
+  }
+}

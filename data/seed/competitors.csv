@@ -1,0 +1,7 @@
+competitor_id,competitor_name,competitor_category,is_active
+1,GlobalFlow,platform,true
+2,ShipChain Pro,point_solution,true
+3,TradeMatrix,platform,true
+4,PortVision,analytics,true
+5,RouteSphere,point_solution,true
+6,CustomsPilot,compliance,true

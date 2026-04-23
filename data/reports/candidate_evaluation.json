@@ -1,0 +1,888 @@
+{
+  "checks": [
+    {
+      "category": "structural_integrity",
+      "check_id": "accounts_exact_count",
+      "message": "Account count must match the required canonical volume.",
+      "observed": 1000,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "exactly 1000"
+    },
+    {
+      "category": "structural_integrity",
+      "check_id": "opportunity_count_range",
+      "message": "Opportunity volume should be rich enough for analytics but still lightweight.",
+      "observed": 2715,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "between 1700 and 3000"
+    },
+    {
+      "category": "structural_integrity",
+      "check_id": "line_item_density",
+      "message": "Opportunity line items should show multi-product deal structure.",
+      "observed": 14094,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "> 4344"
+    },
+    {
+      "category": "distribution_realism",
+      "check_id": "win_rate_band",
+      "message": "Won/lost mix should stay near the requested 40/60 target.",
+      "observed": 0.4,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "0.37 to 0.43"
+    },
+    {
+      "category": "structural_integrity",
+      "check_id": "orphan_opportunities",
+      "message": "Foreign key relationships should resolve cleanly after loading.",
+      "observed": 0,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "0"
+    },
+    {
+      "category": "structural_integrity",
+      "check_id": "orphan_line_items",
+      "message": "Foreign key relationships should resolve cleanly after loading.",
+      "observed": 0,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "0"
+    },
+    {
+      "category": "structural_integrity",
+      "check_id": "orphan_contracts",
+      "message": "Foreign key relationships should resolve cleanly after loading.",
+      "observed": 0,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "0"
+    },
+    {
+      "category": "structural_integrity",
+      "check_id": "orphan_usage_metrics",
+      "message": "Foreign key relationships should resolve cleanly after loading.",
+      "observed": 0,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "0"
+    },
+    {
+      "category": "messiness_without_nonsense",
+      "check_id": "invalid_numerics",
+      "message": "Numeric fields must remain non-negative and sensible.",
+      "observed": 0,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "0"
+    },
+    {
+      "category": "messiness_without_nonsense",
+      "check_id": "invalid_dates",
+      "message": "Commercial and term dates must be ordered logically.",
+      "observed": 0,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "0"
+    },
+    {
+      "category": "won_lost_asymmetry",
+      "check_id": "won_contract_coverage",
+      "message": "Won deals should overwhelmingly carry downstream contract detail while lost deals should not.",
+      "observed": {
+        "lost": 0.0,
+        "won": 0.9761
+      },
+      "passed": true,
+      "severity": "critical",
+      "threshold": "won >= 0.90 and lost = 0.0"
+    },
+    {
+      "category": "distribution_realism",
+      "check_id": "segment_mix_plausible",
+      "message": "Segment distribution should feel plausible rather than concentrated in one bucket.",
+      "observed": [
+        {
+          "opportunity_count": 786,
+          "segment": "enterprise",
+          "share": 0.2895
+        },
+        {
+          "opportunity_count": 677,
+          "segment": "mid_market",
+          "share": 0.2494
+        },
+        {
+          "opportunity_count": 680,
+          "segment": "smb",
+          "share": 0.2505
+        },
+        {
+          "opportunity_count": 572,
+          "segment": "strategic",
+          "share": 0.2107
+        }
+      ],
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": "each share between 0.05 and 0.55"
+    },
+    {
+      "category": "distribution_realism",
+      "check_id": "region_mix_plausible",
+      "message": "Region distribution should support cross-region analysis without looking flat or broken.",
+      "observed": [
+        {
+          "opportunity_count": 529,
+          "sales_region": "apac",
+          "share": 0.1948
+        },
+        {
+          "opportunity_count": 731,
+          "sales_region": "emea",
+          "share": 0.2692
+        },
+        {
+          "opportunity_count": 250,
+          "sales_region": "latam",
+          "share": 0.0921
+        },
+        {
+          "opportunity_count": 1205,
+          "sales_region": "na",
+          "share": 0.4438
+        }
+      ],
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": "each share between 0.05 and 0.65"
+    },
+    {
+      "category": "distribution_realism",
+      "check_id": "contract_length_distribution",
+      "message": "Contract length mix should show realistic concentration without collapsing into one term.",
+      "observed": {
+        "distinct_lengths": 5,
+        "top_share": 0.3336
+      },
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": ">= 3 populated lengths and no single bucket above 0.72"
+    },
+    {
+      "category": "messiness_without_nonsense",
+      "check_id": "tcv_variance",
+      "message": "Contract value distribution should be varied rather than near-uniform.",
+      "observed": {
+        "avg_tcv": 1291787.93,
+        "p10_tcv": 37420.42,
+        "p50_tcv": 347181.62,
+        "p90_tcv": 3711333.82,
+        "stddev_tcv": 2056001.37
+      },
+      "passed": true,
+      "severity": "critical",
+      "threshold": "stddev > 10000 and p90 > p10 * 2.2"
+    },
+    {
+      "category": "distribution_realism",
+      "check_id": "discount_distribution",
+      "message": "Discount patterns should show healthy spread without looking extreme.",
+      "observed": {
+        "avg_discount": 13.64,
+        "max_discount": 31.5,
+        "stddev_discount": 7.04
+      },
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": "avg 4-22, stddev > 2, max <= 35"
+    },
+    {
+      "category": "distribution_realism",
+      "check_id": "competitor_frequency_shape",
+      "message": "Competitor capture should vary, but not collapse to a single rival.",
+      "observed": {
+        "distinct_competitors": 6,
+        "top_share": 0.1932
+      },
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": ">= 4 competitors and top share < 0.60"
+    },
+    {
+      "category": "distribution_realism",
+      "check_id": "loss_reason_variation",
+      "message": "Loss reasons should be skewed but not unnaturally balanced or dominated by a single code.",
+      "observed": {
+        "distinct_reasons": 9,
+        "top_share": 0.1878
+      },
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": ">= 5 represented reasons and top share between 0.15 and 0.45"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "size_to_tcv_correlation",
+      "message": "Larger accounts should trend toward higher contract values without becoming perfectly linear.",
+      "observed": 0.6812,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "between 0.25 and 0.93"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "term_relationships",
+      "message": "Longer terms should generally carry larger TCV and often lower annualized unit pricing.",
+      "observed": [
+        {
+          "annualized_price_per_user": 144.6930287006351,
+          "avg_tcv": 668884.7855605049,
+          "term_bucket": "12_24"
+        },
+        {
+          "annualized_price_per_user": 135.74773360743103,
+          "avg_tcv": 2613099.4062796836,
+          "term_bucket": "36_plus"
+        }
+      ],
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": "36+ term avg TCV materially above 12-24 and annualized unit price not materially higher"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "enterprise_complexity_bias",
+      "message": "Enterprise opportunities should show more implementation complexity than SMB.",
+      "observed": [
+        {
+          "complex_share": 1.0,
+          "segment": "enterprise"
+        },
+        {
+          "complex_share": 0.8818,
+          "segment": "mid_market"
+        },
+        {
+          "complex_share": 0.1618,
+          "segment": "smb"
+        },
+        {
+          "complex_share": 1.0,
+          "segment": "strategic"
+        }
+      ],
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": "enterprise complex share > smb by at least 0.20"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "smb_custom_term_share_band",
+      "message": "SMB deals should show some custom policy structure, but materially less often than enterprise deals.",
+      "observed": 0.2721,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "between 0.20 and 0.35"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "enterprise_custom_term_share_band",
+      "message": "Enterprise deals should frequently show custom policy structure while staying within the configured realism band.",
+      "observed": 0.7837,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "between 0.70 and 0.90"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "enterprise_smb_custom_term_gap",
+      "message": "Enterprise custom-term incidence should be clearly differentiated from SMB.",
+      "observed": {
+        "enterprise": 0.7837,
+        "smb": 0.2721
+      },
+      "passed": true,
+      "severity": "critical",
+      "threshold": "enterprise >= smb + 0.35"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "pressure_discount_effect",
+      "message": "Competitor pressure should influence discount pressure.",
+      "observed": [
+        {
+          "avg_final_discount": 9.92,
+          "pressure_bucket": "low",
+          "win_rate": 0.6477
+        },
+        {
+          "avg_final_discount": 15.06,
+          "pressure_bucket": "medium",
+          "win_rate": 0.3523
+        },
+        {
+          "avg_final_discount": 20.75,
+          "pressure_bucket": "high",
+          "win_rate": 0.1921
+        }
+      ],
+      "passed": true,
+      "severity": "critical",
+      "threshold": "high-pressure avg discount > low-pressure by 2 points"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "pressure_outcome_effect",
+      "message": "Competitor pressure should also affect outcomes.",
+      "observed": [
+        {
+          "avg_final_discount": 9.92,
+          "pressure_bucket": "low",
+          "win_rate": 0.6477
+        },
+        {
+          "avg_final_discount": 15.06,
+          "pressure_bucket": "medium",
+          "win_rate": 0.3523
+        },
+        {
+          "avg_final_discount": 20.75,
+          "pressure_bucket": "high",
+          "win_rate": 0.1921
+        }
+      ],
+      "passed": true,
+      "severity": "critical",
+      "threshold": "high-pressure win rate < low-pressure by 0.08"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "renewal_win_rate_band",
+      "message": "Renewal business in this domain is expected to be sticky, but should remain inside the calibrated realism band.",
+      "observed": 0.9631,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "between 0.90 and 0.99"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "net_new_win_rate_band",
+      "message": "Net new business should remain materially below renewal while landing in the calibrated target band.",
+      "observed": 0.1204,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "between 0.12 and 0.20"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "expansion_between_net_new_and_renewal",
+      "message": "Expansion business should sit between net new and renewal on win-rate behavior.",
+      "observed": [
+        {
+          "high_complexity_share": 0.4992,
+          "lifecycle_type": "expansion",
+          "win_rate": 0.2438
+        },
+        {
+          "high_complexity_share": 0.4684,
+          "lifecycle_type": "net_new",
+          "win_rate": 0.1204
+        },
+        {
+          "high_complexity_share": 0.3325,
+          "lifecycle_type": "renewal",
+          "win_rate": 0.9631
+        }
+      ],
+      "passed": true,
+      "severity": "critical",
+      "threshold": "net_new win rate < expansion win rate < renewal win rate"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "renewal_discount_control",
+      "message": "With renewal win rates this high, renewal discounting should generally stay more controlled than net new discounting.",
+      "observed": [
+        {
+          "avg_observed_discount": 16.0,
+          "lifecycle_type": "expansion"
+        },
+        {
+          "avg_observed_discount": 14.82,
+          "lifecycle_type": "net_new"
+        },
+        {
+          "avg_observed_discount": 13.6,
+          "lifecycle_type": "renewal"
+        }
+      ],
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": "renewal avg observed discount <= net_new avg observed discount"
+    },
+    {
+      "category": "business_relationship_realism",
+      "check_id": "price_not_every_loss",
+      "message": "Price should matter, but it should not explain every loss.",
+      "observed": 0.1878,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "between 0.15 and 0.45"
+    },
+    {
+      "category": "won_lost_asymmetry",
+      "check_id": "won_lost_completeness_gap",
+      "message": "Won opportunities should be materially more complete than lost ones.",
+      "observed": [
+        {
+          "avg_completeness": 0.4709,
+          "outcome": "lost"
+        },
+        {
+          "avg_completeness": 0.9198,
+          "outcome": "won"
+        }
+      ],
+      "passed": true,
+      "severity": "critical",
+      "threshold": "won avg completeness >= lost + 0.20"
+    },
+    {
+      "category": "won_lost_asymmetry",
+      "check_id": "pricing_maturity_gap",
+      "message": "Lost deals should more often lack mature pricing detail.",
+      "observed": [
+        {
+          "final_snapshot_coverage": 0.0,
+          "outcome": "lost"
+        },
+        {
+          "final_snapshot_coverage": 0.558,
+          "outcome": "won"
+        }
+      ],
+      "passed": true,
+      "severity": "critical",
+      "threshold": "won final pricing coverage >= lost + 0.25"
+    },
+    {
+      "category": "won_lost_asymmetry",
+      "check_id": "lost_deals_without_pricing",
+      "message": "Some lost deals should have no pricing history because they never progressed that far.",
+      "observed": 0.1633,
+      "passed": true,
+      "severity": "critical",
+      "threshold": ">= 0.10"
+    },
+    {
+      "category": "won_lost_asymmetry",
+      "check_id": "loss_reason_ambiguity",
+      "message": "Lost deals should contain some ambiguity and incomplete reason capture.",
+      "observed": 0.1283,
+      "passed": true,
+      "severity": "noncritical",
+      "threshold": "between 0.08 and 0.35"
+    },
+    {
+      "category": "analytic_usefulness",
+      "check_id": "win_rate_by_discount_band",
+      "message": "Required downstream analysis query should return meaningful, non-empty results.",
+      "observed": 5,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "> 1 rows"
+    },
+    {
+      "category": "analytic_usefulness",
+      "check_id": "tcv_by_region_segment",
+      "message": "Required downstream analysis query should return meaningful, non-empty results.",
+      "observed": 16,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "> 1 rows"
+    },
+    {
+      "category": "analytic_usefulness",
+      "check_id": "term_patterns_won",
+      "message": "Required downstream analysis query should return meaningful, non-empty results.",
+      "observed": 5,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "> 1 rows"
+    },
+    {
+      "category": "analytic_usefulness",
+      "check_id": "competitor_pricing_influence",
+      "message": "Required downstream analysis query should return meaningful, non-empty results.",
+      "observed": 6,
+      "passed": true,
+      "severity": "critical",
+      "threshold": "> 1 rows"
+    }
+  ],
+  "profiles": {
+    "competitor_frequency": [
+      {
+        "capture_count": 777,
+        "competitor_name": "GlobalFlow"
+      },
+      {
+        "capture_count": 735,
+        "competitor_name": "ShipChain Pro"
+      },
+      {
+        "capture_count": 730,
+        "competitor_name": "TradeMatrix"
+      },
+      {
+        "capture_count": 625,
+        "competitor_name": "RouteSphere"
+      },
+      {
+        "capture_count": 581,
+        "competitor_name": "CustomsPilot"
+      },
+      {
+        "capture_count": 573,
+        "competitor_name": "PortVision"
+      }
+    ],
+    "contract_length_distribution": [
+      {
+        "contract_length_months": 12,
+        "opportunity_count": 813
+      },
+      {
+        "contract_length_months": 24,
+        "opportunity_count": 750
+      },
+      {
+        "contract_length_months": 36,
+        "opportunity_count": 525
+      },
+      {
+        "contract_length_months": 48,
+        "opportunity_count": 232
+      },
+      {
+        "contract_length_months": 60,
+        "opportunity_count": 117
+      }
+    ],
+    "counts_by_region": [
+      {
+        "opportunity_count": 529,
+        "sales_region": "apac",
+        "share": 0.1948
+      },
+      {
+        "opportunity_count": 731,
+        "sales_region": "emea",
+        "share": 0.2692
+      },
+      {
+        "opportunity_count": 250,
+        "sales_region": "latam",
+        "share": 0.0921
+      },
+      {
+        "opportunity_count": 1205,
+        "sales_region": "na",
+        "share": 0.4438
+      }
+    ],
+    "counts_by_segment": [
+      {
+        "opportunity_count": 786,
+        "segment": "enterprise",
+        "share": 0.2895
+      },
+      {
+        "opportunity_count": 677,
+        "segment": "mid_market",
+        "share": 0.2494
+      },
+      {
+        "opportunity_count": 680,
+        "segment": "smb",
+        "share": 0.2505
+      },
+      {
+        "opportunity_count": 572,
+        "segment": "strategic",
+        "share": 0.2107
+      }
+    ],
+    "deal_outcomes": [
+      {
+        "opportunity_count": 1629,
+        "outcome": "lost"
+      },
+      {
+        "opportunity_count": 1086,
+        "outcome": "won"
+      }
+    ],
+    "lifecycle_comparison": [
+      {
+        "high_complexity_share": 0.4992,
+        "lifecycle_type": "expansion",
+        "win_rate": 0.2438
+      },
+      {
+        "high_complexity_share": 0.4684,
+        "lifecycle_type": "net_new",
+        "win_rate": 0.1204
+      },
+      {
+        "high_complexity_share": 0.3325,
+        "lifecycle_type": "renewal",
+        "win_rate": 0.9631
+      }
+    ],
+    "lifecycle_discount_comparison": [
+      {
+        "avg_observed_discount": 16.0,
+        "lifecycle_type": "expansion"
+      },
+      {
+        "avg_observed_discount": 14.82,
+        "lifecycle_type": "net_new"
+      },
+      {
+        "avg_observed_discount": 13.6,
+        "lifecycle_type": "renewal"
+      }
+    ],
+    "loss_reasons": [
+      {
+        "opportunity_count": 306,
+        "primary_loss_reason": "price"
+      },
+      {
+        "opportunity_count": 225,
+        "primary_loss_reason": "competitor"
+      },
+      {
+        "opportunity_count": 209,
+        "primary_loss_reason": "missing"
+      },
+      {
+        "opportunity_count": 186,
+        "primary_loss_reason": "no_decision"
+      },
+      {
+        "opportunity_count": 176,
+        "primary_loss_reason": "weak_champion_internal_politics"
+      },
+      {
+        "opportunity_count": 139,
+        "primary_loss_reason": "procurement_legal_friction"
+      },
+      {
+        "opportunity_count": 132,
+        "primary_loss_reason": "product_gap"
+      },
+      {
+        "opportunity_count": 130,
+        "primary_loss_reason": "budget"
+      },
+      {
+        "opportunity_count": 126,
+        "primary_loss_reason": "timing"
+      }
+    ],
+    "pressure_effect": [
+      {
+        "avg_final_discount": 9.92,
+        "pressure_bucket": "low",
+        "win_rate": 0.6477
+      },
+      {
+        "avg_final_discount": 15.06,
+        "pressure_bucket": "medium",
+        "win_rate": 0.3523
+      },
+      {
+        "avg_final_discount": 20.75,
+        "pressure_bucket": "high",
+        "win_rate": 0.1921
+      }
+    ],
+    "tcv_distribution": {
+      "avg_tcv": 1291787.93,
+      "p10_tcv": 37420.42,
+      "p50_tcv": 347181.62,
+      "p90_tcv": 3711333.82,
+      "stddev_tcv": 2056001.37
+    },
+    "won_vs_lost_completeness": [
+      {
+        "avg_completeness": 0.4709,
+        "outcome": "lost"
+      },
+      {
+        "avg_completeness": 0.9198,
+        "outcome": "won"
+      }
+    ]
+  },
+  "samples": {
+    "sample_lost_deals": [
+      {
+        "account_name": "Atlas Global Freight",
+        "competitor_pressure_score": 0.9,
+        "contract_length_months": 48,
+        "lifecycle_type": "net_new",
+        "loss_reason_detail": null,
+        "opportunity_external_id": "OPP-00263",
+        "primary_loss_reason": "timing",
+        "sales_region": "apac",
+        "segment": "enterprise",
+        "total_quote_amount": 1584146.33
+      },
+      {
+        "account_name": "Apex Distribution",
+        "competitor_pressure_score": 0.9,
+        "contract_length_months": 36,
+        "lifecycle_type": "expansion",
+        "loss_reason_detail": null,
+        "opportunity_external_id": "OPP-00302",
+        "primary_loss_reason": "competitor",
+        "sales_region": "emea",
+        "segment": "enterprise",
+        "total_quote_amount": 1005152.91
+      },
+      {
+        "account_name": "Northstar Distribution",
+        "competitor_pressure_score": 0.9,
+        "contract_length_months": 24,
+        "lifecycle_type": "net_new",
+        "loss_reason_detail": "pricing came in above internal threshold after procurement review",
+        "opportunity_external_id": "OPP-00381",
+        "primary_loss_reason": "price",
+        "sales_region": "na",
+        "segment": "enterprise",
+        "total_quote_amount": 1025871.26
+      },
+      {
+        "account_name": "Granite Global Freight",
+        "competitor_pressure_score": 0.9,
+        "contract_length_months": 12,
+        "lifecycle_type": "net_new",
+        "loss_reason_detail": "project paused after steering committee could not commit",
+        "opportunity_external_id": "OPP-01349",
+        "primary_loss_reason": null,
+        "sales_region": "na",
+        "segment": "enterprise",
+        "total_quote_amount": 645592.52
+      },
+      {
+        "account_name": "Atlas Global Freight",
+        "competitor_pressure_score": 0.9,
+        "contract_length_months": 36,
+        "lifecycle_type": "net_new",
+        "loss_reason_detail": null,
+        "opportunity_external_id": "OPP-01375",
+        "primary_loss_reason": "procurement_legal_friction",
+        "sales_region": "na",
+        "segment": "enterprise",
+        "total_quote_amount": 2375583.04
+      }
+    ],
+    "sample_won_deals": [
+      {
+        "account_name": "Bluewave Industrial",
+        "contract_length_months": 60,
+        "lifecycle_type": "renewal",
+        "opportunity_external_id": "OPP-00366",
+        "primary_win_reason": "Best workflow match for cross-border operations",
+        "sales_region": "na",
+        "segment": "strategic",
+        "support_tier_requested": "premium",
+        "total_quote_amount": 12791021.44
+      },
+      {
+        "account_name": "Harbor Supply Co",
+        "contract_length_months": 48,
+        "lifecycle_type": "net_new",
+        "opportunity_external_id": "OPP-00468",
+        "primary_win_reason": "Incumbent relationship and lower switching risk",
+        "sales_region": "latam",
+        "segment": "strategic",
+        "support_tier_requested": "enterprise",
+        "total_quote_amount": 12483627.44
+      },
+      {
+        "account_name": "Northstar Commerce Partners",
+        "contract_length_months": 60,
+        "lifecycle_type": "expansion",
+        "opportunity_external_id": "OPP-00196",
+        "primary_win_reason": "Best workflow match for cross-border operations",
+        "sales_region": "apac",
+        "segment": "strategic",
+        "support_tier_requested": "premium",
+        "total_quote_amount": 11465661.8
+      },
+      {
+        "account_name": "Ironwood Distribution",
+        "contract_length_months": 60,
+        "lifecycle_type": "expansion",
+        "opportunity_external_id": "OPP-00121",
+        "primary_win_reason": "Best workflow match for cross-border operations",
+        "sales_region": "na",
+        "segment": "strategic",
+        "support_tier_requested": "premium",
+        "total_quote_amount": 11143915.87
+      },
+      {
+        "account_name": "Summit Supply Co",
+        "contract_length_months": 60,
+        "lifecycle_type": "renewal",
+        "opportunity_external_id": "OPP-01410",
+        "primary_win_reason": "Global rollout fit and clear ROI case",
+        "sales_region": "na",
+        "segment": "strategic",
+        "support_tier_requested": "enterprise",
+        "total_quote_amount": 11019173.0
+      }
+    ]
+  },
+  "status": "pass",
+  "summary": {
+    "account_count": 1000,
+    "critical_passed": true,
+    "dataset_dir": "C:\\Users\\arnis\\Documents\\CodexTrustFolder\\PricingProject\\data\\candidate",
+    "lost_count": 1629,
+    "manifest": {
+      "account_count": 1000,
+      "dataset_version": "module3_seed_v1",
+      "generation_seed": 20260414,
+      "row_counts": {
+        "accounts": 1000,
+        "competitors": 6,
+        "contract_terms": 2198,
+        "contracts": 1060,
+        "opportunities": 2715,
+        "opportunity_competitors": 4021,
+        "opportunity_line_items": 14094,
+        "price_snapshots": 6262,
+        "products": 10,
+        "usage_metrics": 6081,
+        "win_loss_details": 2715
+      },
+      "target_win_rate": 0.4
+    },
+    "noncritical_pass_rate": 1.0,
+    "opportunity_count": 2715,
+    "required_noncritical_pass_rate": 0.85,
+    "win_rate": 0.4,
+    "won_count": 1086
+  }
+}

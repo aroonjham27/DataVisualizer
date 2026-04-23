@@ -1,0 +1,35 @@
+{
+  "approved_status": "pass",
+  "evaluation_report_json": "data\\reports\\candidate_evaluation.json",
+  "evaluation_report_markdown": "data\\reports\\candidate_evaluation.md",
+  "summary": {
+    "account_count": 1000,
+    "critical_passed": true,
+    "dataset_dir": "data\\candidate",
+    "lost_count": 1629,
+    "manifest": {
+      "account_count": 1000,
+      "dataset_version": "module3_seed_v1",
+      "generation_seed": 20260414,
+      "row_counts": {
+        "accounts": 1000,
+        "competitors": 6,
+        "contract_terms": 2198,
+        "contracts": 1060,
+        "opportunities": 2715,
+        "opportunity_competitors": 4021,
+        "opportunity_line_items": 14094,
+        "price_snapshots": 6262,
+        "products": 10,
+        "usage_metrics": 6081,
+        "win_loss_details": 2715
+      },
+      "target_win_rate": 0.4
+    },
+    "noncritical_pass_rate": 1.0,
+    "opportunity_count": 2715,
+    "required_noncritical_pass_rate": 0.85,
+    "win_rate": 0.4,
+    "won_count": 1086
+  }
+}
