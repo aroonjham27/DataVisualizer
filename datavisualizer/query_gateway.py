@@ -70,7 +70,7 @@ class QueryGateway:
             query_mode="compiled_plan",
             row_limit=display_query.row_limit,
             involved_entities=display_query.involved_entities,
-            validation_notes=("Compiled from governed AnalysisPlan.", "Detected truncation with one-extra-row probing."),
+            validation_notes=("Compiled from governed AnalysisPlan.", "Performed one-extra-row truncation probe."),
         )
         return GatewayExecution(
             query_mode="compiled_plan",

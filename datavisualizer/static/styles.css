@@ -236,6 +236,18 @@ code {
   border: 1px solid rgba(13, 108, 99, 0.18);
 }
 
+.filter-summary {
+  margin-top: 12px;
+}
+
+.filter-summary h4 {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
 .action-button {
   border: 1px solid var(--line);
   background: var(--panel-strong);

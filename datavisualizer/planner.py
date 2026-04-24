@@ -50,7 +50,7 @@ class SemanticPlanner:
         normalized = _normalize(question)
         if self._is_drill_continuation(normalized):
             return self._continue_drill(question, current_state, selected_member)
-        if current_state is not None and self._is_state_filter_followup(normalized):
+        if current_state is not None and self._is_state_filter_followup(normalized, current_state):
             return self._continue_with_filter(question, normalized, current_state, selected_member)
         return self._plan_initial(question, normalized)
 
@@ -92,7 +92,10 @@ class SemanticPlanner:
             time_dimension = self._time_dimension("opportunities", "close_date")
             time_grain = "month"
             matched_terms.append("close month")
-        filters: list[PlannedFilter] = []
+        filters = self._extract_filters(
+            normalized_question,
+            self._candidate_filter_entities("opportunities", dimensions, [], time_dimension),
+        )
         join_path = self._resolve_join_path("opportunities", dimensions, filters, time_dimension)
         drill = self._select_drill_state([*dimensions, *( [time_dimension] if time_dimension else [])], "opportunity_outcome")
         chart_intent = self._select_chart_intent(measures, dimensions, time_dimension, normalized_question)
@@ -124,7 +127,10 @@ class SemanticPlanner:
         if "line role" in normalized_question:
             dimensions.append(self._dimension("opportunity_line_items", "line_role"))
             matched_terms.append("line role")
-        filters: list[PlannedFilter] = []
+        filters = self._extract_filters(
+            normalized_question,
+            self._candidate_filter_entities("opportunity_line_items", dimensions, [], None),
+        )
         join_path = self._resolve_join_path("opportunity_line_items", dimensions, filters, None)
         drill = self._select_drill_state(dimensions, "product_quote_mix")
         chart_intent = self._select_chart_intent(measures, dimensions, None, normalized_question)
@@ -191,7 +197,10 @@ class SemanticPlanner:
         if "term sequence" in normalized_question:
             dimensions.append(self._dimension("contract_terms", "term_sequence"))
             matched_terms.append("term sequence")
-        filters: list[PlannedFilter] = []
+        filters = self._extract_filters(
+            normalized_question,
+            self._candidate_filter_entities("contract_terms", dimensions, [], None),
+        )
         join_path = self._resolve_join_path("contract_terms", dimensions, filters, None)
         drill = self._select_drill_state(dimensions, "contract_structure")
         chart_intent = self._select_chart_intent(measures, dimensions, None, normalized_question)
@@ -246,9 +255,12 @@ class SemanticPlanner:
             matched_terms.append("customer segment")
         time_dimension = self._time_dimension("usage_metrics", "metric_period_start")
         time_grain = "month"
-        join_path = self._resolve_join_path("usage_metrics", dimensions, (), time_dimension)
+        filters = self._extract_filters(
+            normalized_question,
+            self._candidate_filter_entities("usage_metrics", dimensions, [], time_dimension),
+        )
+        join_path = self._resolve_join_path("usage_metrics", dimensions, filters, time_dimension)
         chart_intent = self._select_chart_intent(measures, dimensions, time_dimension, normalized_question)
-        filters = []
         if "after contract start" in normalized_question:
             warnings.append("The planner did not add an explicit post-start filter because usage rows are already contract-linked; a later SQL compiler should decide whether a stricter date predicate is needed.")
             matched_terms.append("after contract start")
@@ -389,15 +401,7 @@ class SemanticPlanner:
         current_state: AnalysisPlan,
         selected_member: DrillSelection | None = None,
     ) -> AnalysisPlan:
-        candidate_entities: list[str] = [current_state.primary_entity]
-        for field in current_state.dimensions:
-            if field.entity not in candidate_entities:
-                candidate_entities.append(field.entity)
-        for filter_ in current_state.filters:
-            if filter_.field.entity not in candidate_entities:
-                candidate_entities.append(filter_.field.entity)
-        if current_state.time_dimension is not None and current_state.time_dimension.entity not in candidate_entities:
-            candidate_entities.append(current_state.time_dimension.entity)
+        candidate_entities = self._candidate_filter_entities_for_state(current_state)
         new_filters = self._extract_filters(normalized_question, candidate_entities)
         active_selection = selected_member
         if active_selection is None and current_state.drill is not None:
@@ -675,8 +679,40 @@ class SemanticPlanner:
         )
         return any(term in normalized_question for term in usage_terms)
 
-    def _is_state_filter_followup(self, normalized_question: str) -> bool:
-        return normalized_question.startswith("just ") or normalized_question.startswith("only ")
+    def _is_state_filter_followup(self, normalized_question: str, current_state: AnalysisPlan) -> bool:
+        if normalized_question.startswith("just ") or normalized_question.startswith("only "):
+            return True
+        if " only" in f" {normalized_question}" or " for " in f" {normalized_question} ":
+            return bool(self._extract_filters(normalized_question, self._candidate_filter_entities_for_state(current_state)))
+        return False
+
+    def _candidate_filter_entities(
+        self,
+        primary_entity: str,
+        dimensions: list[PlannedField],
+        filters: list[PlannedFilter],
+        time_dimension: PlannedField | None,
+    ) -> list[str]:
+        entities: list[str] = []
+        for field in dimensions:
+            if field.entity not in entities:
+                entities.append(field.entity)
+        for filter_ in filters:
+            if filter_.field.entity not in entities:
+                entities.append(filter_.field.entity)
+        if time_dimension is not None and time_dimension.entity not in entities:
+            entities.append(time_dimension.entity)
+        if primary_entity not in entities:
+            entities.append(primary_entity)
+        return entities
+
+    def _candidate_filter_entities_for_state(self, current_state: AnalysisPlan) -> list[str]:
+        return self._candidate_filter_entities(
+            current_state.primary_entity,
+            list(current_state.dimensions),
+            list(current_state.filters),
+            current_state.time_dimension,
+        )
 
     def _filters_with_selected_member(
         self,

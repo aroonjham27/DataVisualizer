@@ -106,6 +106,7 @@ class ChatOrchestrator:
             "Default to the answer tool for normal analytics.\n"
             "Use restricted_sql only when it is explicitly available and clearly justified by a SQL-specific request.\n"
             "For conversational follow-ups, reuse the current analysis state when helpful.\n"
+            "In final responses, describe filters only when they appear in the returned tool result's plan.filters.\n"
             "For 'top 5', set row_limit to 5 and reuse the current plan.\n"
             "For 'show as table', set chart_type_override to table and reuse the current plan.\n"
             f"Routing policy: {routing.policy}.\n"

@@ -113,6 +113,41 @@ class AnswerPipelineTests(unittest.TestCase):
         self.assertIn('WHERE "t1"."product_family" = \'analytics\'', response.sql)
         self.assertIn("products_product_name", response.chart_spec.columns)
 
+    def test_embedded_segment_filter_follow_up_is_grounded_in_payload(self) -> None:
+        initial = self.service.answer("What is win rate by close month and account segment?", row_limit=20)
+
+        response = self.service.answer(
+            "What is win rate by close month for mid market only",
+            current_analysis_state=initial.plan,
+            row_limit=20,
+        )
+
+        self.assertIn(("accounts.segment", "=", "mid_market"), self._filter_signatures(response))
+        self.assertIn('WHERE "t1"."segment" = \'mid_market\'', response.sql)
+        self.assertTrue(response.rows)
+        segment_index = self._column_index(response, "accounts_segment")
+        self.assertTrue(all(row[segment_index] == "mid_market" for row in response.rows))
+        self.assertEqual(response.chart_spec.chart_type, "line")
+        self.assertIsNone(response.chart_spec.series)
+        self.assertIn("Active filter: Account Segment = mid_market", response.query_metadata.validation_notes)
+
+    def test_embedded_product_filter_follow_up_is_grounded_in_payload(self) -> None:
+        initial = self.service.answer(
+            "How do quoted discount rates and annualized quote amounts vary by product family and line role?",
+            row_limit=20,
+        )
+
+        response = self.service.answer("Show that for analytics only", current_analysis_state=initial.plan, row_limit=20)
+
+        self.assertIn(("products.product_family", "=", "analytics"), self._filter_signatures(response))
+        self.assertIn('WHERE "t1"."product_family" = \'analytics\'', response.sql)
+        self.assertTrue(response.rows)
+        family_index = self._column_index(response, "products_product_family")
+        self.assertTrue(all(row[family_index] == "analytics" for row in response.rows))
+        self.assertEqual(response.chart_spec.chart_type, "grouped_bar")
+        self.assertEqual(response.chart_spec.x, "products_product_family")
+        self.assertIn("Active filter: Product Family = analytics", response.query_metadata.validation_notes)
+
     def test_http_answer_round_trip(self) -> None:
         payload = self._post_answer(
             {
@@ -216,6 +251,15 @@ class AnswerPipelineTests(unittest.TestCase):
 
     def _post_answer(self, payload: dict[str, object], expected_status: int = 200) -> dict[str, object]:
         return self._post_json("/answer", payload, expected_status=expected_status)
+
+    def _filter_signatures(self, response) -> list[tuple[str, str, object]]:
+        return [(filter_.field.field_id, filter_.operator, filter_.value) for filter_ in response.plan.filters]
+
+    def _column_index(self, response, column_name: str) -> int:
+        for index, column in enumerate(response.columns):
+            if column.name == column_name:
+                return index
+        raise AssertionError(f"Column not found: {column_name}")
 
     def _post_json(self, path: str, payload: dict[str, object], expected_status: int = 200) -> dict[str, object]:
         PlanningRequestHandler.answer_service = self.service

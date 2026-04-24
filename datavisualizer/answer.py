@@ -80,16 +80,15 @@ class AnswerService:
         chart_spec = self._override_chart(chart_spec, columns, chart_type_override)
         warnings = self._warning_items(plan.warnings, chart_spec.warnings)
         query_metadata = execution.metadata
+        validation_notes = [*query_metadata.validation_notes, *self._active_filter_notes(plan)]
         if routing is not None and routing.restricted_sql_allowed:
-            query_metadata = QueryMetadata(
-                query_mode=query_metadata.query_mode,
-                row_limit=query_metadata.row_limit,
-                involved_entities=query_metadata.involved_entities,
-                validation_notes=(
-                    *query_metadata.validation_notes,
-                    "Restricted SQL was allowed by routing policy but compiled-plan remained the selected lane.",
-                ),
-            )
+            validation_notes.append("Restricted SQL was allowed by routing policy but compiled-plan remained the selected lane.")
+        query_metadata = QueryMetadata(
+            query_mode=query_metadata.query_mode,
+            row_limit=query_metadata.row_limit,
+            involved_entities=query_metadata.involved_entities,
+            validation_notes=tuple(validation_notes),
+        )
         return AnswerResponse(
             tool_name="answer",
             plan=plan,
@@ -220,6 +219,18 @@ class AnswerService:
         slug = "".join(character if character.isalnum() else "_" for character in message.lower()).strip("_")
         slug = "_".join(part for part in slug.split("_") if part)
         return f"{source}_{slug}"[:80]
+
+    def _active_filter_notes(self, plan: AnalysisPlan) -> tuple[str, ...]:
+        return tuple(f"Active filter: {self._format_filter(filter_)}" for filter_ in plan.filters)
+
+    def _format_filter(self, filter_: Any) -> str:
+        value = filter_.value
+        if isinstance(value, (tuple, list)):
+            value_text = ", ".join(str(item) for item in value)
+        else:
+            value_text = str(value)
+        operator = "=" if filter_.operator == "=" else filter_.operator.upper()
+        return f"{filter_.field.label} {operator} {value_text}"
 
     def _override_chart(
         self,

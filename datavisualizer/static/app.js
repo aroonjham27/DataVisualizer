@@ -246,6 +246,7 @@
       pills.appendChild(pill);
     });
     panel.appendChild(pills);
+    panel.appendChild(renderFilterSummary(data));
 
     if (data.plan && data.plan.drill && data.plan.drill.next_level) {
       const actions = document.createElement("div");
@@ -406,16 +407,22 @@
     const xField = data.chart_spec.x;
     const seriesField = data.chart_spec.series;
     const measureFields = data.chart_spec.y || [];
-    const lineMap = new Map();
+    const xValues = sortedUniqueValues(rows.map((row) => row[xField]));
+    const rawLines = new Map();
 
     rows.forEach((row, rowIndex) => {
       measureFields.forEach((measureName, measureIndex) => {
         const seriesValue = seriesField ? row[seriesField] : null;
         const key = seriesValue ? `${seriesValue} / ${measureName}` : measureName;
-        if (!lineMap.has(key)) {
-          lineMap.set(key, []);
+        if (!rawLines.has(key)) {
+          rawLines.set(key, {
+            key,
+            measureName,
+            seriesValue,
+            pointsByX: new Map(),
+          });
         }
-        lineMap.get(key).push({
+        rawLines.get(key).pointsByX.set(String(row[xField]), {
           x: row[xField],
           y: Number(row[measureName]) || 0,
           rowIndex,
@@ -424,22 +431,29 @@
       });
     });
 
-    const lines = Array.from(lineMap.entries());
-    const flatPoints = lines.flatMap(([, points]) => points);
+    const lines = Array.from(rawLines.values()).map((line) => ({
+      ...line,
+      points: xValues
+        .map((xValue) => line.pointsByX.get(String(xValue)))
+        .filter(Boolean),
+    })).filter((line) => line.points.length > 0);
+    const flatPoints = lines.flatMap((line) => line.points);
     const maxValue = Math.max(...flatPoints.map((point) => point.y), 1);
     const width = 720;
     const height = 300;
     const margin = { top: 24, right: 20, bottom: 72, left: 56 };
     const plotWidth = width - margin.left - margin.right;
     const plotHeight = height - margin.top - margin.bottom;
-    const pointCount = Math.max(rows.length - 1, 1);
+    const pointCount = Math.max(xValues.length - 1, 1);
+    const tickEvery = Math.max(1, Math.ceil(xValues.length / 6));
 
     const svg = svgEl("svg", { viewBox: `0 0 ${width} ${height}`, class: "chart-svg" });
     drawAxes(svg, width, height, margin, plotWidth, plotHeight);
 
-    lines.forEach(([key, points], lineIndex) => {
-      const pathPoints = points.map((point, pointIndex) => {
-        const x = margin.left + (plotWidth * (pointIndex / pointCount));
+    lines.forEach((line, lineIndex) => {
+      const pathPoints = line.points.map((point) => {
+        const xIndex = xValues.findIndex((value) => String(value) === String(point.x));
+        const x = margin.left + (plotWidth * (Math.max(xIndex, 0) / pointCount));
         const y = margin.top + (plotHeight - (plotHeight * (point.y / maxValue)));
         return { x, y, rowIndex: point.rowIndex };
       });
@@ -466,28 +480,62 @@
         svg.appendChild(circle);
       });
 
-      const legend = svgEl("text", {
-        x: width - 18,
-        y: margin.top + 18 + lineIndex * 16,
-        "text-anchor": "end",
-        class: "axis-label",
-      });
-      legend.textContent = truncateLabel(key, 24);
-      svg.appendChild(legend);
+      if (lines.length > 1) {
+        const legend = svgEl("text", {
+          x: width - 18,
+          y: margin.top + 18 + lineIndex * 16,
+          "text-anchor": "end",
+          class: "axis-label",
+        });
+        legend.textContent = truncateLabel(line.key, 24);
+        svg.appendChild(legend);
+      }
     });
 
-    rows.forEach((row, index) => {
+    xValues.forEach((xValue, index) => {
+      if (index % tickEvery !== 0 && index !== xValues.length - 1) {
+        return;
+      }
       const label = svgEl("text", {
         x: margin.left + (plotWidth * (index / pointCount)),
         y: height - 24,
         "text-anchor": "middle",
         class: "axis-label",
       });
-      label.textContent = truncateLabel(String(row[xField]), 12);
+      label.textContent = formatMonthLabel(xValue);
       svg.appendChild(label);
     });
 
     return svg;
+  }
+
+  function renderFilterSummary(data) {
+    const filters = data.plan && Array.isArray(data.plan.filters) ? data.plan.filters : [];
+    const section = document.createElement("div");
+    section.className = "filter-summary";
+    if (filters.length === 0) {
+      return section;
+    }
+    const heading = document.createElement("h4");
+    heading.textContent = "Active Filters";
+    section.appendChild(heading);
+    const list = document.createElement("div");
+    list.className = "metadata-list";
+    filters.forEach((filter) => {
+      const pill = document.createElement("div");
+      pill.className = "metadata-pill";
+      pill.textContent = formatFilter(filter);
+      list.appendChild(pill);
+    });
+    section.appendChild(list);
+    return section;
+  }
+
+  function formatFilter(filter) {
+    const label = filter.field && filter.field.label ? filter.field.label : "Filter";
+    const operator = filter.operator === "=" ? "=" : String(filter.operator || "").toUpperCase();
+    const value = Array.isArray(filter.value) ? filter.value.join(", ") : filter.value;
+    return `${label} ${operator} ${value}`;
   }
 
   function renderTable(data) {
@@ -624,6 +672,25 @@
 
   function unique(values) {
     return Array.from(new Set(values));
+  }
+
+  function sortedUniqueValues(values) {
+    return unique(values.filter((value) => value !== null && value !== undefined && value !== "")).sort((left, right) => {
+      const leftTime = Date.parse(left);
+      const rightTime = Date.parse(right);
+      if (!Number.isNaN(leftTime) && !Number.isNaN(rightTime)) {
+        return leftTime - rightTime;
+      }
+      return String(left).localeCompare(String(right));
+    });
+  }
+
+  function formatMonthLabel(value) {
+    const parsed = new Date(value);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed.toLocaleDateString(undefined, { month: "short", year: "numeric", timeZone: "UTC" });
+    }
+    return truncateLabel(String(value), 12);
   }
 
   function truncateLabel(value, maxLength) {

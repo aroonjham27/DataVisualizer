@@ -66,6 +66,25 @@ class UiContractTests(unittest.TestCase):
         self.assertEqual(selection.field.field_id, "accounts.segment")
         self.assertEqual(selection.values, ("enterprise",))
 
+    def test_line_chart_view_model_dedupes_and_sorts_time_axis(self) -> None:
+        chart_spec = ChartSpec(chart_type="line", title="Win Rate", x="close_month", y=("win_rate",), series="segment")
+        columns = (
+            ResultColumn("close_month", "Close Month", "date", ("opportunities.close_date",), "time"),
+            ResultColumn("segment", "Segment", "string", ("accounts.segment",), "dimension"),
+            ResultColumn("win_rate", "Win Rate", "number", ("opportunities.win_rate",), "measure"),
+        )
+        rows = (
+            ("2025-02-01", "mid_market", 0.6),
+            ("2025-01-01", "mid_market", 0.5),
+            ("2025-02-01", "mid_market", 0.7),
+        )
+
+        view_model = build_chart_view_model(chart_spec, columns, rows)
+
+        self.assertEqual(view_model["x_values"], ("2025-01-01", "2025-02-01"))
+        self.assertEqual(len(view_model["lines"]), 1)
+        self.assertEqual([point["x"] for point in view_model["lines"][0]["points"]], ["2025-01-01", "2025-02-01"])
+
 
 class UiHttpTests(unittest.TestCase):
     @classmethod
@@ -107,6 +126,7 @@ class UiHttpTests(unittest.TestCase):
 
         self.assertIn("sendUserMessage", script)
         self.assertIn("buildSelectedMember", script)
+        self.assertIn("Active Filters", script)
         self.assertIn(".chat-thread", styles)
 
     def test_ui_still_integrates_through_chat_contract(self) -> None:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import Any, Sequence
+from typing import Any, Iterable, Sequence
 
 from .contracts import ChartSpec, DrillSelection, PlannedField, ResultColumn
 
@@ -69,26 +69,33 @@ def build_chart_view_model(
             "bars": tuple(bars),
         }
     if chart_spec.chart_type == "line":
-        lines: dict[str, list[dict[str, Any]]] = {}
+        x_values = _sorted_unique(record.get(chart_spec.x or "") for record in records)
+        lines: dict[str, dict[str, dict[str, Any]]] = {}
         for index, record in enumerate(records):
             series_value = record.get(chart_spec.series) if chart_spec.series else None
             for measure_name in chart_spec.y:
                 key = measure_name
                 if series_value not in (None, ""):
                     key = f"{series_value}:{measure_name}"
-                lines.setdefault(key, []).append(
-                    {
-                        "x": record.get(chart_spec.x or ""),
-                        "y": record.get(measure_name),
-                        "row_index": index,
-                    }
-                )
+                point = {
+                    "x": record.get(chart_spec.x or ""),
+                    "y": record.get(measure_name),
+                    "row_index": index,
+                }
+                lines.setdefault(key, {})[str(point["x"])] = point
         return {
             "chart_type": "line",
             "x": chart_spec.x,
+            "x_values": tuple(x_values),
             "series": chart_spec.series,
             "y": tuple(chart_spec.y),
-            "lines": tuple({"key": key, "points": tuple(points)} for key, points in lines.items()),
+            "lines": tuple(
+                {
+                    "key": key,
+                    "points": tuple(point_by_x[str(x_value)] for x_value in x_values if str(x_value) in point_by_x),
+                }
+                for key, point_by_x in lines.items()
+            ),
         }
     return {"chart_type": chart_spec.chart_type}
 
@@ -143,3 +150,8 @@ def _select_drill_column(chart_spec: ChartSpec, columns: Sequence[ResultColumn])
     if x_column is not None:
         return x_column
     return series_column
+
+
+def _sorted_unique(values: Iterable[Any]) -> tuple[Any, ...]:
+    filtered = [value for value in values if value not in (None, "")]
+    return tuple(sorted(dict.fromkeys(filtered), key=lambda value: str(value)))
