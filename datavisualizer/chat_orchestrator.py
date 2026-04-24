@@ -107,6 +107,7 @@ class ChatOrchestrator:
             "Use restricted_sql only when it is explicitly available and clearly justified by a SQL-specific request.\n"
             "For conversational follow-ups, reuse the current analysis state when helpful.\n"
             "In final responses, describe filters only when they appear in the returned tool result's plan.filters.\n"
+            "After a governed tool result is available, summarize that completed result and do not request another tool call.\n"
             "For 'top 5', set row_limit to 5 and reuse the current plan.\n"
             "For 'show as table', set chart_type_override to table and reuse the current plan.\n"
             f"Routing policy: {routing.policy}.\n"
@@ -239,9 +240,18 @@ class ChatOrchestrator:
                 "content": json.dumps(tool_result),
             }
         )
+        follow_up_messages.append(
+            {
+                "role": "user",
+                "content": (
+                    "Summarize the completed governed tool result for the user. "
+                    "Do not call another tool. Do not describe filters unless they appear in plan.filters."
+                ),
+            }
+        )
         final = self.llm_client.generate(follow_up_messages, tools=None, tool_choice=None)
         if final.message.tool_calls:
-            raise RequestValidationError("Final assistant turn must not contain additional tool calls.")
+            return self._fallback_summary(tool_result)
         if final.message.content.strip():
             return final.message.content.strip()
         return self._fallback_summary(tool_result)

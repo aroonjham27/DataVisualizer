@@ -11,7 +11,7 @@ from unittest.mock import patch
 from datavisualizer.answer import AnswerService
 from datavisualizer.api import PlanningRequestHandler, handle_chat_request
 from datavisualizer.chat_orchestrator import ChatOrchestrator
-from datavisualizer.contracts import ChatMessage, ChatRequest, ConversationState, RoutingControls
+from datavisualizer.contracts import AnalysisPlan, ChatMessage, ChatRequest, ConversationState, RoutingControls
 from datavisualizer.llm_client import (
     FakeLlmClient,
     LlmAssistantMessage,
@@ -20,7 +20,45 @@ from datavisualizer.llm_client import (
     OpenAiCompatibleLlmClient,
     ProviderConfig,
 )
-from datavisualizer.tool_registry import ToolRegistry
+from datavisualizer.tool_registry import ToolDefinition, ToolRegistry
+
+
+class DeterministicAnswerOnlyTools:
+    def __init__(self, answer_service: AnswerService):
+        self.answer_service = answer_service
+        self.answer_tool = ToolDefinition(
+            name="answer",
+            description="Test-only governed analytics tool.",
+            input_schema={"type": "object", "properties": {"question": {"type": "string"}}, "required": ["question"]},
+            output_schema={"type": "object"},
+        )
+
+    def tools_for_chat(self, latest_user_message: str, routing: RoutingControls) -> tuple[ToolDefinition, ...]:
+        return (self.answer_tool,)
+
+    def execute(self, tool_name: str, arguments: dict[str, object]) -> dict[str, object]:
+        if tool_name != "answer":
+            raise AssertionError(f"Unexpected tool: {tool_name}")
+        current_state = None
+        if isinstance(arguments.get("current_analysis_state"), dict):
+            current_state = AnalysisPlan.from_dict(arguments["current_analysis_state"])
+        plan = self.answer_service.planner.plan(str(arguments.get("question", "")), current_state=current_state)
+        rows = [{"example": "value"}]
+        return {
+            "ok": True,
+            "tool_name": "answer",
+            "data": {
+                "plan": plan.to_dict(),
+                "query_mode": "compiled_plan",
+                "compiled_sql": "SELECT 1 AS example",
+                "rows": rows,
+                "columns": ("example",),
+                "chart_spec": {"chart_type": "table"},
+                "limit": {"row_limit": 100, "returned_rows": len(rows), "truncated": False},
+                "warnings": (),
+            },
+            "error": None,
+        }
 
 
 class ProviderConfigTests(unittest.TestCase):
@@ -80,6 +118,11 @@ class ChatOrchestratorTests(unittest.TestCase):
     def _scripted_orchestrator(self, responses: list[LlmResponse]) -> ChatOrchestrator:
         return ChatOrchestrator(self.answer_service, FakeLlmClient(responses), max_iterations=4)
 
+    def _scripted_orchestrator_with_deterministic_tools(self, responses: list[LlmResponse]) -> ChatOrchestrator:
+        orchestrator = self._scripted_orchestrator(responses)
+        orchestrator.tools = DeterministicAnswerOnlyTools(self.answer_service)
+        return orchestrator
+
     def test_chat_executes_answer_tool_for_normal_question(self) -> None:
         orchestrator = self._scripted_orchestrator(
             [
@@ -120,6 +163,53 @@ class ChatOrchestratorTests(unittest.TestCase):
 
         self.assertEqual(second.executed_tool_name, "answer")
         self.assertIn("products.product_name", [field.field_id for field in second.conversation_state.current_analysis_state.dimensions])
+
+    def test_final_turn_tool_call_falls_back_without_losing_tool_result(self) -> None:
+        orchestrator = self._scripted_orchestrator_with_deterministic_tools(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),))
+        )
+
+        self.assertEqual(response.executed_tool_name, "answer")
+        self.assertEqual(response.assistant_message, "Returned 1 rows using compiled_plan.")
+        self.assertTrue(response.tool_result["ok"])
+        self.assertEqual(response.tool_result["data"]["query_mode"], "compiled_plan")
+        self.assertIn("chart_spec", response.tool_result["data"])
+        self.assertIn("rows", response.tool_result["data"])
+        final_prompt = orchestrator.llm_client.calls[1]["messages"][-1]["content"]
+        self.assertIn("Do not call another tool", final_prompt)
+
+    def test_go_deeper_final_turn_tool_call_falls_back_successfully(self) -> None:
+        orchestrator = self._scripted_orchestrator_with_deterministic_tools(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Initial answer ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-3", "answer", {}),))),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="How do quoted discount rates and annualized quote amounts vary by product family and line role?"),))
+        )
+
+        second = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="Go one level deeper"),),
+                conversation_state=first.conversation_state,
+            )
+        )
+
+        self.assertEqual(second.executed_tool_name, "answer")
+        self.assertEqual(second.assistant_message, "Returned 1 rows using compiled_plan.")
+        self.assertTrue(second.tool_result["ok"])
+        self.assertIn("products.product_name", [field.field_id for field in second.conversation_state.current_analysis_state.dimensions])
+        self.assertIn("chart_spec", second.tool_result["data"])
 
     def test_chat_supports_top_five_follow_up(self) -> None:
         orchestrator = self._scripted_orchestrator(
