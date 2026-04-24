@@ -168,29 +168,15 @@
     }
     const data = toolEnvelope.data;
 
-    if (Array.isArray(data.warnings) && data.warnings.length > 0) {
-      const warnings = document.createElement("section");
-      warnings.className = "subpanel";
-      const heading = document.createElement("h3");
-      heading.textContent = "Warnings";
-      warnings.appendChild(heading);
-      const list = document.createElement("div");
-      list.className = "warning-list";
-      data.warnings.forEach((warning) => {
-        const pill = document.createElement("div");
-        pill.className = "warning-pill";
-        pill.textContent = warning.message;
-        list.appendChild(pill);
-      });
-      warnings.appendChild(list);
-      wrapper.appendChild(warnings);
-    }
+    const inspector = buildInspectorModel(payload, data);
+    wrapper.appendChild(renderWarningSummary(inspector));
 
     const grid = document.createElement("div");
     grid.className = "assistant-grid";
     grid.appendChild(renderResultPanel(data));
     grid.appendChild(renderMetaPanel(payload, data));
     wrapper.appendChild(grid);
+    wrapper.appendChild(renderInspector(inspector));
 
     return wrapper;
   }
@@ -207,9 +193,14 @@
 
     const chartCopy = document.createElement("p");
     chartCopy.className = "chart-copy";
-    chartCopy.textContent = data.plan && data.plan.drill && data.plan.drill.next_level
-      ? "Click or double-click a chart mark to drill one level deeper."
-      : "Rendered from the backend chart spec.";
+    const fallbackReasons = chartFallbackReasons(data);
+    if (fallbackReasons.length > 0) {
+      chartCopy.textContent = `Table view selected because ${fallbackReasons.join(" ")}`;
+    } else {
+      chartCopy.textContent = data.plan && data.plan.drill && data.plan.drill.next_level
+        ? "Click or double-click a chart mark to drill one level deeper."
+        : "Rendered from the backend chart spec.";
+    }
     chartShell.appendChild(chartCopy);
 
     chartShell.appendChild(renderChart(data));
@@ -536,6 +527,254 @@
     const operator = filter.operator === "=" ? "=" : String(filter.operator || "").toUpperCase();
     const value = Array.isArray(filter.value) ? filter.value.join(", ") : filter.value;
     return `${label} ${operator} ${value}`;
+  }
+
+  function buildInspectorModel(payload, data) {
+    const queryMetadata = data.query_metadata || {};
+    const routing = data.routing || {};
+    const limit = data.limit || {};
+    const chartSpec = data.chart_spec || {};
+    return {
+      executedTool: payload.executed_tool_name || data.tool_name || "unknown",
+      queryMode: data.query_mode || "unknown",
+      routingPolicy: routing.policy || "not provided",
+      sql: data.sql || "",
+      filters: (data.plan && Array.isArray(data.plan.filters)) ? data.plan.filters.map(filterSummary) : [],
+      involvedEntities: Array.isArray(queryMetadata.involved_entities) ? queryMetadata.involved_entities : [],
+      rowLimit: limit.row_limit,
+      returnedRows: limit.returned_rows,
+      truncated: Boolean(limit.truncated),
+      chartType: chartSpec.chart_type || "none",
+      chartTitle: chartSpec.title || "",
+      fallbackReasons: chartFallbackReasons(data),
+      plan: data.plan ? planSummary(data.plan) : null,
+      warningGroups: warningGroups(data),
+    };
+  }
+
+  function renderWarningSummary(inspector) {
+    const groups = inspector.warningGroups;
+    const hasWarnings = Object.values(groups).some((items) => items.length > 0);
+    const wrapper = document.createElement("section");
+    wrapper.className = "subpanel notice-panel";
+    if (!hasWarnings) {
+      wrapper.hidden = true;
+      return wrapper;
+    }
+    const heading = document.createElement("h3");
+    heading.textContent = "Warnings And Notes";
+    wrapper.appendChild(heading);
+    [
+      ["Plan warnings", groups.plan],
+      ["Chart warnings", groups.chart],
+      ["Fallback explanations", groups.fallback],
+      ["Routing notes", groups.routing],
+      ["Query notes", groups.query],
+    ].forEach(([label, items]) => {
+      if (!items.length) {
+        return;
+      }
+      const group = document.createElement("div");
+      group.className = "notice-group";
+      const title = document.createElement("h4");
+      title.textContent = label;
+      group.appendChild(title);
+      const list = document.createElement("div");
+      list.className = "warning-list";
+      items.forEach((item) => {
+        const pill = document.createElement("div");
+        pill.className = "warning-pill";
+        pill.textContent = item.message || item;
+        if (item.code) {
+          pill.title = `${item.source}:${item.code}`;
+        }
+        list.appendChild(pill);
+      });
+      group.appendChild(list);
+      wrapper.appendChild(group);
+    });
+    return wrapper;
+  }
+
+  function renderInspector(inspector) {
+    const details = document.createElement("details");
+    details.className = "subpanel inspector";
+    const summary = document.createElement("summary");
+    summary.textContent = "What did the system do?";
+    details.appendChild(summary);
+
+    const pills = document.createElement("div");
+    pills.className = "metadata-list inspector-pills";
+    [
+      `Tool: ${inspector.executedTool}`,
+      `Query mode: ${inspector.queryMode}`,
+      `Routing: ${inspector.routingPolicy}`,
+      `Chart: ${inspector.chartType}`,
+      `Rows: ${inspector.returnedRows || 0}/${inspector.rowLimit || 0}`,
+      inspector.truncated ? "Truncated" : "Full result",
+    ].forEach((text) => {
+      const pill = document.createElement("div");
+      pill.className = "metadata-pill";
+      pill.textContent = text;
+      pills.appendChild(pill);
+    });
+    details.appendChild(pills);
+
+    if (inspector.filters.length > 0) {
+      details.appendChild(renderInspectorSection("Applied Filters", inspector.filters.map((filter) => filter.text)));
+    }
+    if (inspector.involvedEntities.length > 0) {
+      details.appendChild(renderInspectorSection("Involved Entities", inspector.involvedEntities));
+    }
+    if (inspector.fallbackReasons.length > 0) {
+      details.appendChild(renderInspectorSection("Chart Fallback", inspector.fallbackReasons));
+    }
+    if (inspector.plan) {
+      details.appendChild(renderPlanSummary(inspector.plan));
+    }
+    if (inspector.sql) {
+      const sqlSection = document.createElement("section");
+      sqlSection.className = "inspector-section";
+      const heading = document.createElement("h4");
+      heading.textContent = "SQL Executed";
+      sqlSection.appendChild(heading);
+      const pre = document.createElement("pre");
+      pre.className = "sql-block";
+      pre.textContent = inspector.sql;
+      sqlSection.appendChild(pre);
+      details.appendChild(sqlSection);
+    }
+    return details;
+  }
+
+  function renderInspectorSection(title, values) {
+    const section = document.createElement("section");
+    section.className = "inspector-section";
+    const heading = document.createElement("h4");
+    heading.textContent = title;
+    section.appendChild(heading);
+    const list = document.createElement("ul");
+    list.className = "inspector-list";
+    values.forEach((value) => {
+      const item = document.createElement("li");
+      item.textContent = value;
+      list.appendChild(item);
+    });
+    section.appendChild(list);
+    return section;
+  }
+
+  function renderPlanSummary(plan) {
+    const section = document.createElement("section");
+    section.className = "inspector-section";
+    const heading = document.createElement("h4");
+    heading.textContent = "Analysis Plan";
+    section.appendChild(heading);
+    const rows = [
+      ["Question", plan.question],
+      ["Status", plan.status],
+      ["Primary entity", plan.primaryEntity],
+      ["Measures", plan.measures.join(", ")],
+      ["Dimensions", plan.dimensions.join(", ") || "none"],
+      ["Time", plan.timeDimension ? `${plan.timeDimension} (${plan.timeGrain || "day"})` : "none"],
+    ];
+    const dl = document.createElement("dl");
+    dl.className = "inspector-definition-list";
+    rows.forEach(([label, value]) => {
+      const dt = document.createElement("dt");
+      dt.textContent = label;
+      const dd = document.createElement("dd");
+      dd.textContent = value || "none";
+      dl.appendChild(dt);
+      dl.appendChild(dd);
+    });
+    section.appendChild(dl);
+    return section;
+  }
+
+  function warningGroups(data) {
+    const groups = {
+      plan: [],
+      chart: [],
+      fallback: [],
+      routing: [],
+      query: [],
+    };
+    (data.warnings || []).forEach((warning) => {
+      const item = {
+        code: warning.code || "",
+        source: warning.source || "query",
+        message: businessWarningText(warning),
+      };
+      if (item.source === "plan") {
+        groups.plan.push(item);
+      } else if (item.source === "chart") {
+        groups.chart.push(item);
+      } else {
+        groups.query.push(item);
+      }
+    });
+    chartFallbackReasons(data).forEach((reason) => groups.fallback.push(reason));
+    const notes = data.query_metadata && Array.isArray(data.query_metadata.validation_notes)
+      ? data.query_metadata.validation_notes
+      : [];
+    notes.forEach((note) => {
+      if (String(note).startsWith("Active filter:")) {
+        return;
+      }
+      if (String(note).toLowerCase().includes("routing") || String(note).toLowerCase().includes("restricted sql was allowed")) {
+        groups.routing.push(note);
+      } else {
+        groups.query.push({ code: "", source: "query", message: note });
+      }
+    });
+    return groups;
+  }
+
+  function businessWarningText(warning) {
+    const message = warning.message || "";
+    if (warning.source === "chart") {
+      return `Chart note: ${message}`;
+    }
+    if (warning.source === "plan") {
+      return `Plan note: ${message}`;
+    }
+    return message;
+  }
+
+  function chartFallbackReasons(data) {
+    const chartSpec = data.chart_spec || {};
+    if (chartSpec.chart_type !== "table" || !Array.isArray(chartSpec.warnings)) {
+      return [];
+    }
+    return chartSpec.warnings;
+  }
+
+  function planSummary(plan) {
+    return {
+      question: plan.question || "",
+      status: plan.status || "",
+      primaryEntity: plan.primary_entity || "",
+      measures: (plan.measures || []).map((measure) => fieldId(measure.field)),
+      dimensions: (plan.dimensions || []).map(fieldId),
+      timeDimension: plan.time_dimension ? fieldId(plan.time_dimension) : "",
+      timeGrain: plan.time_grain || "",
+    };
+  }
+
+  function filterSummary(filter) {
+    return {
+      text: formatFilter(filter),
+      fieldId: fieldId(filter.field),
+      source: filter.source || "question",
+    };
+  }
+
+  function fieldId(field) {
+    if (!field) {
+      return "";
+    }
+    return field.entity && field.name ? `${field.entity}.${field.name}` : "";
   }
 
   function renderTable(data) {

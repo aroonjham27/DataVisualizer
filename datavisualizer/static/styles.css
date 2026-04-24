@@ -216,6 +216,29 @@ code {
   gap: 8px;
 }
 
+.notice-panel {
+  display: grid;
+  gap: 10px;
+}
+
+.notice-panel[hidden] {
+  display: none;
+}
+
+.notice-group {
+  display: grid;
+  gap: 6px;
+}
+
+.notice-group h4,
+.inspector-section h4 {
+  margin: 0;
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
 .warning-pill,
 .metadata-pill,
 .action-button {
@@ -258,6 +281,70 @@ code {
 .action-button:hover,
 .action-button:focus-visible {
   border-color: var(--accent);
+}
+
+.inspector {
+  display: grid;
+  gap: 12px;
+}
+
+.inspector summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.inspector summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.inspector-pills {
+  margin-top: 12px;
+}
+
+.inspector-section {
+  margin-top: 14px;
+  display: grid;
+  gap: 8px;
+}
+
+.inspector-list {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.inspector-definition-list {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.25fr) minmax(0, 1fr);
+  gap: 8px 12px;
+  margin: 0;
+}
+
+.inspector-definition-list dt {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.inspector-definition-list dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sql-block {
+  margin: 0;
+  padding: 12px;
+  max-height: 320px;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #111827;
+  color: #f8fafc;
+  font-family: "Consolas", "Courier New", monospace;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
 }
 
 .chart-shell {

@@ -21,6 +21,7 @@ This roadmap tracks the path from the current pilot backend to a chat-first visu
 - [x] Phase 1 tool boundary completed
 - [x] Phase 2 chat orchestration completed
 - [x] Phase 3 first chat UI completed
+- [x] Phase 4 explainability and inspection completed
 
 ---
 
@@ -91,14 +92,14 @@ Goal: provide the user-facing chat experience that renders both data and visuals
 
 Goal: make the system transparent and trustworthy.
 
-- [ ] Add a "what did the system do?" panel
-  - [ ] plan used
-  - [ ] query mode used
-  - [ ] SQL executed
-  - [ ] filters applied
-  - [ ] entities involved
-- [ ] Add user-visible warning banners
-- [ ] Add chart fallback explanations
+- [x] Add a "what did the system do?" panel
+  - [x] plan used
+  - [x] query mode used
+  - [x] SQL executed
+  - [x] filters applied
+  - [x] entities involved
+- [x] Add user-visible warning banners
+- [x] Add chart fallback explanations
 
 ---
 
@@ -166,8 +167,8 @@ MVP is complete when all of the following are true:
 
 ## Suggested immediate next task
 
-Phase 3 is complete. Move next to **Phase 4**, focused on explainability and inspection:
+Phase 4 is complete. Move next to **Phase 5**, focused on the product evaluation harness:
 
-- [ ] what did the system do panel
-- [ ] user-visible warning banners and fallback explanations
-- [ ] clearer SQL / plan / filter inspection surface
+- [ ] curated benchmark question set
+- [ ] multi-turn drill-down evaluation
+- [ ] routing and fallback-quality evaluation

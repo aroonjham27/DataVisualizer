@@ -14,6 +14,7 @@ This repository now contains:
 - a governed restricted-SQL gateway for future fallback tooling
 - a provider-agnostic chat orchestrator with env-configured live LLM support
 - a minimal single-page chat UI served by the existing Python backend
+- a compact per-response inspection surface for query mode, plan, SQL, filters, entities, limits, warnings, and chart fallbacks
 - a standard-library test suite under `tests/`
 
 ## Running the project
@@ -36,7 +37,7 @@ The server currently exposes:
 
 Every tool-facing endpoint returns a stable envelope with `ok`, `tool_name`, `data`, and `error`.
 
-`/answer` returns explicit routing metadata, query mode, semantic result metadata, rows, true truncation status, structured warnings, and a renderer-agnostic chart spec. Chart specs are row-aware and may fall back to `table` when a visual shape is empty, sparse, too wide, or has too many categories.
+`/answer` returns explicit routing metadata, query mode, semantic result metadata, rows, true truncation status, structured warnings, and a renderer-agnostic chart spec. Chart specs are row-aware and may fall back to `table` when a visual shape is empty, sparse, too wide, or has too many categories. The UI inspector derives from this same payload rather than a separate debug endpoint.
 
 `/chat` sits on top of the governed tools instead of replacing them. The orchestrator exposes:
 
@@ -49,6 +50,8 @@ The frontend stack is intentionally minimal:
 
 - plain HTML, CSS, and browser JavaScript
 - inline SVG rendering for `line`, `bar`, and `grouped_bar`
+- grouped warning and fallback explanation rendering
+- a collapsible "What did the system do?" inspector on each assistant answer
 - no package manager
 - no asset build step
 - no separate frontend server
@@ -85,7 +88,7 @@ The browser UI keeps the same governed flow:
 1. user sends a message to `POST /chat`
 2. `/chat` calls the live orchestrator
 3. the orchestrator chooses governed backend tools
-4. the UI renders assistant text, warnings, chart spec, and result table
+4. the UI renders assistant text, grouped warnings, chart spec, fallback reasons, result table, metadata, and inspector details
 5. chart clicks send a selected-member drill payload back through `POST /chat`
 
 ## Data
@@ -106,7 +109,7 @@ This repository includes the approved canonical synthetic seed copied from `../P
 - [data/README.md](data/README.md): provenance and scope of the imported pricing seed
 - `data/seed/`: approved canonical seed CSVs and manifests copied from `PricingProject`
 - `data/reports/`: evaluation reports copied to preserve seed approval context
-- `datavisualizer/`: semantic-model loader, typed contracts, planner logic, SQL compiler, query gateway, answer service, execution harness, chart specs, LLM adapter, tool registry, chat orchestrator, UI contract helpers, static SPA assets, and minimal API
+- `datavisualizer/`: semantic-model loader, typed contracts, planner logic, SQL compiler, query gateway, answer service, execution harness, chart specs, LLM adapter, tool registry, chat orchestrator, UI contract and inspector helpers, static SPA assets, and minimal API
 - `tests/`: stdlib planner, compiler, answer pipeline, restricted SQL, chat orchestration, UI contract, and API tests
 - [AGENTS.md](AGENTS.md): concise repository instructions for agents
 - [CONTRIBUTING.md](CONTRIBUTING.md): contribution workflow, planning discipline, and verification expectations
@@ -126,4 +129,4 @@ For this phase, `/answer` still selects the compiled-plan lane by default and re
 
 The chat orchestrator preserves that posture. It uses live-model interpretation only to choose and parameterize governed tools. Tool execution itself remains deterministic and backend-controlled.
 
-The user-facing SPA preserves the same posture. It renders governed results from `/chat`, displays warnings clearly, and uses selected-member drill payloads rather than any raw-query escape hatch.
+The user-facing SPA preserves the same posture. It renders governed results from `/chat`, displays warnings and fallback reasons clearly, shows active filters and SQL in a collapsible inspector, and uses selected-member drill payloads rather than any raw-query escape hatch.

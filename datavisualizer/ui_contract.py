@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-from typing import Any, Iterable, Sequence
+from typing import Any, Iterable, Mapping, Sequence
 
 from .contracts import ChartSpec, DrillSelection, PlannedField, ResultColumn
 
@@ -139,6 +139,38 @@ def drill_selection_payload(
     return asdict(selection) if selection else None
 
 
+def build_inspector_view_model(tool_data: Mapping[str, Any]) -> dict[str, Any]:
+    """Shape an existing governed tool result for the UI inspector."""
+
+    plan = _as_mapping(tool_data.get("plan"))
+    query_metadata = _as_mapping(tool_data.get("query_metadata"))
+    routing = _as_mapping(tool_data.get("routing"))
+    limit = _as_mapping(tool_data.get("limit"))
+    chart_spec = _as_mapping(tool_data.get("chart_spec"))
+    filters = _filter_view_models(plan.get("filters", ()) if plan else ())
+    warning_groups = _warning_groups(tool_data, chart_spec, query_metadata)
+    return {
+        "tool_name": tool_data.get("tool_name"),
+        "query_mode": tool_data.get("query_mode"),
+        "routing_policy": routing.get("policy") if routing else None,
+        "sql": tool_data.get("sql", ""),
+        "applied_filters": filters,
+        "involved_entities": tuple(query_metadata.get("involved_entities", ())) if query_metadata else (),
+        "limit": {
+            "row_limit": limit.get("row_limit") if limit else None,
+            "returned_rows": limit.get("returned_rows") if limit else None,
+            "truncated": bool(limit.get("truncated", False)) if limit else False,
+        },
+        "chart": {
+            "chart_type": chart_spec.get("chart_type") if chart_spec else None,
+            "title": chart_spec.get("title") if chart_spec else None,
+            "fallback_reasons": tuple(chart_spec.get("warnings", ())) if chart_spec and chart_spec.get("chart_type") == "table" else (),
+        },
+        "analysis_plan": _analysis_plan_summary(plan),
+        "warning_groups": warning_groups,
+    }
+
+
 def _select_drill_column(chart_spec: ChartSpec, columns: Sequence[ResultColumn]) -> ResultColumn | None:
     by_name = {column.name: column for column in columns}
     x_column = by_name.get(chart_spec.x or "")
@@ -155,3 +187,95 @@ def _select_drill_column(chart_spec: ChartSpec, columns: Sequence[ResultColumn])
 def _sorted_unique(values: Iterable[Any]) -> tuple[Any, ...]:
     filtered = [value for value in values if value not in (None, "")]
     return tuple(sorted(dict.fromkeys(filtered), key=lambda value: str(value)))
+
+
+def _as_mapping(value: Any) -> Mapping[str, Any]:
+    return value if isinstance(value, Mapping) else {}
+
+
+def _analysis_plan_summary(plan: Mapping[str, Any]) -> dict[str, Any] | None:
+    if not plan:
+        return None
+    return {
+        "question": plan.get("question"),
+        "status": plan.get("status"),
+        "primary_entity": plan.get("primary_entity"),
+        "measures": tuple(_field_id(item.get("field", {})) for item in plan.get("measures", ())),
+        "dimensions": tuple(_field_id(item) for item in plan.get("dimensions", ())),
+        "time_dimension": _field_id(plan.get("time_dimension")) if plan.get("time_dimension") else None,
+        "time_grain": plan.get("time_grain"),
+        "matched_terms": tuple(plan.get("matched_terms", ())),
+    }
+
+
+def _filter_view_models(filters: Iterable[Any]) -> tuple[dict[str, Any], ...]:
+    return tuple(_filter_view_model(filter_) for filter_ in filters)
+
+
+def _filter_view_model(filter_: Any) -> dict[str, Any]:
+    item = _as_mapping(filter_)
+    field = _as_mapping(item.get("field"))
+    value = item.get("value")
+    operator = item.get("operator", "")
+    value_text = ", ".join(str(part) for part in value) if isinstance(value, (list, tuple)) else str(value)
+    label = field.get("label") or _field_id(field) or "Filter"
+    return {
+        "field_id": _field_id(field),
+        "label": label,
+        "operator": operator,
+        "value": value,
+        "source": item.get("source", "question"),
+        "text": f"{label} {'=' if operator == '=' else str(operator).upper()} {value_text}",
+    }
+
+
+def _warning_groups(
+    tool_data: Mapping[str, Any],
+    chart_spec: Mapping[str, Any],
+    query_metadata: Mapping[str, Any],
+) -> dict[str, tuple[dict[str, Any], ...] | tuple[str, ...]]:
+    grouped: dict[str, list[dict[str, Any]] | list[str]] = {
+        "plan": [],
+        "chart": [],
+        "fallback": [],
+        "routing": [],
+        "query": [],
+    }
+    for warning in tool_data.get("warnings", ()):
+        item = _as_mapping(warning)
+        source = item.get("source", "query")
+        normalized = {
+            "code": item.get("code", ""),
+            "source": source,
+            "message": item.get("message", ""),
+        }
+        if source == "plan":
+            grouped["plan"].append(normalized)  # type: ignore[union-attr]
+        elif source == "chart":
+            grouped["chart"].append(normalized)  # type: ignore[union-attr]
+        else:
+            grouped["query"].append(normalized)  # type: ignore[union-attr]
+
+    if chart_spec.get("chart_type") == "table":
+        for reason in chart_spec.get("warnings", ()):
+            grouped["fallback"].append(str(reason))  # type: ignore[union-attr]
+
+    for note in query_metadata.get("validation_notes", ()):
+        text = str(note)
+        if text.startswith("Active filter:"):
+            continue
+        if "routing" in text.lower() or "restricted sql was allowed" in text.lower():
+            grouped["routing"].append(text)  # type: ignore[union-attr]
+        else:
+            grouped["query"].append({"code": "", "source": "query", "message": text})  # type: ignore[union-attr]
+
+    return {key: tuple(value) for key, value in grouped.items()}
+
+
+def _field_id(field: Any) -> str:
+    item = _as_mapping(field)
+    entity = item.get("entity")
+    name = item.get("name")
+    if entity and name:
+        return f"{entity}.{name}"
+    return ""

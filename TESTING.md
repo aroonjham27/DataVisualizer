@@ -46,6 +46,9 @@ py -3 -m unittest discover -s tests -t .
 - static UI asset serving
 - UI contract helpers for chart view-model shaping
 - selected-member drill payload generation from rendered chart rows
+- inspector view-model shaping from governed answer and chat tool payloads
+- grouped warning, routing-note, query-note, and chart fallback explanation coverage
+- active filter, SQL, entity, row-limit, truncation, and chart-type visibility in inspector tests
 
 ## Expectations
 
@@ -59,6 +62,7 @@ py -3 -m unittest discover -s tests -t .
 - Keep most orchestration tests on the fake client so behavior stays deterministic.
 - Gate live-model smoke tests behind environment checks so they are optional for normal local runs.
 - Keep UI tests lightweight and contract-focused unless the repo gains a browser automation harness.
+- Keep inspector tests derived from existing `/chat` and tool-result payloads rather than adding separate debug-only contracts.
 
 ## Live Smoke Tests
 

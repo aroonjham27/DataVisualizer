@@ -38,9 +38,9 @@ For the current repository, the system boundary is:
 10. `datavisualizer.chat_orchestrator`
    The chat-layer coordinator that maintains conversation state, exposes governed tools to the model, executes tool calls deterministically, and returns structured assistant responses
 11. `datavisualizer.ui_contract`
-   Small helper logic for shaping chart rows and deriving selected-member drill payloads from the existing backend chart contract
+   Small helper logic for shaping chart rows, deriving selected-member drill payloads, and building an inspector view model from existing governed tool results
 12. `datavisualizer.static`
-   A minimal browser UI that calls `/chat`, renders assistant text plus governed data, and sends chart-driven drill requests back through the same chat boundary
+   A minimal browser UI that calls `/chat`, renders assistant text plus governed data, groups warnings and fallback explanations, shows a collapsible inspection panel, and sends chart-driven drill requests back through the same chat boundary
 13. `datavisualizer.api`
    The HTTP boundary that now serves both the static SPA and the stable JSON envelopes for planning, default answer generation, restricted SQL, and chat orchestration
 14. Future visualization layer
@@ -71,6 +71,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - The first UI is intentionally thin: plain static assets, no frontend framework, no build pipeline, and no alternate query path. It exists to prove the end-to-end chat + chart + drill loop with minimal overhead.
 - Chart rendering stays contract-driven: the frontend consumes the existing backend `chart_spec`, result columns, and result rows instead of inventing a parallel visualization schema.
 - Drill interaction also stays contract-driven: chart clicks derive a `selected_member` payload and send it back through `/chat`, preserving the same semantic drill mechanism used by text follow-ups.
+- Inspection stays contract-derived: the UI exposes plan, SQL, filters, entities, query mode, limits, warnings, and chart fallback reasons from the existing tool payload rather than adding a separate debug contract.
 
 ## Boundaries And Guardrails
 
@@ -83,6 +84,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Validation, unsupported-shape, and execution failures are normalized into distinct backend error types.
 - Missing live-model credentials should fail gracefully at the orchestration boundary rather than crashing the backend or exposing secrets.
 - The browser UI must never bypass `/chat` to recreate planning or query behavior client-side.
+- Warning, fallback, and filter visibility should be preserved in the UI because these are part of the trust boundary, not decorative metadata.
 
 ## Review Model
 

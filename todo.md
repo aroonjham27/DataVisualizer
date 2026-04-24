@@ -1,12 +1,12 @@
 # Todo
 
-- [x] Inspect repo structure, API contracts, and current server shape for the Phase 3 UI pass
-- [x] Update `spec.md` for the Phase 3 chat UI milestone
-- [x] Add minimal static SPA assets
-- [x] Serve the SPA from the existing Python HTTP server
-- [x] Render assistant message, warnings, metadata, chart, and table from `/chat`
-- [x] Add chart interactions that send selected-member drill payloads back through `/chat`
-- [x] Add a simple UI-level “go deeper” action
-- [x] Add practical UI and contract tests
-- [x] Update docs and roadmap tracking
-- [x] Run the local deterministic suite
+- [x] Inspect Phase 4 roadmap, docs, UI contract, and current chat payload shape
+- [x] Update `spec.md` for the Phase 4 explainability and inspection milestone
+- [x] Add inspector view-model shaping from existing governed tool result payloads
+- [x] Render a collapsible "What did the system do?" inspector in each assistant response
+- [x] Group plan warnings, chart warnings, routing notes, fallback explanations, and query/execution notes
+- [x] Surface chart fallback reasons in the chart area and inspector
+- [x] Keep active filters, SQL, query mode, entities, row limit, truncation, and chart type visible in inspection
+- [x] Add practical UI contract and static asset tests
+- [x] Update README, TESTING, ARCHITECTURE, and roadmap tracking
+- [x] Run the full deterministic suite

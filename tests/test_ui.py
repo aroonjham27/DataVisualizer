@@ -9,9 +9,9 @@ from http.server import ThreadingHTTPServer
 from datavisualizer.answer import AnswerService
 from datavisualizer.api import PlanningRequestHandler
 from datavisualizer.chat_orchestrator import ChatOrchestrator
-from datavisualizer.contracts import ChartSpec, ResultColumn
+from datavisualizer.contracts import ChartSpec, ResultColumn, RoutingControls
 from datavisualizer.llm_client import FakeLlmClient, LlmAssistantMessage, LlmResponse, LlmToolCall
-from datavisualizer.ui_contract import build_chart_view_model, build_selected_member, drill_selection_payload
+from datavisualizer.ui_contract import build_chart_view_model, build_inspector_view_model, build_selected_member, drill_selection_payload
 
 
 class UiContractTests(unittest.TestCase):
@@ -85,6 +85,52 @@ class UiContractTests(unittest.TestCase):
         self.assertEqual(len(view_model["lines"]), 1)
         self.assertEqual([point["x"] for point in view_model["lines"][0]["points"]], ["2025-01-01", "2025-02-01"])
 
+    def test_inspector_view_model_surfaces_filters_sql_and_entities(self) -> None:
+        initial = self.service.answer("What is win rate by close month and account segment?", row_limit=20)
+        response = self.service.answer(
+            "What is win rate by close month for mid market only",
+            current_analysis_state=initial.plan,
+            row_limit=20,
+        )
+
+        inspector = build_inspector_view_model(response.to_dict())
+
+        self.assertEqual(inspector["query_mode"], "compiled_plan")
+        self.assertIn("read_csv_auto", inspector["sql"])
+        self.assertEqual(inspector["applied_filters"][0]["text"], "Account Segment = mid_market")
+        self.assertIn("accounts", inspector["involved_entities"])
+        self.assertEqual(inspector["limit"]["row_limit"], 20)
+        self.assertIsInstance(inspector["limit"]["truncated"], bool)
+        self.assertEqual(inspector["chart"]["chart_type"], "line")
+        self.assertEqual(inspector["analysis_plan"]["primary_entity"], "opportunities")
+
+    def test_inspector_groups_warnings_and_fallback_reasons(self) -> None:
+        service = AnswerService.from_default_model()
+        service.chart_specs.max_chart_columns = 3
+        response = service.answer("What is win rate by close month, account segment, sales region, and lifecycle type?", row_limit=5)
+
+        inspector = build_inspector_view_model(response.to_dict())
+
+        self.assertEqual(response.chart_spec.chart_type, "table")
+        self.assertTrue(inspector["warning_groups"]["chart"])
+        self.assertTrue(inspector["warning_groups"]["fallback"])
+        self.assertIn("over-wide", " ".join(inspector["chart"]["fallback_reasons"]))
+        self.assertTrue(inspector["warning_groups"]["query"])
+
+    def test_inspector_groups_plan_and_routing_notes(self) -> None:
+        response = self.service.answer("What is win rate by sales region?", row_limit=5)
+        routed = self.service.answer(
+            "What is win rate by close month and account segment?",
+            row_limit=5,
+            routing=RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True),
+        )
+
+        plan_inspector = build_inspector_view_model(response.to_dict())
+        routed_inspector = build_inspector_view_model(routed.to_dict())
+
+        self.assertTrue(plan_inspector["warning_groups"]["plan"])
+        self.assertTrue(routed_inspector["warning_groups"]["routing"])
+
 
 class UiHttpTests(unittest.TestCase):
     @classmethod
@@ -127,7 +173,12 @@ class UiHttpTests(unittest.TestCase):
         self.assertIn("sendUserMessage", script)
         self.assertIn("buildSelectedMember", script)
         self.assertIn("Active Filters", script)
+        self.assertIn("What did the system do?", script)
+        self.assertIn("SQL Executed", script)
+        self.assertIn("Fallback explanations", script)
         self.assertIn(".chat-thread", styles)
+        self.assertIn(".inspector", styles)
+        self.assertIn(".sql-block", styles)
 
     def test_ui_still_integrates_through_chat_contract(self) -> None:
         payload = json.dumps(
@@ -154,6 +205,9 @@ class UiHttpTests(unittest.TestCase):
         self.assertIn("assistant_message", body["data"])
         self.assertIn("tool_result", body["data"])
         self.assertIn("conversation_state", body["data"])
+        inspector = build_inspector_view_model(body["data"]["tool_result"]["data"])
+        self.assertEqual(inspector["query_mode"], "compiled_plan")
+        self.assertIn("sql", inspector)
 
 
 if __name__ == "__main__":
