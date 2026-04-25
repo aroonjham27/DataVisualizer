@@ -24,6 +24,7 @@ This roadmap tracks the path from the current pilot backend to a chat-first visu
 - [x] Phase 4 explainability and inspection completed
 - [x] Phase 4.5 governed fallback orchestration hardening completed
 - [x] Phase 4.6 result-aware visualization follow-ups completed
+- [x] Phase 4.7 trust-critical orchestration hardening completed
 
 ---
 
@@ -152,6 +153,22 @@ Goal: reuse prior governed results for chart/table follow-ups instead of startin
 
 ---
 
+## Phase 4.7: Trust-critical orchestration hardening
+
+**Live LLM required:** No additional model dependency beyond Phase 2
+
+Goal: fix UI-discovered trust bugs around restricted-SQL value casing and stale conversation state.
+
+- [x] Canonicalize restricted SQL filter values for indexed low-cardinality fields before execution
+- [x] Reject unknown indexed restricted SQL filter values safely
+- [x] Detect explicit standalone analytics questions with conflicting measure or entity intent
+- [x] Drop current analysis state and selected member for standalone new-topic requests
+- [x] Preserve state for true follow-ups such as "go deeper", "top 5", and visualization-only requests
+- [x] Guard assistant prose against stale measure, filter, and chart-type claims
+- [x] Add exact regressions for restricted SQL casing, stale win-rate state, true drill follow-up preservation, visualization reuse, and prose/payload consistency
+
+---
+
 ## Phase 5: Product evaluation harness
 
 **Live LLM required:** Yes for orchestration evaluation, No for deterministic backend checks
@@ -216,7 +233,7 @@ MVP is complete when all of the following are true:
 
 ## Suggested immediate next task
 
-Phase 4.6 is complete. Move next to **Phase 5**, focused on the product evaluation harness:
+Phase 4.7 is complete. Move next to **Phase 5**, focused on the product evaluation harness:
 
 - [ ] curated benchmark question set
 - [ ] multi-turn drill-down evaluation

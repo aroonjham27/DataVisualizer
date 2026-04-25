@@ -30,6 +30,7 @@ py -3 -m unittest discover -s tests -t .
 - true HTTP `/answer` round trips
 - selected-member drill context through the answer path and over HTTP
 - restricted SQL gateway success and rejection cases
+- restricted SQL canonical value casing for indexed filters
 - structurally invalid restricted SQL lookalike rejection
 - true truncation detection with one-extra-row probing
 - row-aware chart fallback behavior for empty, sparse, over-wide, and too-many-category results
@@ -42,6 +43,8 @@ py -3 -m unittest discover -s tests -t .
 - safe restricted-SQL fallback rejection behavior that returns a compiled result with warnings
 - result-aware conversation state for visualization-only follow-ups over prior governed results
 - reused-result chart override behavior for restricted SQL and compiled-plan results
+- new-topic state reset behavior for standalone analytics questions after drill follow-ups
+- assistant prose consistency checks against governed payload measures, filters, and chart specs
 - provider adapter env parsing and graceful missing-credential behavior
 - governed tool registration and schema shape for model tool-calling
 - chat orchestration tool-call execution with a fake LLM client
@@ -64,8 +67,10 @@ py -3 -m unittest discover -s tests -t .
 - When ambiguity is expected, test for warnings rather than forcing brittle guesses.
 - Keep SQL compiler tests focused on structured plans and compiled SQL, never natural-language SQL generation.
 - Keep restricted SQL tests focused on governed validation boundaries; it is a fallback tool surface, not the default answer path.
+- Include casing variants when testing indexed restricted SQL filter values; model/display casing must not control executable values.
 - Keep automatic fallback tests focused on routing behavior and SQL shape, not exact formatting.
 - Keep visualization follow-up tests deterministic and assert no new query tool runs when prior results can be reused.
+- Keep state-reset tests multi-turn so they prove true follow-ups still preserve state while standalone questions drop stale state.
 - When chart heuristics change, test both the intended chart and the table fallback reason.
 - For heatmaps, use representative two-category-dimension questions from the pricing seed, such as implementation complexity by support tier, pricing model by line role, billing frequency by currency, and segment by region.
 - Keep tool-facing payload tests explicit about `ok`, `tool_name`, `data`, `error`, routing metadata, and structured warnings.
@@ -93,3 +98,5 @@ The live smoke path currently checks:
 The deterministic chat suite includes golden fallback questions for custom opportunity, quote-line/product, and contract-header breakdowns. These tests assert that `/chat` evaluates `answer` first, uses `restricted_sql` only when policy and compiled-plan signals justify it, preserves inspector metadata, and handles restricted-SQL validation failure without broken UI payloads.
 
 The suite also covers Phase 4.6 visualization follow-ups: a restricted-SQL table followed by "plot the above" must reuse the prior rows, preserve original SQL and query mode, set `no_new_sql_executed`, and produce a chart spec that matches the assistant prose.
+
+The Phase 4.7 trust-hardening regressions cover restricted SQL casing for `enterprise`, `Enterprise`, and `ENTERPRISE`; safe rejection for unknown indexed values; a win-rate drill followed by a standalone analytics product line-item question; preservation of the true `go deeper` follow-up; and model prose that tries to claim stale measures, filters, or chart types.

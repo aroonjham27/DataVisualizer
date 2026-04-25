@@ -342,6 +342,35 @@ class RestrictedSqlGatewayTests(unittest.TestCase):
         self.assertEqual(result.metadata.involved_entities, ("accounts", "opportunities"))
         self.assertLessEqual(len(result.result.rows), 3)
 
+    def test_restricted_sql_canonicalizes_indexed_filter_values(self) -> None:
+        for segment_value in ("enterprise", "Enterprise", "ENTERPRISE"):
+            with self.subTest(segment_value=segment_value):
+                result = self.gateway.execute_restricted_sql(
+                    "SELECT implementation_complexity, support_tier_requested, "
+                    "COUNT(DISTINCT opportunity_id) AS opportunity_count "
+                    f"FROM opportunities WHERE segment = '{segment_value}' "
+                    "GROUP BY implementation_complexity, support_tier_requested "
+                    "ORDER BY opportunity_count DESC",
+                    row_limit=20,
+                )
+
+                self.assertIn("segment = 'enterprise'", result.sql)
+                self.assertGreater(len(result.result.rows), 0)
+                self.assertEqual(
+                    result.result.columns,
+                    ("implementation_complexity", "support_tier_requested", "opportunity_count"),
+                )
+
+    def test_restricted_sql_rejects_unknown_indexed_filter_value(self) -> None:
+        with self.assertRaises(RestrictedSqlValidationError):
+            self.gateway.execute_restricted_sql(
+                "SELECT implementation_complexity, support_tier_requested, "
+                "COUNT(DISTINCT opportunity_id) AS opportunity_count "
+                "FROM opportunities WHERE segment = 'Enterprise Plus' "
+                "GROUP BY implementation_complexity, support_tier_requested",
+                row_limit=20,
+            )
+
     def test_restricted_sql_rejects_unsafe_or_unsupported_shapes(self) -> None:
         bad_queries = [
             "DROP TABLE accounts",

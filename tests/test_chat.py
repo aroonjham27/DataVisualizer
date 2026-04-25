@@ -385,6 +385,44 @@ class ChatOrchestratorTests(unittest.TestCase):
         self.assertEqual(inspector["query_mode"], "restricted_sql")
         self.assertIn("requested semantic fields were missing", inspector["fallback_reason"])
 
+    def test_custom_single_entity_breakdown_canonicalizes_restricted_sql_filter_value(self) -> None:
+        for segment_value in ("enterprise", "Enterprise", "ENTERPRISE"):
+            with self.subTest(segment_value=segment_value):
+                sql = (
+                    "SELECT implementation_complexity, support_tier_requested, "
+                    "COUNT(DISTINCT opportunity_id) AS opportunity_count "
+                    f"FROM opportunities WHERE segment = '{segment_value}' "
+                    "GROUP BY implementation_complexity, support_tier_requested "
+                    "ORDER BY opportunity_count DESC"
+                )
+                orchestrator = self._scripted_orchestrator(
+                    [
+                        LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                        LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "restricted_sql", {"sql": sql}),))),
+                        LlmResponse(LlmAssistantMessage("Here is the custom breakdown.")),
+                    ]
+                )
+
+                response = orchestrator.chat_request(
+                    ChatRequest(
+                        messages=(
+                            ChatMessage(
+                                role="user",
+                                content=f"Show opportunity count by implementation complexity and requested support tier for {segment_value} deals.",
+                            ),
+                        )
+                    )
+                )
+
+                executed_sql = response.tool_result["data"]["sql"]
+                self.assertEqual(response.executed_tool_name, "restricted_sql")
+                self.assertIn("segment = 'enterprise'", executed_sql)
+                self.assertGreater(response.tool_result["data"]["limit"]["returned_rows"], 0)
+                self.assertEqual(
+                    [column["name"] for column in response.tool_result["data"]["columns"]],
+                    ["implementation_complexity", "support_tier_requested", "opportunity_count"],
+                )
+
     def test_visualization_follow_up_reuses_prior_restricted_sql_result(self) -> None:
         sql = (
             "SELECT implementation_complexity, support_tier_requested, "
@@ -414,7 +452,7 @@ class ChatOrchestratorTests(unittest.TestCase):
 
         second = orchestrator.chat_request(
             ChatRequest(
-                messages=(ChatMessage(role="user", content="is there a way to plot the above? May be bar graphs?"),),
+                messages=(ChatMessage(role="user", content="Can you plot the above as a bar chart?"),),
                 conversation_state=first.conversation_state,
             )
         )
@@ -569,6 +607,103 @@ class ChatOrchestratorTests(unittest.TestCase):
         self.assertIn("Restricted SQL fallback was attempted but rejected safely", warning_text)
         inspector = build_inspector_view_model(response.tool_result["data"])
         self.assertEqual(inspector["query_mode"], "compiled_plan")
+
+    def test_new_standalone_question_resets_stale_win_rate_state(self) -> None:
+        sql = (
+            "SELECT p.pricing_model, oli.line_role, COUNT(DISTINCT oli.line_item_id) AS line_item_count "
+            "FROM opportunity_line_items oli JOIN products p ON oli.product_id = p.product_id "
+            "WHERE p.product_family = 'analytics' "
+            "GROUP BY p.pricing_model, oli.line_role ORDER BY line_item_count DESC"
+        )
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Win rate by month is ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Drilled one level deeper.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-3", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-4", "restricted_sql", {"sql": sql}),))),
+                LlmResponse(LlmAssistantMessage("Line item count for mid market is ready.")),
+            ]
+        )
+
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month for mid market?"),))
+        )
+        second = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="Go one level deeper"),), conversation_state=first.conversation_state)
+        )
+        third = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="For analytics products, show line item count by pricing model and line role."),),
+                conversation_state=second.conversation_state,
+            )
+        )
+
+        third_args = third.tool_trace[0].arguments
+        payload_text = json.dumps(third.tool_result["data"]).lower()
+        self.assertNotIn("current_analysis_state", third_args)
+        self.assertNotIn("selected_member", third_args)
+        self.assertEqual(third.executed_tool_name, "restricted_sql")
+        self.assertNotIn("win_rate", payload_text)
+        self.assertNotIn("mid_market", payload_text)
+        self.assertIn("line_item_count", payload_text)
+        self.assertIn("pricing_model", payload_text)
+        self.assertIn("line_role", payload_text)
+        self.assertIn("product_family = 'analytics'", third.tool_result["data"]["sql"].lower())
+        self.assertNotIn("mid market", third.assistant_message.lower())
+
+    def test_true_drill_follow_up_preserves_state_after_new_topic_gate(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Win rate by month is ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Drilled one level deeper.")),
+            ]
+        )
+
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month for mid market?"),))
+        )
+        second = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="Go one level deeper"),), conversation_state=first.conversation_state)
+        )
+
+        filters = second.conversation_state.current_analysis_state.filters
+        self.assertEqual(second.tool_result["data"]["query_mode"], "compiled_plan")
+        self.assertIn("opportunities.sales_region", [field.field_id for field in second.conversation_state.current_analysis_state.dimensions])
+        self.assertTrue(any(item.value == "mid_market" for item in filters))
+
+    def test_assistant_prose_falls_back_when_it_conflicts_with_payload(self) -> None:
+        sql = (
+            "SELECT p.pricing_model, oli.line_role, COUNT(DISTINCT oli.line_item_id) AS line_item_count "
+            "FROM opportunity_line_items oli JOIN products p ON oli.product_id = p.product_id "
+            "WHERE p.product_family = 'analytics' "
+            "GROUP BY p.pricing_model, oli.line_role ORDER BY line_item_count DESC"
+        )
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("This line item count result is ready.")),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-3", "restricted_sql", {"sql": sql}),))),
+                LlmResponse(LlmAssistantMessage("Here is the win rate grouped bar for mid market.")),
+            ]
+        )
+
+        win_rate = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month for mid market?"),))
+        )
+        line_items = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="For analytics products, show line item count by pricing model and line role."),))
+        )
+
+        self.assertNotIn("line item count", win_rate.assistant_message.lower())
+        self.assertIn("line_item_count", json.dumps(line_items.tool_result["data"]))
+        self.assertNotIn("win rate", line_items.assistant_message.lower())
+        self.assertNotIn("mid market", line_items.assistant_message.lower())
+        self.assertNotIn("grouped bar", line_items.assistant_message.lower())
 
     def test_compiled_plan_show_as_table_reuses_prior_result(self) -> None:
         orchestrator = self._scripted_orchestrator(

@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import csv
 from dataclasses import dataclass, replace
 from pathlib import Path
 
 from .contracts import AnalysisPlan, QueryMetadata
 from .execution import QueryResult, execute_compiled_query
 from .planner import DEFAULT_MODEL_PATH
+from .semantic_resolver import normalize_semantic_term
 from .semantic_model import SemanticModel, load_semantic_model
 from .sql_compiler import CompiledQuery, DuckDbSqlCompiler
 
@@ -138,6 +140,7 @@ class RestrictedSqlQueryService:
     def __init__(self, semantic_model: SemanticModel, default_limit: int = 500):
         self.semantic_model = semantic_model
         self.default_limit = default_limit
+        self.value_index = self._build_value_index()
 
     def validate(self, sql: str, row_limit: int | None = None) -> ValidatedRestrictedQuery:
         limit = row_limit if row_limit is not None else self.default_limit
@@ -151,20 +154,29 @@ class RestrictedSqlQueryService:
         relations = self._parse_relations(tokens)
         self._validate_relation_entities(relations)
         self._validate_join_edges(relations)
+        source_sql, canonical_notes = self._canonicalize_where_literals(source_sql, tokens, relations)
+        tokens = self._tokenize(source_sql)
+        self._validate_token_stream(tokens)
+        relations = self._parse_relations(tokens)
+        self._validate_relation_entities(relations)
+        self._validate_join_edges(relations)
         self._validate_where_clause(tokens)
         involved_entities = tuple(dict.fromkeys(relation.entity for relation in relations))
         display_sql = self._wrap_with_governed_ctes(source_sql, involved_entities, limit)
         execution_sql = self._wrap_with_governed_ctes(source_sql, involved_entities, limit + 1)
+        validation_notes = [
+            "Validated restricted SQL structure against the pilot subset.",
+            "Validated restricted SQL entities and joins against the semantic model.",
+            "Canonicalized indexed restricted SQL filter values against governed data values.",
+            "Enforced gateway row limit.",
+        ]
+        validation_notes.extend(canonical_notes)
         return ValidatedRestrictedQuery(
             sql=display_sql,
             execution_sql=execution_sql,
             row_limit=limit,
             involved_entities=involved_entities,
-            validation_notes=(
-                "Validated restricted SQL structure against the pilot subset.",
-                "Validated restricted SQL entities and joins against the semantic model.",
-                "Enforced gateway row limit.",
-            ),
+            validation_notes=tuple(validation_notes),
         )
 
     def _normalize_sql_text(self, sql: str) -> str:
@@ -473,6 +485,137 @@ class RestrictedSqlQueryService:
                 expecting_value = True
         if expecting_value:
             raise RestrictedSqlValidationError("IN predicate literal list cannot end with a comma.")
+
+    def _canonicalize_where_literals(
+        self,
+        sql: str,
+        tokens: tuple[_SqlToken, ...],
+        relations: tuple[_RelationRef, ...],
+    ) -> tuple[str, tuple[str, ...]]:
+        where_index = self._top_level_keyword(tokens, "where")
+        if where_index is None:
+            return sql, ()
+        alias_to_entity = self._alias_to_entity(relations)
+        replacements: list[tuple[int, int, str, str]] = []
+        end = self._next_clause_boundary(tokens, where_index + 1)
+        for predicate in self._split_on_and(tokens[where_index + 1 : end]):
+            replacements.extend(self._canonical_literal_replacements(predicate, alias_to_entity))
+        if not replacements:
+            return sql, ()
+        rewritten = sql
+        notes: list[str] = []
+        for start, end, replacement, note in sorted(replacements, key=lambda item: item[0], reverse=True):
+            rewritten = rewritten[:start] + replacement + rewritten[end:]
+            notes.append(note)
+        return rewritten, tuple(reversed(notes))
+
+    def _canonical_literal_replacements(
+        self,
+        tokens: tuple[_SqlToken, ...],
+        alias_to_entity: dict[str, str],
+    ) -> list[tuple[int, int, str, str]]:
+        normalized = [token.normalized for token in tokens]
+        if "=" in normalized:
+            equals_index = normalized.index("=")
+            field_ref = self._resolve_where_field(tokens[:equals_index], alias_to_entity)
+            if field_ref is None:
+                return []
+            literal_tokens = tokens[equals_index + 1 :]
+            if len(literal_tokens) != 1:
+                return []
+            return self._canonicalize_literal_token(field_ref[0], field_ref[1], literal_tokens[0])
+        if "in" in normalized:
+            in_index = normalized.index("in")
+            field_ref = self._resolve_where_field(tokens[:in_index], alias_to_entity)
+            if field_ref is None:
+                return []
+            return [
+                replacement
+                for token in tokens[in_index + 1 :]
+                if token.kind in {"string", "identifier"}
+                for replacement in self._canonicalize_literal_token(field_ref[0], field_ref[1], token)
+            ]
+        return []
+
+    def _resolve_where_field(self, tokens: tuple[_SqlToken, ...], alias_to_entity: dict[str, str]) -> tuple[str, str] | None:
+        if len(tokens) == 1 and tokens[0].kind == "identifier":
+            candidates = [
+                entity_name
+                for entity_name in dict.fromkeys(alias_to_entity.values())
+                if self._entity_has_dimension(entity_name, tokens[0].value)
+            ]
+            if len(candidates) != 1:
+                return None
+            return candidates[0], tokens[0].value
+        if len(tokens) == 3 and tokens[0].kind == "identifier" and tokens[1].value == "." and tokens[2].kind == "identifier":
+            entity_name = alias_to_entity.get(tokens[0].value)
+            if entity_name is None or not self._entity_has_dimension(entity_name, tokens[2].value):
+                return None
+            return entity_name, tokens[2].value
+        return None
+
+    def _canonicalize_literal_token(self, entity_name: str, field_name: str, token: _SqlToken) -> list[tuple[int, int, str, str]]:
+        indexed_values = self.value_index.get(entity_name, {}).get(field_name)
+        if not indexed_values or token.kind not in {"string", "identifier"}:
+            return []
+        raw_value = self._literal_token_value(token)
+        normalized_value = normalize_semantic_term(raw_value)
+        value_by_normalized = {normalized: value for normalized, value in indexed_values}
+        canonical_value = value_by_normalized.get(normalized_value)
+        if canonical_value is None:
+            raise RestrictedSqlValidationError(
+                f"Filter value is not an indexed governed value for {entity_name}.{field_name}: {raw_value}"
+            )
+        note = f"Canonicalized {entity_name}.{field_name} filter value {raw_value!r} to {canonical_value!r}."
+        return [(token.start, token.end, self._literal(canonical_value), note)]
+
+    def _literal_token_value(self, token: _SqlToken) -> str:
+        if token.kind == "string":
+            return token.value[1:-1].replace("''", "'")
+        return token.value
+
+    def _alias_to_entity(self, relations: tuple[_RelationRef, ...]) -> dict[str, str]:
+        aliases: dict[str, str] = {}
+        for relation in relations:
+            aliases[relation.alias] = relation.entity
+            aliases[relation.entity] = relation.entity
+        return aliases
+
+    def _entity_has_dimension(self, entity_name: str, field_name: str) -> bool:
+        try:
+            self.semantic_model.entity(entity_name).get_dimension(field_name)
+            return True
+        except KeyError:
+            return False
+
+    def _build_value_index(self) -> dict[str, dict[str, tuple[tuple[str, str], ...]]]:
+        index: dict[str, dict[str, tuple[tuple[str, str], ...]]] = {}
+        for entity in self.semantic_model.entities.values():
+            source_path = self.semantic_model.source_path_for_entity(entity.name)
+            if not source_path.exists():
+                continue
+            with source_path.open("r", encoding="utf-8", newline="") as handle:
+                reader = csv.DictReader(handle)
+                distinct_values: dict[str, set[str]] = {field.name: set() for field in entity.dimensions}
+                for row in reader:
+                    for field in entity.dimensions:
+                        value = (row.get(field.name) or "").strip()
+                        if value:
+                            distinct_values[field.name].add(value)
+            indexed_fields: dict[str, tuple[tuple[str, str], ...]] = {}
+            for field_name, values in distinct_values.items():
+                if not 0 < len(values) <= 12:
+                    continue
+                filtered_values = tuple(
+                    (normalize_semantic_term(value), value)
+                    for value in sorted(values)
+                    if value.lower() not in {"true", "false"}
+                )
+                if filtered_values:
+                    indexed_fields[field_name] = filtered_values
+            if indexed_fields:
+                index[entity.name] = indexed_fields
+        return index
 
     def _top_level_keyword(self, tokens: tuple[_SqlToken, ...], keyword: str) -> int | None:
         depth = 0

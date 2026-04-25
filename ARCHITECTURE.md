@@ -62,6 +62,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Tool requests carry explicit routing controls so a future orchestrator does not need to infer lane permissions.
 - Chart specs are deterministic metadata for `line`, `bar`, `grouped_bar`, `heatmap`, and `table`; rendering remains outside this repository. The generator inspects returned rows and falls back to tables for weak chart shapes.
 - Restricted SQL is intentionally narrow: tokenized `SELECT` validation, semantic-model entities only, approved join edges only, read-only statements only, no direct file access, and gateway-enforced row limits.
+- Restricted SQL canonicalizes indexed low-cardinality filter values before execution and rejects unknown indexed values rather than returning casing-driven empty results.
 - Query execution uses one-extra-row probing so answer metadata distinguishes returned rows from true truncation.
 - API success and error envelopes are machine-friendly and stable for future tool-calling integration.
 - The live-model layer is adapter-based: provider configuration comes from environment variables, the transport uses an OpenAI-compatible tool-calling shape, and OpenRouter is treated as a deploy-time endpoint choice rather than an architecture dependency.
@@ -75,6 +76,8 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Chart specs include a chart choice explanation so assistant prose, inspector details, and rendered chart type can stay consistent.
 - Orchestration remains deterministic around tool execution: the model may choose among offered tools, but argument enrichment, execution, state updates, and response shaping stay backend-controlled.
 - Conversation state is first-class: the orchestrator carries forward prior analysis context so follow-ups such as `go deeper`, `just enterprise`, `top 5`, and `show as table` can reuse governed state instead of reinterpreting the full task from scratch.
+- New-topic detection protects that state: explicit standalone requests with a conflicting measure or entity intent drop the current analysis plan before tool execution, while the last governed result remains available for visualization follow-ups.
+- Final assistant prose is guarded by the governed payload; stale claims about measures, filters, or grouped-bar charts fall back to deterministic backend text.
 - The first UI is intentionally thin: plain static assets, no frontend framework, no build pipeline, and no alternate query path. It exists to prove the end-to-end chat + chart + drill loop with minimal overhead.
 - Chart rendering stays contract-driven: the frontend consumes the existing backend `chart_spec`, result columns, and result rows instead of inventing a parallel visualization schema.
 - Drill interaction also stays contract-driven: chart clicks derive a `selected_member` payload and send it back through `/chat`, preserving the same semantic drill mechanism used by text follow-ups.
@@ -87,8 +90,10 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Usage facts should flow through `contracts` or `accounts`, not be joined directly to opportunities.
 - The pilot dataset is not treated as proof that every relationship is universal outside this seed.
 - Restricted SQL should not be used when the compiled-plan path already supports the request.
+- Restricted SQL filter literals for indexed fields must match governed canonical values after validation, regardless of user or model casing.
 - Restricted SQL must remain invisible as a user mode: no raw SQL input, no frontend SQL editor, and no toggle that lets users bypass normal chat orchestration.
 - Visualization-only follow-ups should not be treated as new analytics questions while a prior governed result is available.
+- Explicit standalone analytics questions should not inherit stale measures, selected members, or filters from previous analysis state.
 - Restricted SQL does not support CTEs, subqueries, comma joins, cross joins, unions, arbitrary operators, or direct table-function/file access.
 - Validation, unsupported-shape, and execution failures are normalized into distinct backend error types.
 - Missing live-model credentials should fail gracefully at the orchestration boundary rather than crashing the backend or exposing secrets.

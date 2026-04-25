@@ -45,6 +45,8 @@ class ChatOrchestrator:
         visualization_response = self._visualization_follow_up_response(latest_user_message, active_state, request)
         if visualization_response is not None:
             return visualization_response
+        if self._is_new_standalone_analysis(latest_user_message, active_state):
+            active_state = self._state_without_current_analysis(active_state)
         tool_definitions = self.tools.tools_for_chat(latest_user_message, request.routing)
         llm_messages = self._llm_messages(request, active_state)
         llm_response = self.llm_client.generate(
@@ -337,6 +339,86 @@ class ChatOrchestrator:
 
     def _state_has_prior_result(self, state: ConversationState) -> bool:
         return bool(state.last_columns and state.last_rows and state.last_limit and state.last_query_mode)
+
+    def _is_new_standalone_analysis(self, latest_user_message: str, state: ConversationState) -> bool:
+        current = state.current_analysis_state
+        if current is None:
+            return False
+        normalized = normalize_semantic_term(latest_user_message)
+        if self._is_analysis_follow_up(normalized):
+            return False
+        if not self._looks_like_analytics_request(latest_user_message):
+            return False
+        requested_measures = set(self._requested_semantic_fields(latest_user_message, kinds={"measure"}))
+        current_measures = {measure.field.field_id for measure in current.measures}
+        if requested_measures and not requested_measures.issubset(current_measures):
+            return True
+        requested_entities = self._requested_entities(latest_user_message)
+        if requested_entities and current.primary_entity not in requested_entities and self._has_explicit_metric_intent(normalized):
+            return True
+        return False
+
+    def _is_analysis_follow_up(self, normalized_message: str) -> bool:
+        follow_up_terms = (
+            "go one level deeper",
+            "one level deeper",
+            "go deeper",
+            "drill down",
+            "drill one level",
+            "top 5",
+            "top five",
+            "show as table",
+            "show as a table",
+            "above",
+            "same",
+            "current",
+        )
+        pronouns = ("that", "this", "it")
+        if normalized_message.startswith(("just ", "only ")):
+            return True
+        if " only" in f" {normalized_message}" and normalized_message.startswith("for "):
+            return True
+        if any(term in normalized_message for term in follow_up_terms):
+            return True
+        return any(f" {term} " in f" {normalized_message} " for term in pronouns)
+
+    def _state_without_current_analysis(self, state: ConversationState) -> ConversationState:
+        return ConversationState(
+            current_analysis_state=None,
+            selected_member=None,
+            last_tool_name=state.last_tool_name,
+            last_query_mode=state.last_query_mode,
+            last_sql=state.last_sql,
+            last_columns=state.last_columns,
+            last_rows=state.last_rows,
+            last_chart_spec=state.last_chart_spec,
+            last_limit=state.last_limit,
+            last_warnings=state.last_warnings,
+            last_query_metadata=state.last_query_metadata,
+            last_plan=state.last_plan,
+            last_chart_type=state.last_chart_type,
+            last_row_limit=state.last_row_limit,
+        )
+
+    def _requested_entities(self, question: str) -> set[str]:
+        normalized = normalize_semantic_term(question)
+        matches: set[str] = set()
+        for entity in self.answer_service.semantic_model.entities.values():
+            terms = [entity.name.replace("_", " "), entity.label, *entity.synonyms]
+            for raw_term in terms:
+                term = normalize_semantic_term(raw_term)
+                if not term:
+                    continue
+                candidates = {term}
+                if term.endswith("s"):
+                    candidates.add(term[:-1])
+                if any(f" {candidate} " in f" {normalized} " for candidate in candidates):
+                    matches.add(entity.name)
+        return matches
+
+    def _has_explicit_metric_intent(self, normalized_message: str) -> bool:
+        metric_terms = ("count", "rate", "sum", "average", "avg", "amount", "users", "transactions")
+        return any(term in normalized_message for term in metric_terms)
 
     def _visualize_existing_result(self, latest_user_message: str, state: ConversationState) -> dict[str, Any]:
         chart_override = self._requested_chart_override(latest_user_message)
@@ -652,6 +734,8 @@ class ChatOrchestrator:
             return self._with_restricted_sql_notice(message) if force_restricted_sql_notice else message
         if final.message.content.strip():
             message = final.message.content.strip()
+            if self._assistant_message_conflicts_with_payload(message, tool_result):
+                message = self._fallback_summary(tool_result)
             return self._with_restricted_sql_notice(message) if force_restricted_sql_notice else message
         message = self._fallback_summary(tool_result)
         return self._with_restricted_sql_notice(message) if force_restricted_sql_notice else message
@@ -663,6 +747,23 @@ class ChatOrchestrator:
         if tool_result.get("tool_name") == "restricted_sql":
             return f"Executed governed restricted SQL and returned {data.get('limit', {}).get('returned_rows', 0)} rows."
         return "Completed the requested tool call."
+
+    def _assistant_message_conflicts_with_payload(self, message: str, tool_result: dict[str, Any]) -> bool:
+        data = tool_result.get("data") or {}
+        message_text = normalize_semantic_term(message)
+        payload_text = normalize_semantic_term(json.dumps(data, default=str))
+        phrase_requirements = (
+            ("win rate", "win rate"),
+            ("line item count", "line item count"),
+            ("line items", "line item"),
+            ("mid market", "mid market"),
+        )
+        for phrase, required_payload_phrase in phrase_requirements:
+            if phrase in message_text and required_payload_phrase not in payload_text:
+                return True
+        if "grouped bar" in message_text and (data.get("chart_spec") or {}).get("chart_type") != "grouped_bar":
+            return True
+        return False
 
     def _attempt_restricted_sql_fallback(
         self,
