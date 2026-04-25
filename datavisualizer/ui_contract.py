@@ -68,6 +68,23 @@ def build_chart_view_model(
             "y": tuple(chart_spec.y),
             "bars": tuple(bars),
         }
+    if chart_spec.chart_type == "heatmap":
+        measure = chart_spec.y[0] if chart_spec.y else None
+        return {
+            "chart_type": "heatmap",
+            "x": chart_spec.x,
+            "series": chart_spec.series,
+            "y": tuple(chart_spec.y),
+            "cells": tuple(
+                {
+                    "x": record.get(chart_spec.x or ""),
+                    "y": record.get(chart_spec.series or ""),
+                    "value": record.get(measure) if measure else None,
+                    "row_index": index,
+                }
+                for index, record in enumerate(records)
+            ),
+        }
     if chart_spec.chart_type == "line":
         x_values = _sorted_unique(record.get(chart_spec.x or "") for record in records)
         lines: dict[str, dict[str, dict[str, Any]]] = {}
@@ -155,6 +172,11 @@ def build_inspector_view_model(tool_data: Mapping[str, Any]) -> dict[str, Any]:
         "routing_policy": routing.get("policy") if routing else None,
         "sql": tool_data.get("sql", ""),
         "fallback_reason": tool_data.get("fallback_reason"),
+        "source_result_tool": tool_data.get("source_result_tool"),
+        "source_query_mode": tool_data.get("source_query_mode"),
+        "visualization_follow_up": bool(tool_data.get("visualization_follow_up", False)),
+        "no_new_sql_executed": bool(tool_data.get("no_new_sql_executed", False)),
+        "chart_override_requested": tool_data.get("chart_override_requested"),
         "applied_filters": filters,
         "involved_entities": tuple(query_metadata.get("involved_entities", ())) if query_metadata else (),
         "limit": {
@@ -165,6 +187,7 @@ def build_inspector_view_model(tool_data: Mapping[str, Any]) -> dict[str, Any]:
         "chart": {
             "chart_type": chart_spec.get("chart_type") if chart_spec else None,
             "title": chart_spec.get("title") if chart_spec else None,
+            "choice_explanation": chart_spec.get("chart_choice_explanation", "") if chart_spec else "",
             "fallback_reasons": tuple(chart_spec.get("warnings", ())) if chart_spec and chart_spec.get("chart_type") == "table" else (),
         },
         "analysis_plan": _analysis_plan_summary(plan),

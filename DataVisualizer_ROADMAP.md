@@ -23,6 +23,7 @@ This roadmap tracks the path from the current pilot backend to a chat-first visu
 - [x] Phase 3 first chat UI completed
 - [x] Phase 4 explainability and inspection completed
 - [x] Phase 4.5 governed fallback orchestration hardening completed
+- [x] Phase 4.6 result-aware visualization follow-ups completed
 
 ---
 
@@ -126,6 +127,31 @@ Goal: make restricted SQL available as an invisible governed fallback for valid 
 
 ---
 
+## Phase 4.6: Result-aware conversation state and visualization follow-ups
+
+**Live LLM required:** No additional model dependency beyond Phase 2
+
+Goal: reuse prior governed results for chart/table follow-ups instead of starting a new query.
+
+- [x] Preserve last governed result data in conversation state
+  - [x] tool name, query mode, SQL, columns, rows, chart spec, limit, warnings, query metadata, and plan when available
+- [x] Detect visualization-only follow-ups such as "plot the above", "visualize it", "can you graph that?", "show this as a heatmap", and "show as table"
+- [x] Reuse prior governed result rows and columns without re-querying
+- [x] Preserve original query mode and SQL in the inspector
+- [x] Add reused-result metadata
+  - [x] source result tool
+  - [x] source query mode
+  - [x] visualization follow-up
+  - [x] no new SQL executed
+  - [x] chart override requested
+- [x] Support deterministic chart overrides for table, heatmap, bar, grouped bar, and line
+- [x] Add chart choice explanations to chart specs, reused-result prose, and inspector metadata
+- [x] Cover heatmap questions for opportunity, quote-line/product, contract, and win-rate result shapes
+- [x] Fall back to table with warnings when the prior result cannot support the requested chart
+- [x] Add regression tests for restricted SQL and compiled-plan visualization follow-ups
+
+---
+
 ## Phase 5: Product evaluation harness
 
 **Live LLM required:** Yes for orchestration evaluation, No for deterministic backend checks
@@ -190,7 +216,7 @@ MVP is complete when all of the following are true:
 
 ## Suggested immediate next task
 
-Phase 4.5 is complete. Move next to **Phase 5**, focused on the product evaluation harness:
+Phase 4.6 is complete. Move next to **Phase 5**, focused on the product evaluation harness:
 
 - [ ] curated benchmark question set
 - [ ] multi-turn drill-down evaluation

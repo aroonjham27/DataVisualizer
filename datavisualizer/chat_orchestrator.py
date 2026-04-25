@@ -42,6 +42,9 @@ class ChatOrchestrator:
         latest_user_message = self._latest_user_message(request)
         state = request.conversation_state or ConversationState()
         active_state = self._merge_state_with_request(state, request)
+        visualization_response = self._visualization_follow_up_response(latest_user_message, active_state, request)
+        if visualization_response is not None:
+            return visualization_response
         tool_definitions = self.tools.tools_for_chat(latest_user_message, request.routing)
         llm_messages = self._llm_messages(request, active_state)
         llm_response = self.llm_client.generate(
@@ -118,6 +121,14 @@ class ChatOrchestrator:
             selected_member=request.selected_member or state.selected_member,
             last_tool_name=state.last_tool_name,
             last_query_mode=state.last_query_mode,
+            last_sql=state.last_sql,
+            last_columns=state.last_columns,
+            last_rows=state.last_rows,
+            last_chart_spec=state.last_chart_spec,
+            last_limit=state.last_limit,
+            last_warnings=state.last_warnings,
+            last_query_metadata=state.last_query_metadata,
+            last_plan=state.last_plan,
             last_chart_type=state.last_chart_type,
             last_row_limit=state.last_row_limit,
         )
@@ -237,17 +248,358 @@ class ChatOrchestrator:
                 selected_member=selected_member,
                 last_tool_name="answer",
                 last_query_mode=data["query_mode"],
-                last_chart_type=data["chart_spec"]["chart_type"],
-                last_row_limit=data["limit"]["row_limit"],
-            )
+            last_chart_type=data["chart_spec"]["chart_type"],
+            last_row_limit=data["limit"]["row_limit"],
+            **self._result_state_fields(tool_name, data),
+        )
         return ConversationState(
             current_analysis_state=state.current_analysis_state,
             selected_member=state.selected_member,
-            last_tool_name=tool_name,
+            last_tool_name=state.last_tool_name if tool_name == "visualize_result" else tool_name,
             last_query_mode=data["query_mode"],
-            last_chart_type=state.last_chart_type,
+            last_chart_type=data.get("chart_spec", {}).get("chart_type", state.last_chart_type),
             last_row_limit=data["limit"]["row_limit"],
+            **self._result_state_fields(tool_name, data),
         )
+
+    def _result_state_fields(self, tool_name: str, data: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "last_sql": data.get("sql") or data.get("compiled_sql"),
+            "last_columns": self._dict_tuple(data.get("columns", ())),
+            "last_rows": tuple(tuple(row) for row in data.get("rows", ())),
+            "last_chart_spec": dict(data["chart_spec"]) if isinstance(data.get("chart_spec"), dict) else None,
+            "last_limit": dict(data["limit"]) if isinstance(data.get("limit"), dict) else None,
+            "last_warnings": self._dict_tuple(data.get("warnings", ())),
+            "last_query_metadata": dict(data["query_metadata"]) if isinstance(data.get("query_metadata"), dict) else None,
+            "last_plan": dict(data["plan"]) if isinstance(data.get("plan"), dict) else None,
+        }
+
+    def _dict_tuple(self, values: Any) -> tuple[dict[str, Any], ...]:
+        return tuple(dict(item) for item in values if isinstance(item, dict))
+
+    def _visualization_follow_up_response(self, latest_user_message: str, state: ConversationState, request: ChatRequest) -> ChatResponse | None:
+        if not self._is_visualization_follow_up(latest_user_message):
+            return None
+        if not self._state_has_prior_result(state):
+            return ChatResponse(
+                tool_name="chat",
+                assistant_message="I need a prior governed result before I can plot or reformat it.",
+                executed_tool_name=None,
+                tool_result=None,
+                conversation_state=state,
+                tool_trace=(),
+            )
+        tool_result = self._visualize_existing_result(latest_user_message, state)
+        updated_state = self._updated_state(state, request, "visualize_result", tool_result)
+        return ChatResponse(
+            tool_name="chat",
+            assistant_message=self._visualization_summary(tool_result["data"]),
+            executed_tool_name="visualize_result",
+            tool_result=tool_result,
+            conversation_state=updated_state,
+            tool_trace=(ToolCallTrace(tool_name="visualize_result", arguments={"question": latest_user_message}, result_ok=True),),
+        )
+
+    def _is_visualization_follow_up(self, message: str) -> bool:
+        normalized = normalize_semantic_term(message)
+        phrases = (
+            "plot the above",
+            "chart the above",
+            "plot above",
+            "chart above",
+            "visualize it",
+            "visualize this",
+            "visualize that",
+            "show this as",
+            "show that as",
+            "show as table",
+            "show as a table",
+            "show as line chart",
+            "show as a line chart",
+            "can you graph that",
+            "graph that",
+            "graph it",
+            "make it a grouped bar",
+            "make that a grouped bar",
+            "make it a heatmap",
+            "make that a heatmap",
+            "show as heatmap",
+            "show this as a heatmap",
+            "show that as a heatmap",
+            "bar graph",
+            "bar chart",
+            "grouped bar",
+            "heatmap",
+            "heat map",
+            "line chart",
+        )
+        return any(phrase in normalized for phrase in phrases)
+
+    def _state_has_prior_result(self, state: ConversationState) -> bool:
+        return bool(state.last_columns and state.last_rows and state.last_limit and state.last_query_mode)
+
+    def _visualize_existing_result(self, latest_user_message: str, state: ConversationState) -> dict[str, Any]:
+        chart_override = self._requested_chart_override(latest_user_message)
+        chart_spec = self._chart_spec_for_existing_result(state.last_columns, state.last_rows, chart_override)
+        warnings = list(state.last_warnings)
+        for warning in chart_spec.get("warnings", ()):
+            warnings.append(
+                {
+                    "code": "chart_existing_result_fallback",
+                    "message": str(warning),
+                    "source": "chart",
+                }
+            )
+        query_metadata = dict(state.last_query_metadata or {})
+        validation_notes = list(query_metadata.get("validation_notes", ()))
+        validation_notes.append("Reused prior governed result for visualization follow-up.")
+        validation_notes.append("No new SQL was executed for this visualization follow-up.")
+        if chart_override is not None:
+            validation_notes.append(f"Chart override requested: {chart_override}")
+        query_metadata["validation_notes"] = tuple(validation_notes)
+        data = {
+            "tool_name": "visualize_result",
+            "query_mode": state.last_query_mode,
+            "query_metadata": query_metadata,
+            "sql": state.last_sql or "",
+            "columns": state.last_columns,
+            "rows": state.last_rows,
+            "limit": state.last_limit,
+            "warnings": tuple(warnings),
+            "chart_spec": chart_spec,
+            "plan": state.last_plan,
+            "source_result_tool": state.last_tool_name,
+            "source_query_mode": state.last_query_mode,
+            "visualization_follow_up": True,
+            "no_new_sql_executed": True,
+            "chart_override_requested": chart_override,
+        }
+        if state.last_plan is None:
+            data.pop("plan")
+        return {
+            "ok": True,
+            "tool_name": "visualize_result",
+            "data": data,
+            "error": None,
+        }
+
+    def _requested_chart_override(self, message: str) -> str | None:
+        normalized = normalize_semantic_term(message)
+        if "table" in normalized:
+            return "table"
+        if "heatmap" in normalized or "heat map" in normalized:
+            return "heatmap"
+        if "line" in normalized:
+            return "line"
+        if "grouped bar" in normalized:
+            return "grouped_bar"
+        if "bar" in normalized or "graph" in normalized or "plot" in normalized or "chart" in normalized or "visualize" in normalized:
+            return "bar"
+        return None
+
+    def _chart_spec_for_existing_result(
+        self,
+        columns: tuple[dict[str, Any], ...],
+        rows: tuple[tuple[Any, ...], ...],
+        chart_override: str | None,
+    ) -> dict[str, Any]:
+        column_names = tuple(str(column.get("name", "")) for column in columns)
+        dimensions, measures, time_columns = self._infer_existing_result_roles(columns, rows)
+        title = self._existing_result_title(measures)
+        if chart_override == "table":
+            return self._existing_result_table_chart(column_names, title)
+        if not rows:
+            return self._existing_result_table_chart(column_names, title, ("Prior result is empty; table view is safest.",))
+        desired = chart_override
+        if desired is None:
+            if len(dimensions) >= 2 and measures:
+                desired = "heatmap" if len(measures) == 1 else "grouped_bar"
+            elif len(dimensions) >= 1 and measures:
+                desired = "bar"
+        elif desired == "bar" and len(dimensions) >= 2 and measures:
+            desired = "grouped_bar"
+        if desired == "heatmap":
+            if len(dimensions) < 2 or not measures:
+                return self._existing_result_table_chart(column_names, title, ("Heatmap needs two dimensions and at least one measure.",))
+            warnings = self._heatmap_shape_warnings(rows, columns, dimensions[0], dimensions[1])
+            if warnings:
+                return self._existing_result_table_chart(column_names, title, warnings)
+            return {
+                "chart_type": "heatmap",
+                "title": title,
+                "x": dimensions[0],
+                "y": (measures[0],),
+                "series": dimensions[1],
+                "columns": column_names,
+                "warnings": (),
+                "chart_choice_explanation": "Selected a heatmap because the prior result has two category dimensions and one measure.",
+            }
+        if desired == "grouped_bar":
+            if len(dimensions) < 2 or not measures:
+                return self._existing_result_table_chart(column_names, title, ("Grouped bar chart needs two dimensions and at least one measure.",))
+            warnings = self._bar_shape_warnings(rows, columns, dimensions[0], dimensions[1])
+            if warnings:
+                return self._existing_result_table_chart(column_names, title, warnings)
+            return {
+                "chart_type": "grouped_bar",
+                "title": title,
+                "x": dimensions[0],
+                "y": tuple(measures),
+                "series": dimensions[1],
+                "columns": column_names,
+                "warnings": (),
+                "chart_choice_explanation": "Selected a grouped bar chart because the prior result has two category dimensions and measure values.",
+            }
+        if desired == "bar":
+            if not dimensions or not measures:
+                return self._existing_result_table_chart(column_names, title, ("Bar chart needs one dimension and at least one measure.",))
+            warnings = self._bar_shape_warnings(rows, columns, dimensions[0], None)
+            if warnings:
+                return self._existing_result_table_chart(column_names, title, warnings)
+            return {
+                "chart_type": "bar",
+                "title": title,
+                "x": dimensions[0],
+                "y": (measures[0],),
+                "series": None,
+                "columns": column_names,
+                "warnings": (),
+                "chart_choice_explanation": "Selected a bar chart because the prior result has one category dimension and one measure.",
+            }
+        if desired == "line":
+            if not time_columns or not measures:
+                return self._existing_result_table_chart(column_names, title, ("Line chart requested but the prior result does not include a time column and measure.",))
+            return {
+                "chart_type": "line",
+                "title": title,
+                "x": time_columns[0],
+                "y": tuple(measures),
+                "series": dimensions[0] if dimensions else None,
+                "columns": column_names,
+                "warnings": (),
+                "chart_choice_explanation": "Selected a line chart because the prior result has a time-like column and measure values.",
+            }
+        return self._existing_result_table_chart(column_names, title, ("Could not infer a supported chart shape from the prior result.",))
+
+    def _infer_existing_result_roles(
+        self,
+        columns: tuple[dict[str, Any], ...],
+        rows: tuple[tuple[Any, ...], ...],
+    ) -> tuple[list[str], list[str], list[str]]:
+        dimensions: list[str] = []
+        measures: list[str] = []
+        time_columns: list[str] = []
+        for index, column in enumerate(columns):
+            name = str(column.get("name", ""))
+            role = str(column.get("role", "unknown"))
+            if role == "time" or self._looks_like_time_column(name):
+                time_columns.append(name)
+                continue
+            if role == "measure" or self._looks_like_measure_column(name, rows, index):
+                measures.append(name)
+                continue
+            dimensions.append(name)
+        return dimensions, measures, time_columns
+
+    def _looks_like_time_column(self, name: str) -> bool:
+        normalized = name.lower()
+        return any(term in normalized for term in ("date", "month", "period", "year", "quarter"))
+
+    def _looks_like_measure_column(self, name: str, rows: tuple[tuple[Any, ...], ...], index: int) -> bool:
+        normalized = name.lower()
+        measure_terms = ("count", "amount", "rate", "pct", "percent", "average", "avg", "sum", "total", "fee", "users", "transactions")
+        if any(term in normalized for term in measure_terms):
+            return True
+        values = [row[index] for row in rows if index < len(row) and row[index] not in (None, "")]
+        return bool(values) and all(isinstance(value, (int, float)) and not isinstance(value, bool) for value in values)
+
+    def _existing_result_title(self, measures: list[str]) -> str:
+        if measures:
+            return ", ".join(measures)
+        return "Prior Governed Result"
+
+    def _existing_result_table_chart(
+        self,
+        column_names: tuple[str, ...],
+        title: str,
+        warnings: tuple[str, ...] = (),
+    ) -> dict[str, Any]:
+        return {
+            "chart_type": "table",
+            "title": title,
+            "x": None,
+            "y": (),
+            "series": None,
+            "columns": column_names,
+            "warnings": warnings,
+            "chart_choice_explanation": (
+                f"Selected a table because {warnings[0]}"
+                if warnings
+                else "Selected a table because it is the safest representation for this prior result."
+            ),
+        }
+
+    def _bar_shape_warnings(
+        self,
+        rows: tuple[tuple[Any, ...], ...],
+        columns: tuple[dict[str, Any], ...],
+        x_column: str,
+        series_column: str | None,
+    ) -> tuple[str, ...]:
+        warnings = []
+        x_distinct = self._distinct_count(rows, columns, x_column)
+        if x_distinct > self.answer_service.chart_specs.max_grouped_categories:
+            warnings.append("Prior result has too many x-axis categories for the pilot renderer contract.")
+        if series_column is not None:
+            series_distinct = self._distinct_count(rows, columns, series_column)
+            if series_distinct > self.answer_service.chart_specs.max_grouped_series:
+                warnings.append("Prior result has too many grouped-bar series for the pilot renderer contract.")
+        return tuple(warnings)
+
+    def _heatmap_shape_warnings(
+        self,
+        rows: tuple[tuple[Any, ...], ...],
+        columns: tuple[dict[str, Any], ...],
+        x_column: str,
+        y_column: str,
+    ) -> tuple[str, ...]:
+        warnings = []
+        x_distinct = self._distinct_count(rows, columns, x_column)
+        y_distinct = self._distinct_count(rows, columns, y_column)
+        if x_distinct > self.answer_service.chart_specs.max_heatmap_x:
+            warnings.append("Prior result has too many x-axis categories for the pilot heatmap contract.")
+        if y_distinct > self.answer_service.chart_specs.max_heatmap_y:
+            warnings.append("Prior result has too many y-axis categories for the pilot heatmap contract.")
+        return tuple(warnings)
+
+    def _distinct_count(self, rows: tuple[tuple[Any, ...], ...], columns: tuple[dict[str, Any], ...], column_name: str) -> int:
+        names = [str(column.get("name", "")) for column in columns]
+        try:
+            index = names.index(column_name)
+        except ValueError:
+            return 0
+        return len({row[index] for row in rows if index < len(row) and row[index] not in (None, "")})
+
+    def _visualization_summary(self, data: dict[str, Any]) -> str:
+        chart_type = data.get("chart_spec", {}).get("chart_type", "table")
+        explanation = data.get("chart_spec", {}).get("chart_choice_explanation", "")
+        if chart_type == "grouped_bar":
+            return self._append_chart_explanation("Rendered the prior governed result as a grouped bar chart without running new SQL.", explanation)
+        if chart_type == "heatmap":
+            return self._append_chart_explanation("Rendered the prior governed result as a heatmap without running new SQL.", explanation)
+        if chart_type == "bar":
+            return self._append_chart_explanation("Rendered the prior governed result as a bar chart without running new SQL.", explanation)
+        if chart_type == "line":
+            return self._append_chart_explanation("Rendered the prior governed result as a line chart without running new SQL.", explanation)
+        warnings = data.get("chart_spec", {}).get("warnings", ())
+        if warnings:
+            return f"I reused the prior governed result, but kept it as a table because {warnings[0]}"
+        return self._append_chart_explanation("Showing the prior governed result as a table without running new SQL.", explanation)
+
+    def _append_chart_explanation(self, message: str, explanation: str) -> str:
+        if not explanation:
+            return message
+        return f"{message} {explanation}"
 
     def _final_assistant_message(
         self,
@@ -531,6 +883,7 @@ class ChatOrchestrator:
                 "series": None,
                 "columns": tuple(column.get("name") for column in columns if isinstance(column, dict)),
                 "warnings": ("Restricted SQL fallback results default to table rendering.",),
+                "chart_choice_explanation": "Selected a table because restricted SQL fallback results default to table rendering until a visualization follow-up is requested.",
             },
         )
         metadata = data.setdefault("query_metadata", {})

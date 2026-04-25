@@ -382,6 +382,11 @@ code {
   fill: var(--muted);
 }
 
+.heatmap-value {
+  fill: #123330;
+  font-weight: 700;
+}
+
 .table-wrap {
   overflow: auto;
   border: 1px solid var(--line);

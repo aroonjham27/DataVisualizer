@@ -85,6 +85,29 @@ class UiContractTests(unittest.TestCase):
         self.assertEqual(len(view_model["lines"]), 1)
         self.assertEqual([point["x"] for point in view_model["lines"][0]["points"]], ["2025-01-01", "2025-02-01"])
 
+    def test_heatmap_view_model_builds_cells(self) -> None:
+        chart_spec = ChartSpec(
+            chart_type="heatmap",
+            title="Opportunities",
+            x="implementation_complexity",
+            y=("opportunity_count",),
+            series="support_tier_requested",
+            chart_choice_explanation="Selected a heatmap because the result has two category dimensions and one measure.",
+        )
+        columns = (
+            ResultColumn("implementation_complexity", "Implementation Complexity", "string", ("opportunities.implementation_complexity",), "dimension"),
+            ResultColumn("support_tier_requested", "Requested Support Tier", "string", ("opportunities.support_tier_requested",), "dimension"),
+            ResultColumn("opportunity_count", "Opportunities", "number", ("opportunities.opportunity_count",), "measure"),
+        )
+        rows = (("high", "enterprise", 12), ("medium", "standard", 8))
+
+        view_model = build_chart_view_model(chart_spec, columns, rows)
+
+        self.assertEqual(view_model["chart_type"], "heatmap")
+        self.assertEqual(view_model["x"], "implementation_complexity")
+        self.assertEqual(view_model["series"], "support_tier_requested")
+        self.assertEqual(view_model["cells"][0]["value"], 12)
+
     def test_inspector_view_model_surfaces_filters_sql_and_entities(self) -> None:
         initial = self.service.answer("What is win rate by close month and account segment?", row_limit=20)
         response = self.service.answer(
@@ -177,6 +200,10 @@ class UiHttpTests(unittest.TestCase):
         self.assertIn("SQL Executed", script)
         self.assertIn("Fallback explanations", script)
         self.assertIn("Fallback Reason", script)
+        self.assertIn("Reused Result", script)
+        self.assertIn("No new SQL", script)
+        self.assertIn("renderHeatmap", script)
+        self.assertIn("Chart Choice", script)
         self.assertIn(".chat-thread", styles)
         self.assertIn(".inspector", styles)
         self.assertIn(".sql-block", styles)

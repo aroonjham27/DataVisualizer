@@ -11,6 +11,8 @@ class ChartSpecGenerator:
     max_categories = 12
     max_grouped_categories = 8
     max_grouped_series = 6
+    max_heatmap_x = 12
+    max_heatmap_y = 12
     max_chart_columns = 5
 
     def generate(self, plan: AnalysisPlan, columns: tuple[ResultColumn, ...], rows: tuple[tuple[Any, ...], ...] = ()) -> ChartSpec:
@@ -24,6 +26,8 @@ class ChartSpecGenerator:
             return self._bar(plan, columns, rows)
         if chart_type == "grouped_bar":
             return self._grouped_bar(plan, columns, rows)
+        if chart_type == "heatmap":
+            return self._heatmap(plan, columns, rows)
         return self._table(plan, columns)
 
     def _line(self, plan: AnalysisPlan, columns: tuple[ResultColumn, ...], rows: tuple[tuple[Any, ...], ...]) -> ChartSpec:
@@ -45,6 +49,7 @@ class ChartSpecGenerator:
             y=tuple(column.name for column in measure_columns),
             series=series.name if series else None,
             columns=tuple(column.name for column in columns),
+            chart_choice_explanation="Selected a line chart because the result includes a time column and measure values.",
         )
 
     def _bar(self, plan: AnalysisPlan, columns: tuple[ResultColumn, ...], rows: tuple[tuple[Any, ...], ...]) -> ChartSpec:
@@ -63,6 +68,7 @@ class ChartSpecGenerator:
             x=dimension.name,
             y=(measure.name,),
             columns=tuple(column.name for column in columns),
+            chart_choice_explanation="Selected a bar chart because the result has one category dimension and one measure.",
         )
 
     def _grouped_bar(self, plan: AnalysisPlan, columns: tuple[ResultColumn, ...], rows: tuple[tuple[Any, ...], ...]) -> ChartSpec:
@@ -87,6 +93,33 @@ class ChartSpecGenerator:
             y=tuple(column.name for column in measure_columns),
             series=series.name if series else None,
             columns=tuple(column.name for column in columns),
+            chart_choice_explanation=(
+                "Selected a grouped bar chart because the result has category dimensions and multiple comparable measures."
+                if len(measure_columns) > 1
+                else "Selected a grouped bar chart because the result has category and series dimensions with a measure."
+            ),
+        )
+
+    def _heatmap(self, plan: AnalysisPlan, columns: tuple[ResultColumn, ...], rows: tuple[tuple[Any, ...], ...]) -> ChartSpec:
+        dimensions = self._columns_by_role(columns, "dimension")
+        measure = self._first_column(columns, "measure")
+        warnings = []
+        if len(dimensions) < 2 or measure is None:
+            warnings.append("Heatmap needs two dimensions and one measure.")
+        elif self._distinct_count(dimensions[0], rows, columns) > self.max_heatmap_x:
+            warnings.append("Heatmap has too many x-axis categories for the pilot renderer contract.")
+        elif self._distinct_count(dimensions[1], rows, columns) > self.max_heatmap_y:
+            warnings.append("Heatmap has too many y-axis categories for the pilot renderer contract.")
+        if warnings:
+            return self._table(plan, columns, tuple(warnings))
+        return ChartSpec(
+            chart_type="heatmap",
+            title=self._title(plan),
+            x=dimensions[0].name,
+            y=(measure.name,),
+            series=dimensions[1].name,
+            columns=tuple(column.name for column in columns),
+            chart_choice_explanation="Selected a heatmap because the result has two category dimensions and one measure.",
         )
 
     def _table(self, plan: AnalysisPlan, columns: tuple[ResultColumn, ...], warnings: tuple[str, ...] = ()) -> ChartSpec:
@@ -95,6 +128,11 @@ class ChartSpecGenerator:
             title=self._title(plan),
             columns=tuple(column.name for column in columns),
             warnings=warnings,
+            chart_choice_explanation=(
+                f"Selected a table because {warnings[0]}"
+                if warnings
+                else "Selected a table because it is the safest representation for this result shape."
+            ),
         )
 
     def _shape_warnings(self, columns: tuple[ResultColumn, ...], rows: tuple[tuple[Any, ...], ...]) -> tuple[str, ...]:

@@ -14,8 +14,9 @@ This repository now contains:
 - a governed restricted-SQL gateway for future fallback tooling
 - a provider-agnostic chat orchestrator with env-configured live LLM support
 - an automatic governed restricted-SQL fallback inside `/chat` for valid analytics requests the compiled planner cannot fully cover
+- result-aware chat state so visualization-only follow-ups can reuse the prior governed result without re-querying
 - a minimal single-page chat UI served by the existing Python backend
-- a compact per-response inspection surface for query mode, plan, SQL, filters, entities, fallback reason, limits, warnings, and chart fallbacks
+- a compact per-response inspection surface for query mode, plan, SQL, filters, entities, fallback reason, chart choice explanation, limits, warnings, and chart fallbacks
 - a standard-library test suite under `tests/`
 
 ## Running the project
@@ -56,12 +57,15 @@ Then open `http://127.0.0.1:8000/dev/chat-trace` to inspect the last N `/chat` r
 
 The chat UI does not expose a restricted-SQL mode, SQL editor, or raw SQL input. Users ask normal business questions. When `/chat` uses the alternate governed query path, the assistant includes a short notice and the inspector shows `query_mode = restricted_sql`, the fallback reason, SQL executed, involved entities, and limit/truncation metadata.
 
+`/chat` also keeps a compact snapshot of the last governed result in conversation state. Follow-ups such as "plot the above", "can you graph that?", "show this as a bar chart", "show this as a heatmap", and "show as table" reuse the prior columns, rows, SQL, query metadata, warnings, and chart context. These visualization-only turns do not call `/answer`, do not invoke restricted SQL, and mark the response with `visualization_follow_up = true` and `no_new_sql_executed = true`.
+
 The live provider adapter is env-configured and provider-agnostic. The current local setup supports an OpenRouter-backed OpenAI-compatible endpoint without hard-coding provider secrets into the repo.
 
 The frontend stack is intentionally minimal:
 
 - plain HTML, CSS, and browser JavaScript
 - inline SVG rendering for `line`, `bar`, and `grouped_bar`
+- inline SVG rendering for `line`, `bar`, `grouped_bar`, and `heatmap`
 - grouped warning and fallback explanation rendering
 - a collapsible "What did the system do?" inspector on each assistant answer
 - no package manager
@@ -139,6 +143,6 @@ The default answer path is still `compiled_plan`: question -> `AnalysisPlan` -> 
 
 `/answer` still selects the compiled-plan lane by default and reports that choice explicitly in the response.
 
-The chat orchestrator preserves that posture. It evaluates compiled-plan insufficiency using signals such as planner fallback warnings, incomplete/review-needed unsupported states, requested semantic fields missing from the plan, and unsupported chart-shape fallback. It only asks the model for restricted SQL after the compiled plan has been evaluated, routing allows fallback, the request looks like analytics, and the requested shape can be expressed over governed semantic entities and approved joins. Execution still goes through the restricted SQL validator and gateway.
+The chat orchestrator preserves that posture. It evaluates compiled-plan insufficiency using signals such as planner fallback warnings, incomplete/review-needed unsupported states, requested semantic fields missing from the plan, and unsupported chart-shape fallback. It only asks the model for restricted SQL after the compiled plan has been evaluated, routing allows fallback, the request looks like analytics, and the requested shape can be expressed over governed semantic entities and approved joins. Visualization-only follow-ups reuse the previous governed result instead of starting a new query. Execution still goes through the restricted SQL validator and gateway when new SQL is actually needed.
 
 The user-facing SPA preserves the same posture. It renders governed results from `/chat`, displays warnings and fallback reasons clearly, shows active filters and SQL in a collapsible inspector, and uses selected-member drill payloads rather than any raw-query escape hatch.

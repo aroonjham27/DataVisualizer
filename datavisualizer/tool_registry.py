@@ -47,7 +47,7 @@ class ToolRegistry:
                         },
                     },
                     "reuse_current_plan": {"type": "boolean"},
-                    "chart_type_override": {"type": "string", "enum": ["line", "bar", "grouped_bar", "table"]},
+                    "chart_type_override": {"type": "string", "enum": ["line", "bar", "grouped_bar", "heatmap", "table"]},
                 },
                 "required": ["question"],
             },

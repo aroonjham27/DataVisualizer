@@ -240,8 +240,16 @@ class AnswerService:
     ) -> ChartSpec:
         if chart_type_override is None:
             return chart_spec
-        if chart_type_override not in {"line", "bar", "grouped_bar", "table"}:
+        if chart_type_override not in {"line", "bar", "grouped_bar", "heatmap", "table"}:
             raise ValueError(f"Unsupported chart_type_override: {chart_type_override}")
         if chart_type_override == "table":
-            return replace(chart_spec, chart_type="table", x=None, y=(), series=None, columns=tuple(column.name for column in columns))
+            return replace(
+                chart_spec,
+                chart_type="table",
+                x=None,
+                y=(),
+                series=None,
+                columns=tuple(column.name for column in columns),
+                chart_choice_explanation="Selected a table because the user requested a table view.",
+            )
         return replace(chart_spec, chart_type=chart_type_override)

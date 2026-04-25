@@ -385,6 +385,101 @@ class ChatOrchestratorTests(unittest.TestCase):
         self.assertEqual(inspector["query_mode"], "restricted_sql")
         self.assertIn("requested semantic fields were missing", inspector["fallback_reason"])
 
+    def test_visualization_follow_up_reuses_prior_restricted_sql_result(self) -> None:
+        sql = (
+            "SELECT implementation_complexity, support_tier_requested, "
+            "COUNT(DISTINCT opportunity_id) AS opportunity_count "
+            "FROM opportunities WHERE segment = 'enterprise' "
+            "GROUP BY implementation_complexity, support_tier_requested "
+            "ORDER BY opportunity_count DESC"
+        )
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "restricted_sql", {"sql": sql}),))),
+                LlmResponse(LlmAssistantMessage("Here is the custom breakdown.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(
+                messages=(
+                    ChatMessage(
+                        role="user",
+                        content="Show opportunity count by implementation complexity and requested support tier for enterprise deals.",
+                    ),
+                )
+            )
+        )
+        llm_call_count = len(orchestrator.llm_client.calls)
+
+        second = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="is there a way to plot the above? May be bar graphs?"),),
+                conversation_state=first.conversation_state,
+            )
+        )
+
+        self.assertEqual(len(orchestrator.llm_client.calls), llm_call_count)
+        self.assertEqual([item.tool_name for item in second.tool_trace], ["visualize_result"])
+        self.assertEqual(second.executed_tool_name, "visualize_result")
+        self.assertEqual(second.tool_result["data"]["query_mode"], "restricted_sql")
+        self.assertEqual(second.tool_result["data"]["rows"], first.tool_result["data"]["rows"])
+        self.assertEqual(
+            [column["name"] for column in second.tool_result["data"]["columns"]],
+            ["implementation_complexity", "support_tier_requested", "opportunity_count"],
+        )
+        self.assertEqual(second.tool_result["data"]["chart_spec"]["chart_type"], "grouped_bar")
+        self.assertIn("two category dimensions", second.tool_result["data"]["chart_spec"]["chart_choice_explanation"])
+        self.assertTrue(second.tool_result["data"]["visualization_follow_up"])
+        self.assertTrue(second.tool_result["data"]["no_new_sql_executed"])
+        self.assertEqual(second.tool_result["data"]["source_result_tool"], "restricted_sql")
+        self.assertIn("without running new SQL", second.assistant_message)
+        if "grouped bar" in second.assistant_message:
+            self.assertEqual(second.tool_result["data"]["chart_spec"]["chart_type"], "grouped_bar")
+        inspector = build_inspector_view_model(second.tool_result["data"])
+        self.assertTrue(inspector["visualization_follow_up"])
+        self.assertTrue(inspector["no_new_sql_executed"])
+        self.assertEqual(inspector["source_query_mode"], "restricted_sql")
+
+    def test_heatmap_follow_up_for_product_line_breakdown_reuses_prior_result(self) -> None:
+        sql = (
+            "SELECT p.pricing_model, oli.line_role, COUNT(DISTINCT oli.line_item_id) AS line_item_count "
+            "FROM opportunity_line_items oli JOIN products p ON oli.product_id = p.product_id "
+            "WHERE p.product_family = 'analytics' "
+            "GROUP BY p.pricing_model, oli.line_role ORDER BY line_item_count DESC"
+        )
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "restricted_sql", {"sql": sql}),))),
+                LlmResponse(LlmAssistantMessage("Line-item breakdown ready.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(
+                messages=(
+                    ChatMessage(
+                        role="user",
+                        content="For analytics products, show line item count by pricing model and line role.",
+                    ),
+                )
+            )
+        )
+
+        second = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="show this as a heatmap"),),
+                conversation_state=first.conversation_state,
+            )
+        )
+
+        self.assertEqual(second.executed_tool_name, "visualize_result")
+        self.assertEqual(second.tool_result["data"]["chart_spec"]["chart_type"], "heatmap")
+        self.assertEqual(second.tool_result["data"]["chart_spec"]["x"], "pricing_model")
+        self.assertEqual(second.tool_result["data"]["chart_spec"]["series"], "line_role")
+        self.assertEqual(second.tool_result["data"]["chart_spec"]["y"], ("line_item_count",))
+        self.assertTrue(second.tool_result["data"]["no_new_sql_executed"])
+
     def test_custom_approved_join_breakdown_falls_back_to_restricted_sql(self) -> None:
         sql = (
             "SELECT p.pricing_model, oli.line_role, COUNT(DISTINCT oli.line_item_id) AS line_item_count "
@@ -474,6 +569,41 @@ class ChatOrchestratorTests(unittest.TestCase):
         self.assertIn("Restricted SQL fallback was attempted but rejected safely", warning_text)
         inspector = build_inspector_view_model(response.tool_result["data"])
         self.assertEqual(inspector["query_mode"], "compiled_plan")
+
+    def test_compiled_plan_show_as_table_reuses_prior_result(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Initial answer ready.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),))
+        )
+        llm_call_count = len(orchestrator.llm_client.calls)
+
+        second = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="show as table"),), conversation_state=first.conversation_state)
+        )
+
+        self.assertEqual(len(orchestrator.llm_client.calls), llm_call_count)
+        self.assertEqual(second.executed_tool_name, "visualize_result")
+        self.assertEqual(second.tool_result["data"]["query_mode"], "compiled_plan")
+        self.assertEqual(second.tool_result["data"]["chart_spec"]["chart_type"], "table")
+        self.assertEqual(second.tool_result["data"]["rows"], first.tool_result["data"]["rows"])
+        self.assertTrue(second.tool_result["data"]["no_new_sql_executed"])
+
+    def test_plot_above_without_prior_result_returns_clarification(self) -> None:
+        orchestrator = self._scripted_orchestrator([])
+
+        response = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="plot the above"),))
+        )
+
+        self.assertIsNone(response.executed_tool_name)
+        self.assertIsNone(response.tool_result)
+        self.assertIn("prior governed result", response.assistant_message)
+        self.assertEqual(response.tool_trace, ())
 
     def test_chat_can_execute_restricted_sql_when_clearly_requested(self) -> None:
         orchestrator = self._scripted_orchestrator(

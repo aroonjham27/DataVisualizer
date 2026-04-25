@@ -313,6 +313,7 @@ class ChartSpec:
     series: str | None = None
     columns: tuple[str, ...] = ()
     warnings: tuple[str, ...] = ()
+    chart_choice_explanation: str = ""
 
 
 @dataclass(frozen=True)
@@ -364,6 +365,14 @@ class ConversationState:
     selected_member: DrillSelection | None = None
     last_tool_name: str | None = None
     last_query_mode: str | None = None
+    last_sql: str | None = None
+    last_columns: tuple[dict[str, Any], ...] = ()
+    last_rows: tuple[tuple[Any, ...], ...] = ()
+    last_chart_spec: dict[str, Any] | None = None
+    last_limit: dict[str, Any] | None = None
+    last_warnings: tuple[dict[str, Any], ...] = ()
+    last_query_metadata: dict[str, Any] | None = None
+    last_plan: dict[str, Any] | None = None
     last_chart_type: str | None = None
     last_row_limit: int | None = None
 
@@ -387,11 +396,22 @@ class ConversationState:
             )
 
         current_state_payload = payload.get("current_analysis_state")
+        rows = tuple(tuple(row) for row in payload.get("last_rows", ()))
+        columns = tuple(dict(column) for column in payload.get("last_columns", ()) if isinstance(column, dict))
+        warnings = tuple(dict(warning) for warning in payload.get("last_warnings", ()) if isinstance(warning, dict))
         return cls(
             current_analysis_state=AnalysisPlan.from_dict(current_state_payload) if current_state_payload else None,
             selected_member=parse_selection(payload.get("selected_member")),
             last_tool_name=payload.get("last_tool_name"),
             last_query_mode=payload.get("last_query_mode"),
+            last_sql=payload.get("last_sql"),
+            last_columns=columns,
+            last_rows=rows,
+            last_chart_spec=dict(payload["last_chart_spec"]) if isinstance(payload.get("last_chart_spec"), dict) else None,
+            last_limit=dict(payload["last_limit"]) if isinstance(payload.get("last_limit"), dict) else None,
+            last_warnings=warnings,
+            last_query_metadata=dict(payload["last_query_metadata"]) if isinstance(payload.get("last_query_metadata"), dict) else None,
+            last_plan=dict(payload["last_plan"]) if isinstance(payload.get("last_plan"), dict) else None,
             last_chart_type=payload.get("last_chart_type"),
             last_row_limit=payload.get("last_row_limit"),
         )

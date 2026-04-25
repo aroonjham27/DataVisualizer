@@ -423,6 +423,87 @@ class RowAwareChartSpecTests(unittest.TestCase):
         self.assertEqual(chart.chart_type, "grouped_bar")
         self.assertIsNone(chart.series)
 
+    def test_heatmap_for_opportunity_complexity_and_support_tier_question(self) -> None:
+        plan = replace(
+            self.plan,
+            question="Show opportunity count by implementation complexity and requested support tier for enterprise deals.",
+            chart_intent=ChartIntent(chart_type="heatmap", reason="test"),
+        )
+        columns = (
+            ResultColumn("implementation_complexity", "Implementation Complexity", "string", ("opportunities.implementation_complexity",), "dimension"),
+            ResultColumn("support_tier_requested", "Requested Support Tier", "string", ("opportunities.support_tier_requested",), "dimension"),
+            ResultColumn("opportunity_count", "Opportunities", "number", ("opportunities.opportunity_count",), "measure"),
+        )
+        rows = (("high", "enterprise", 12), ("medium", "standard", 8))
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "heatmap")
+        self.assertEqual(chart.x, "implementation_complexity")
+        self.assertEqual(chart.series, "support_tier_requested")
+        self.assertEqual(chart.y, ("opportunity_count",))
+        self.assertIn("two category dimensions and one measure", chart.chart_choice_explanation)
+
+    def test_heatmap_for_line_item_pricing_model_and_line_role_question(self) -> None:
+        plan = replace(
+            self.plan,
+            question="For analytics products, show line item count by pricing model and line role.",
+            chart_intent=ChartIntent(chart_type="heatmap", reason="test"),
+        )
+        columns = (
+            ResultColumn("pricing_model", "Pricing Model", "string", ("products.pricing_model",), "dimension"),
+            ResultColumn("line_role", "Line Role", "string", ("opportunity_line_items.line_role",), "dimension"),
+            ResultColumn("line_item_count", "Line Items", "number", ("opportunity_line_items.line_item_count",), "measure"),
+        )
+        rows = (("subscription", "base", 4), ("transactional", "add_on", 7))
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "heatmap")
+        self.assertEqual(chart.x, "pricing_model")
+        self.assertEqual(chart.series, "line_role")
+        self.assertEqual(chart.y, ("line_item_count",))
+
+    def test_heatmap_for_contract_billing_frequency_and_currency_question(self) -> None:
+        plan = replace(
+            self.plan,
+            question="Show active contract count by billing frequency and currency.",
+            chart_intent=ChartIntent(chart_type="heatmap", reason="test"),
+        )
+        columns = (
+            ResultColumn("billing_frequency", "Billing Frequency", "string", ("contracts.billing_frequency",), "dimension"),
+            ResultColumn("currency_code", "Currency", "string", ("contracts.currency_code",), "dimension"),
+            ResultColumn("active_contract_count", "Active Contracts", "number", ("contracts.active_contract_count",), "measure"),
+        )
+        rows = (("monthly", "USD", 10), ("annual", "USD", 6))
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "heatmap")
+        self.assertEqual(chart.x, "billing_frequency")
+        self.assertEqual(chart.series, "currency_code")
+        self.assertEqual(chart.y, ("active_contract_count",))
+
+    def test_heatmap_for_win_rate_by_segment_and_region_question(self) -> None:
+        plan = replace(
+            self.plan,
+            question="Where is win rate strongest by deal segment and sales region?",
+            chart_intent=ChartIntent(chart_type="heatmap", reason="test"),
+        )
+        columns = (
+            ResultColumn("segment", "Deal Segment", "string", ("opportunities.segment",), "dimension"),
+            ResultColumn("sales_region", "Deal Sales Region", "string", ("opportunities.sales_region",), "dimension"),
+            ResultColumn("win_rate", "Win Rate", "number", ("opportunities.win_rate",), "measure"),
+        )
+        rows = (("enterprise", "apac", 0.52), ("mid_market", "na", 0.47))
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "heatmap")
+        self.assertEqual(chart.x, "segment")
+        self.assertEqual(chart.series, "sales_region")
+        self.assertEqual(chart.y, ("win_rate",))
+
 
 if __name__ == "__main__":
     unittest.main()

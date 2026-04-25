@@ -196,6 +196,8 @@
     const fallbackReasons = chartFallbackReasons(data);
     if (fallbackReasons.length > 0) {
       chartCopy.textContent = `Table view selected because ${fallbackReasons.join(" ")}`;
+    } else if (data.chart_spec && data.chart_spec.chart_choice_explanation) {
+      chartCopy.textContent = data.chart_spec.chart_choice_explanation;
     } else {
       chartCopy.textContent = data.plan && data.plan.drill && data.plan.drill.next_level
         ? "Click or double-click a chart mark to drill one level deeper."
@@ -267,6 +269,9 @@
     }
     if (chartType === "grouped_bar") {
       return renderGroupedBarChart(data);
+    }
+    if (chartType === "heatmap") {
+      return renderHeatmap(data);
     }
     if (chartType === "line") {
       return renderLineChart(data);
@@ -390,6 +395,88 @@
       svg.appendChild(label);
     });
 
+    return svg;
+  }
+
+  function renderHeatmap(data) {
+    const rows = rowObjects(data);
+    const xField = data.chart_spec.x;
+    const yField = data.chart_spec.series;
+    const measureField = data.chart_spec.y[0];
+    const xValues = sortedUniqueValues(rows.map((row) => row[xField]));
+    const yValues = sortedUniqueValues(rows.map((row) => row[yField]));
+    const values = rows.map((row) => Number(row[measureField]) || 0);
+    const maxValue = Math.max(...values, 1);
+    const width = 720;
+    const height = 320;
+    const margin = { top: 24, right: 24, bottom: 72, left: 112 };
+    const plotWidth = width - margin.left - margin.right;
+    const plotHeight = height - margin.top - margin.bottom;
+    const cellWidth = plotWidth / Math.max(xValues.length, 1);
+    const cellHeight = plotHeight / Math.max(yValues.length, 1);
+
+    const svg = svgEl("svg", { viewBox: `0 0 ${width} ${height}`, class: "chart-svg" });
+    const valueByCell = new Map();
+    rows.forEach((row, rowIndex) => {
+      valueByCell.set(`${row[xField]}|||${row[yField]}`, {
+        value: Number(row[measureField]) || 0,
+        rowIndex,
+      });
+    });
+
+    yValues.forEach((yValue, yIndex) => {
+      const label = svgEl("text", {
+        x: margin.left - 10,
+        y: margin.top + yIndex * cellHeight + cellHeight / 2 + 4,
+        "text-anchor": "end",
+        class: "axis-label",
+      });
+      label.textContent = truncateLabel(String(yValue), 18);
+      svg.appendChild(label);
+    });
+
+    xValues.forEach((xValue, xIndex) => {
+      const label = svgEl("text", {
+        x: margin.left + xIndex * cellWidth + cellWidth / 2,
+        y: height - 28,
+        "text-anchor": "middle",
+        class: "axis-label",
+      });
+      label.textContent = truncateLabel(String(xValue), 14);
+      svg.appendChild(label);
+    });
+
+    yValues.forEach((yValue, yIndex) => {
+      xValues.forEach((xValue, xIndex) => {
+        const cell = valueByCell.get(`${xValue}|||${yValue}`) || { value: 0, rowIndex: -1 };
+        const intensity = Math.max(0.12, Math.min(1, cell.value / maxValue));
+        const rect = svgEl("rect", {
+          x: margin.left + xIndex * cellWidth + 2,
+          y: margin.top + yIndex * cellHeight + 2,
+          width: Math.max(1, cellWidth - 4),
+          height: Math.max(1, cellHeight - 4),
+          fill: heatColor(intensity),
+          rx: 4,
+          class: cell.rowIndex >= 0 ? "chart-target" : "",
+          tabindex: cell.rowIndex >= 0 ? 0 : -1,
+        });
+        if (cell.rowIndex >= 0) {
+          bindDrillTarget(rect, data, cell.rowIndex);
+        }
+        svg.appendChild(rect);
+
+        if (cellWidth > 46 && cellHeight > 24 && cell.value > 0) {
+          const valueLabel = svgEl("text", {
+            x: margin.left + xIndex * cellWidth + cellWidth / 2,
+            y: margin.top + yIndex * cellHeight + cellHeight / 2 + 4,
+            "text-anchor": "middle",
+            class: "axis-label heatmap-value",
+          });
+          valueLabel.textContent = formatCompactNumber(cell.value);
+          svg.appendChild(valueLabel);
+        }
+      });
+    });
     return svg;
   }
 
@@ -540,6 +627,11 @@
       routingPolicy: routing.policy || "not provided",
       sql: data.sql || "",
       fallbackReason: data.fallback_reason || "",
+      sourceResultTool: data.source_result_tool || "",
+      sourceQueryMode: data.source_query_mode || "",
+      visualizationFollowUp: Boolean(data.visualization_follow_up),
+      noNewSqlExecuted: Boolean(data.no_new_sql_executed),
+      chartOverrideRequested: data.chart_override_requested || "",
       filters: (data.plan && Array.isArray(data.plan.filters)) ? data.plan.filters.map(filterSummary) : [],
       involvedEntities: Array.isArray(queryMetadata.involved_entities) ? queryMetadata.involved_entities : [],
       rowLimit: limit.row_limit,
@@ -547,6 +639,7 @@
       truncated: Boolean(limit.truncated),
       chartType: chartSpec.chart_type || "none",
       chartTitle: chartSpec.title || "",
+      chartChoiceExplanation: chartSpec.chart_choice_explanation || "",
       fallbackReasons: chartFallbackReasons(data),
       plan: data.plan ? planSummary(data.plan) : null,
       warningGroups: warningGroups(data),
@@ -613,7 +706,12 @@
       `Chart: ${inspector.chartType}`,
       `Rows: ${inspector.returnedRows || 0}/${inspector.rowLimit || 0}`,
       inspector.truncated ? "Truncated" : "Full result",
+      inspector.visualizationFollowUp ? "Reused prior result" : "",
+      inspector.noNewSqlExecuted ? "No new SQL" : "",
     ].forEach((text) => {
+      if (!text) {
+        return;
+      }
       const pill = document.createElement("div");
       pill.className = "metadata-pill";
       pill.textContent = text;
@@ -630,8 +728,22 @@
     if (inspector.fallbackReasons.length > 0) {
       details.appendChild(renderInspectorSection("Chart Fallback", inspector.fallbackReasons));
     }
+    if (inspector.chartChoiceExplanation) {
+      details.appendChild(renderInspectorSection("Chart Choice", [inspector.chartChoiceExplanation]));
+    }
     if (inspector.fallbackReason) {
       details.appendChild(renderInspectorSection("Fallback Reason", [inspector.fallbackReason]));
+    }
+    if (inspector.visualizationFollowUp) {
+      const reuseDetails = [
+        `Source result tool: ${inspector.sourceResultTool || "unknown"}`,
+        `Source query mode: ${inspector.sourceQueryMode || inspector.queryMode}`,
+        `No new SQL executed: ${inspector.noNewSqlExecuted ? "true" : "false"}`,
+      ];
+      if (inspector.chartOverrideRequested) {
+        reuseDetails.push(`Chart override requested: ${inspector.chartOverrideRequested}`);
+      }
+      details.appendChild(renderInspectorSection("Reused Result", reuseDetails));
     }
     if (inspector.plan) {
       details.appendChild(renderPlanSummary(inspector.plan));
@@ -943,6 +1055,17 @@
   function palette(index) {
     const colors = ["#0d6c63", "#ba5f06", "#5a6fd4", "#a03d7b", "#3d7d35", "#7c4d2f"];
     return colors[Math.abs(index) % colors.length];
+  }
+
+  function heatColor(intensity) {
+    const start = [232, 244, 241];
+    const end = [13, 108, 99];
+    const rgb = start.map((channel, index) => Math.round(channel + ((end[index] - channel) * intensity)));
+    return `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`;
+  }
+
+  function formatCompactNumber(value) {
+    return new Intl.NumberFormat(undefined, { notation: "compact", maximumFractionDigits: 1 }).format(value);
   }
 
   function hashCode(value) {
