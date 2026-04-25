@@ -41,6 +41,7 @@ py -3 -m unittest discover -s tests -t .
 - chat orchestration tool-call execution with a fake LLM client
 - conversational carry-forward for `go deeper`, `just enterprise`, `top 5`, and `show as table`
 - true HTTP `/chat` round trips
+- opt-in dev `/chat` trace endpoint disabled-by-default behavior and secret-field redaction
 - env-gated live-model smoke tests for normal analytics, drill follow-up, and compiled-plan-default routing
 - root UI shell serving
 - static UI asset serving
@@ -60,6 +61,7 @@ py -3 -m unittest discover -s tests -t .
 - When chart heuristics change, test both the intended chart and the table fallback reason.
 - Keep tool-facing payload tests explicit about `ok`, `tool_name`, `data`, `error`, routing metadata, and structured warnings.
 - Keep most orchestration tests on the fake client so behavior stays deterministic.
+- Keep dev trace tests focused on bounded, opt-in observability and redaction; do not make tracing required for normal `/chat` behavior.
 - Gate live-model smoke tests behind environment checks so they are optional for normal local runs.
 - Keep UI tests lightweight and contract-focused unless the repo gains a browser automation harness.
 - Keep inspector tests derived from existing `/chat` and tool-result payloads rather than adding separate debug-only contracts.

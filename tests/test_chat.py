@@ -6,10 +6,11 @@ import threading
 import unittest
 import urllib.request
 from http.server import ThreadingHTTPServer
+from urllib.error import HTTPError
 from unittest.mock import patch
 
 from datavisualizer.answer import AnswerService
-from datavisualizer.api import PlanningRequestHandler, handle_chat_request
+from datavisualizer.api import ChatTraceLog, PlanningRequestHandler, handle_chat_request
 from datavisualizer.chat_orchestrator import ChatOrchestrator
 from datavisualizer.contracts import AnalysisPlan, ChatMessage, ChatRequest, ConversationState, RoutingControls
 from datavisualizer.llm_client import (
@@ -382,6 +383,7 @@ class ChatApiTests(unittest.TestCase):
         PlanningRequestHandler.chat_orchestrator = self.orchestrator
         PlanningRequestHandler.answer_service = self.orchestrator.answer_service
         PlanningRequestHandler.planner = self.orchestrator.answer_service.planner
+        PlanningRequestHandler.dev_chat_trace_enabled = False
         server = ThreadingHTTPServer(("127.0.0.1", 0), PlanningRequestHandler)
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
@@ -402,6 +404,76 @@ class ChatApiTests(unittest.TestCase):
         self.assertTrue(payload["ok"])
         self.assertEqual(payload["tool_name"], "chat")
         self.assertEqual(payload["data"]["executed_tool_name"], "answer")
+
+    def test_dev_chat_trace_endpoint_is_disabled_by_default(self) -> None:
+        PlanningRequestHandler.dev_chat_trace_enabled = False
+        PlanningRequestHandler.chat_trace_log = ChatTraceLog(limit=2)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), PlanningRequestHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            try:
+                urllib.request.urlopen(f"http://127.0.0.1:{server.server_port}/dev/chat-trace", timeout=5)
+                self.fail("Expected disabled trace endpoint to return 404.")
+            except HTTPError as exc:
+                status_code = exc.code
+                exc.close()
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+        self.assertEqual(status_code, 404)
+
+    def test_dev_chat_trace_captures_chat_envelopes_without_secrets(self) -> None:
+        fake_client = FakeLlmClient(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Trace response ready.")),
+            ]
+        )
+        orchestrator = ChatOrchestrator(AnswerService.from_default_model(), fake_client)
+        orchestrator.tools = DeterministicAnswerOnlyTools(orchestrator.answer_service)
+        PlanningRequestHandler.chat_orchestrator = orchestrator
+        PlanningRequestHandler.answer_service = orchestrator.answer_service
+        PlanningRequestHandler.planner = orchestrator.answer_service.planner
+        PlanningRequestHandler.dev_chat_trace_enabled = True
+        PlanningRequestHandler.chat_trace_log = ChatTraceLog(limit=1)
+        server = ThreadingHTTPServer(("127.0.0.1", 0), PlanningRequestHandler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        thread.start()
+        try:
+            request = urllib.request.Request(
+                f"http://127.0.0.1:{server.server_port}/chat",
+                data=json.dumps(
+                    {
+                        "messages": [{"role": "user", "content": "What is win rate by close month for enterprise?"}],
+                        "api_key": "should-not-appear",
+                        "accessToken": "also-should-not-appear",
+                    }
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(request, timeout=5) as response:
+                chat_payload = json.loads(response.read().decode("utf-8"))
+            with urllib.request.urlopen(f"http://127.0.0.1:{server.server_port}/dev/chat-trace", timeout=5) as response:
+                trace_payload = json.loads(response.read().decode("utf-8"))
+        finally:
+            PlanningRequestHandler.dev_chat_trace_enabled = False
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
+        self.assertTrue(chat_payload["ok"])
+        self.assertTrue(trace_payload["ok"])
+        entries = trace_payload["data"]["entries"]
+        self.assertEqual(len(entries), 1)
+        self.assertEqual(entries[0]["path"], "/chat")
+        self.assertEqual(entries[0]["request"]["api_key"], "[redacted]")
+        self.assertEqual(entries[0]["request"]["accessToken"], "[redacted]")
+        self.assertEqual(entries[0]["request"]["messages"][0]["content"], "What is win rate by close month for enterprise?")
+        self.assertTrue(entries[0]["response"]["ok"])
 
 
 LIVE_SMOKE_ENABLED = (

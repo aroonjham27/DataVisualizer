@@ -34,8 +34,17 @@ The server currently exposes:
 - `POST /answer` for the default compiled-plan answer path
 - `POST /restricted-sql` for the separate governed restricted-SQL capability
 - `POST /chat` for live-model orchestration over the governed backend tools
+- `GET /dev/chat-trace` for an opt-in in-memory trace of recent `/chat` envelopes when dev tracing is enabled
 
 Every tool-facing endpoint returns a stable envelope with `ok`, `tool_name`, `data`, and `error`.
+
+For local UI debugging, enable the dev-only chat trace log:
+
+```powershell
+py -3 -m datavisualizer.api --dev-chat-trace --dev-chat-trace-limit 10
+```
+
+Then open `http://127.0.0.1:8000/dev/chat-trace` to inspect the last N `/chat` request/response envelopes. You can also set `DATAVISUALIZER_DEV_CHAT_TRACE=1` and optionally `DATAVISUALIZER_DEV_CHAT_TRACE_LIMIT=10`. The trace is in-memory, disabled by default, does not capture request headers, and recursively redacts secret-looking fields such as API keys, tokens, passwords, and credentials. It may still include user prompts, governed SQL, result rows, and metadata, so use it only for local development.
 
 `/answer` returns explicit routing metadata, query mode, semantic result metadata, rows, true truncation status, structured warnings, and a renderer-agnostic chart spec. Chart specs are row-aware and may fall back to `table` when a visual shape is empty, sparse, too wide, or has too many categories. The UI inspector derives from this same payload rather than a separate debug endpoint.
 
