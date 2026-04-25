@@ -134,7 +134,7 @@ class ChatOrchestrator:
     ) -> dict[str, Any]:
         enriched = dict(arguments)
         if tool_name == "answer":
-            enriched.setdefault("question", latest_user_message)
+            enriched["question"] = latest_user_message
             if request.semantic_model_path is not None:
                 enriched.setdefault("semantic_model_path", request.semantic_model_path)
             enriched.setdefault(
@@ -156,11 +156,13 @@ class ChatOrchestrator:
                     },
                 )
             normalized = latest_user_message.lower().strip()
+            if "reuse_current_plan" in enriched:
+                enriched["reuse_current_plan"] = False
             if normalized in {"top 5", "top five"} and state.current_analysis_state is not None:
-                enriched.setdefault("reuse_current_plan", True)
+                enriched["reuse_current_plan"] = True
                 enriched.setdefault("row_limit", 5)
             if normalized == "show as table" and state.current_analysis_state is not None:
-                enriched.setdefault("reuse_current_plan", True)
+                enriched["reuse_current_plan"] = True
                 enriched.setdefault("chart_type_override", "table")
         elif tool_name == "restricted_sql":
             if request.semantic_model_path is not None:

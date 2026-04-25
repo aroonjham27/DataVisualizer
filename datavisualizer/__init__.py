@@ -24,6 +24,7 @@ from .execution import QueryResult, execute_compiled_query
 from .llm_client import FakeLlmClient, OpenAiCompatibleLlmClient, ProviderConfig
 from .planner import SemanticPlanner
 from .query_gateway import QueryGateway, RestrictedSqlQueryService, RestrictedSqlValidationError
+from .semantic_resolver import SemanticFieldResolver
 from .semantic_model import SemanticModel, load_semantic_model
 from .sql_compiler import CompiledQuery, DuckDbSqlCompiler, compile_analysis_plan
 from .tool_registry import ToolRegistry
@@ -60,6 +61,7 @@ __all__ = [
     "RoutingControls",
     "RoutingMetadata",
     "SemanticModel",
+    "SemanticFieldResolver",
     "SemanticPlanner",
     "ToolCallTrace",
     "ToolRegistry",

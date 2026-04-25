@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import csv
-import re
 from collections import deque
 from dataclasses import replace
 from pathlib import Path
+import re
 
 from .contracts import (
     AnalysisPlan,
@@ -17,14 +17,13 @@ from .contracts import (
     PlannedMeasure,
 )
 from .semantic_model import DrillHierarchy, SemanticJoin, SemanticModel, load_semantic_model
+from .semantic_resolver import FieldResolution, SemanticFieldResolver, normalize_semantic_term
 
 DEFAULT_MODEL_PATH = Path(__file__).resolve().parents[1] / "configs" / "semantic_models" / "pilot_pricing_v0.json"
 
 
 def _normalize(text: str) -> str:
-    normalized = text.lower().replace("_", " ").replace("-", " ")
-    normalized = re.sub(r"[^a-z0-9\s]", " ", normalized)
-    return re.sub(r"\s+", " ", normalized).strip()
+    return normalize_semantic_term(text)
 
 
 def _field_id(entity: str, name: str) -> str:
@@ -36,6 +35,7 @@ class SemanticPlanner:
         self.semantic_model = semantic_model
         self.value_index = self._build_value_index()
         self.join_graph = self._build_join_graph()
+        self.field_resolver = SemanticFieldResolver(semantic_model, self._join_cost)
 
     @classmethod
     def from_default_model(cls) -> "SemanticPlanner":
@@ -50,6 +50,16 @@ class SemanticPlanner:
         normalized = _normalize(question)
         if self._is_drill_continuation(normalized):
             return self._continue_drill(question, current_state, selected_member)
+        if current_state is not None:
+            requested_dimensions = self._resolve_dimension_requests(
+                normalized,
+                current_state.primary_entity,
+                list(current_state.dimensions),
+                list(current_state.filters),
+                current_state.time_dimension,
+            )
+            if requested_dimensions:
+                return self._continue_with_dimensions(question, normalized, current_state, selected_member, requested_dimensions)
         if current_state is not None and self._is_state_filter_followup(normalized, current_state):
             return self._continue_with_filter(question, normalized, current_state, selected_member)
         return self._plan_initial(question, normalized)
@@ -72,29 +82,18 @@ class SemanticPlanner:
         dimensions = []
         matched_terms = ["win rate"]
         warnings: list[str] = []
-        if "account segment" in normalized_question:
-            dimensions.append(self._dimension("accounts", "segment"))
-            matched_terms.append("account segment")
-        elif "segment" in normalized_question:
-            dimensions.append(self._dimension("opportunities", "segment"))
-            matched_terms.append("segment")
-        if "sales region" in normalized_question:
-            chosen = "opportunities"
-            dimensions.append(self._dimension(chosen, "sales_region"))
-            matched_terms.append("sales region")
-            warnings.append("Resolved 'sales region' to opportunities.sales_region; account-level sales region is also available in the semantic model.")
-        if "lifecycle type" in normalized_question:
-            dimensions.append(self._dimension("opportunities", "lifecycle_type"))
-            matched_terms.append("lifecycle type")
         time_dimension = None
         time_grain = None
         if "close month" in normalized_question or "close date" in normalized_question or "by month" in normalized_question:
             time_dimension = self._time_dimension("opportunities", "close_date")
             time_grain = "month"
             matched_terms.append("close month")
+        resolved_dimensions = self._resolve_dimension_requests(normalized_question, "opportunities", dimensions, [], time_dimension)
+        self._append_dimension_resolutions(dimensions, resolved_dimensions, matched_terms, warnings)
         filters = self._extract_filters(
             normalized_question,
             self._candidate_filter_entities("opportunities", dimensions, [], time_dimension),
+            primary_entity="opportunities",
         )
         join_path = self._resolve_join_path("opportunities", dimensions, filters, time_dimension)
         drill = self._select_drill_state([*dimensions, *( [time_dimension] if time_dimension else [])], "opportunity_outcome")
@@ -121,15 +120,13 @@ class SemanticPlanner:
         ]
         dimensions = []
         matched_terms = ["quoted", "discount"]
-        if "product family" in normalized_question:
-            dimensions.append(self._dimension("products", "product_family"))
-            matched_terms.append("product family")
-        if "line role" in normalized_question:
-            dimensions.append(self._dimension("opportunity_line_items", "line_role"))
-            matched_terms.append("line role")
+        warnings: list[str] = []
+        resolved_dimensions = self._resolve_dimension_requests(normalized_question, "opportunity_line_items", dimensions, [], None)
+        self._append_dimension_resolutions(dimensions, resolved_dimensions, matched_terms, warnings)
         filters = self._extract_filters(
             normalized_question,
             self._candidate_filter_entities("opportunity_line_items", dimensions, [], None),
+            primary_entity="opportunity_line_items",
         )
         join_path = self._resolve_join_path("opportunity_line_items", dimensions, filters, None)
         drill = self._select_drill_state(dimensions, "product_quote_mix")
@@ -146,7 +143,7 @@ class SemanticPlanner:
             drill=drill,
             chart_intent=chart_intent,
             matched_terms=matched_terms,
-            warnings=[],
+            warnings=warnings,
         )
 
     def _plan_competitors(self, question: str, normalized_question: str) -> AnalysisPlan:
@@ -185,21 +182,13 @@ class SemanticPlanner:
         ]
         dimensions = []
         matched_terms = ["subscription fee", "support fee"]
-        if "contract status" in normalized_question:
-            dimensions.append(self._dimension("contracts", "contract_status"))
-            matched_terms.append("contract status")
-        if "billing frequency" in normalized_question:
-            dimensions.append(self._dimension("contracts", "billing_frequency"))
-            matched_terms.append("billing frequency")
-        if "support tier" in normalized_question:
-            dimensions.append(self._dimension("contract_terms", "support_tier"))
-            matched_terms.append("support tier")
-        if "term sequence" in normalized_question:
-            dimensions.append(self._dimension("contract_terms", "term_sequence"))
-            matched_terms.append("term sequence")
+        warnings: list[str] = []
+        resolved_dimensions = self._resolve_dimension_requests(normalized_question, "contract_terms", dimensions, [], None)
+        self._append_dimension_resolutions(dimensions, resolved_dimensions, matched_terms, warnings)
         filters = self._extract_filters(
             normalized_question,
             self._candidate_filter_entities("contract_terms", dimensions, [], None),
+            primary_entity="contract_terms",
         )
         join_path = self._resolve_join_path("contract_terms", dimensions, filters, None)
         drill = self._select_drill_state(dimensions, "contract_structure")
@@ -216,7 +205,7 @@ class SemanticPlanner:
             drill=drill,
             chart_intent=chart_intent,
             matched_terms=matched_terms,
-            warnings=[],
+            warnings=warnings,
         )
 
     def _plan_usage(self, question: str, normalized_question: str) -> AnalysisPlan:
@@ -247,17 +236,14 @@ class SemanticPlanner:
         if not measures:
             measures.append(self._measure("usage_metrics", "metric_value"))
         dimensions = []
-        if "product family" in normalized_question:
-            dimensions.append(self._dimension("products", "product_family"))
-            matched_terms.append("product family")
-        if "customer segment" in normalized_question or "account segment" in normalized_question:
-            dimensions.append(self._dimension("accounts", "segment"))
-            matched_terms.append("customer segment")
         time_dimension = self._time_dimension("usage_metrics", "metric_period_start")
         time_grain = "month"
+        resolved_dimensions = self._resolve_dimension_requests(normalized_question, "usage_metrics", dimensions, [], time_dimension)
+        self._append_dimension_resolutions(dimensions, resolved_dimensions, matched_terms, warnings)
         filters = self._extract_filters(
             normalized_question,
             self._candidate_filter_entities("usage_metrics", dimensions, [], time_dimension),
+            primary_entity="usage_metrics",
         )
         join_path = self._resolve_join_path("usage_metrics", dimensions, filters, time_dimension)
         chart_intent = self._select_chart_intent(measures, dimensions, time_dimension, normalized_question)
@@ -334,6 +320,22 @@ class SemanticPlanner:
                 matched_terms=[],
                 warnings=["Drill continuation was requested, but no current analysis state was provided."],
             )
+        requested_dimensions = self._resolve_dimension_requests(
+            _normalize(question),
+            current_state.primary_entity,
+            list(current_state.dimensions),
+            list(current_state.filters),
+            current_state.time_dimension,
+        )
+        if requested_dimensions:
+            return self._continue_with_dimensions(
+                question,
+                _normalize(question),
+                current_state,
+                selected_member,
+                requested_dimensions,
+                user_directed_drill=True,
+            )
         if current_state.drill is None or current_state.drill.next_level is None:
             return replace(
                 current_state,
@@ -392,6 +394,75 @@ class SemanticPlanner:
             warnings=current_state.warnings,
             matched_terms=current_state.matched_terms + ("drill continuation",),
             notes=current_state.notes + (f"Added drill level {next_field.field_id}.",),
+        )
+
+    def _continue_with_dimensions(
+        self,
+        question: str,
+        normalized_question: str,
+        current_state: AnalysisPlan,
+        selected_member: DrillSelection | None,
+        requested_dimensions: tuple[FieldResolution, ...],
+        *,
+        user_directed_drill: bool = False,
+    ) -> AnalysisPlan:
+        active_selection = selected_member
+        if active_selection is None and current_state.drill is not None:
+            active_selection = current_state.drill.selected_member
+        updated_dimensions = list(current_state.dimensions)
+        updated_filters = self._filters_with_selected_member(list(current_state.filters), active_selection)
+        new_filters = self._extract_filters(normalized_question, self._candidate_filter_entities_for_state(current_state))
+        for filter_ in new_filters:
+            signature = (filter_.field.field_id, filter_.operator, str(filter_.value), filter_.source)
+            existing = {
+                (item.field.field_id, item.operator, str(item.value), item.source)
+                for item in updated_filters
+            }
+            if signature not in existing:
+                updated_filters.append(filter_)
+        matched_terms = list(current_state.matched_terms)
+        warnings = list(current_state.warnings)
+        notes = list(current_state.notes)
+        added_field_ids: list[str] = []
+        self._append_dimension_resolutions(updated_dimensions, requested_dimensions, matched_terms, warnings, added_field_ids)
+        if added_field_ids:
+            if user_directed_drill:
+                notes.append(f"Applied user-directed drill target {', '.join(added_field_ids)}.")
+            else:
+                notes.append(f"Added requested semantic breakdown {', '.join(added_field_ids)}.")
+        updated_join_path = self._resolve_join_path(
+            current_state.primary_entity,
+            updated_dimensions,
+            updated_filters,
+            current_state.time_dimension,
+        )
+        preferred_hierarchy = current_state.drill.hierarchy_name if current_state.drill is not None else None
+        updated_drill = self._select_drill_state(
+            [*updated_dimensions, *( [current_state.time_dimension] if current_state.time_dimension else [])],
+            preferred_hierarchy,
+        )
+        if updated_drill is None and preferred_hierarchy is not None:
+            updated_drill = self._select_drill_state(
+                [*updated_dimensions, *( [current_state.time_dimension] if current_state.time_dimension else [])],
+            )
+        updated_chart = self._select_chart_intent(list(current_state.measures), updated_dimensions, current_state.time_dimension, normalized_question)
+        return AnalysisPlan(
+            question=question,
+            semantic_model_name=current_state.semantic_model_name,
+            semantic_model_version=current_state.semantic_model_version,
+            status="ok" if not warnings else "review_needed",
+            primary_entity=current_state.primary_entity,
+            measures=current_state.measures,
+            dimensions=tuple(updated_dimensions),
+            time_dimension=current_state.time_dimension,
+            time_grain=current_state.time_grain,
+            filters=tuple(updated_filters),
+            join_path=tuple(updated_join_path),
+            drill=updated_drill,
+            chart_intent=updated_chart,
+            warnings=tuple(warnings),
+            matched_terms=tuple(dict.fromkeys(matched_terms + ["semantic dimension follow-up"])),
+            notes=tuple(notes),
         )
 
     def _continue_with_filter(
@@ -482,6 +553,45 @@ class SemanticPlanner:
             notes=(),
         )
 
+    def _resolve_dimension_requests(
+        self,
+        normalized_question: str,
+        primary_entity: str,
+        dimensions: list[PlannedField],
+        filters: list[PlannedFilter],
+        time_dimension: PlannedField | None,
+    ) -> tuple[FieldResolution, ...]:
+        current_entities = self._candidate_filter_entities(primary_entity, dimensions, filters, time_dimension)
+        existing_field_ids = [field.field_id for field in dimensions]
+        if time_dimension is not None:
+            existing_field_ids.append(time_dimension.field_id)
+        return self.field_resolver.resolve_dimensions(
+            normalized_question,
+            primary_entity=primary_entity,
+            current_entities=current_entities,
+            existing_field_ids=existing_field_ids,
+        )
+
+    def _append_dimension_resolutions(
+        self,
+        dimensions: list[PlannedField],
+        resolutions: tuple[FieldResolution, ...],
+        matched_terms: list[str],
+        warnings: list[str],
+        added_field_ids: list[str] | None = None,
+    ) -> None:
+        existing_field_ids = {field.field_id for field in dimensions}
+        for resolution in resolutions:
+            if resolution.field.field_id in existing_field_ids:
+                continue
+            dimensions.append(resolution.field)
+            existing_field_ids.add(resolution.field.field_id)
+            matched_terms.append(resolution.requested_term)
+            if added_field_ids is not None:
+                added_field_ids.append(resolution.field.field_id)
+            if resolution.warning is not None and resolution.warning not in warnings:
+                warnings.append(resolution.warning)
+
     def _measure(
         self,
         entity_name: str,
@@ -525,7 +635,13 @@ class SemanticPlanner:
                 return PlannedField(entity=entity_name, name=measure.name, label=measure.label, kind="measure")
         raise KeyError(f"Unknown semantic field: {field_id}")
 
-    def _extract_filters(self, normalized_question: str, candidate_entities: list[str]) -> list[PlannedFilter]:
+    def _extract_filters(
+        self,
+        normalized_question: str,
+        candidate_entities: list[str],
+        *,
+        primary_entity: str | None = None,
+    ) -> list[PlannedFilter]:
         filters: list[PlannedFilter] = []
         matches_by_value: dict[str, list[tuple[str, str, str]]] = {}
         for entity_name in candidate_entities:
@@ -534,7 +650,7 @@ class SemanticPlanner:
                     if normalized_value and re.search(rf"\b{re.escape(normalized_value)}\b", normalized_question):
                         matches_by_value.setdefault(normalized_value, []).append((entity_name, field_name, raw_value))
         for normalized_value, matches in matches_by_value.items():
-            chosen_entity, chosen_field, raw_value = self._choose_filter_match(matches, candidate_entities, normalized_question)
+            chosen_entity, chosen_field, raw_value = self._choose_filter_match(matches, candidate_entities, normalized_question, primary_entity)
             filters.append(self._filter(chosen_entity, chosen_field, "=", raw_value))
         deduped: dict[tuple[str, str, object], PlannedFilter] = {}
         for item in filters:
@@ -546,10 +662,13 @@ class SemanticPlanner:
         matches: list[tuple[str, str, str]],
         candidate_entities: list[str],
         normalized_question: str,
+        primary_entity: str | None = None,
     ) -> tuple[str, str, str]:
         preferred_order = list(candidate_entities)
         if "account segment" in normalized_question:
             preferred_order.insert(0, "accounts")
+        elif primary_entity is not None:
+            preferred_order.insert(0, primary_entity)
         for preferred_entity in preferred_order:
             for entity_name, field_name, raw_value in matches:
                 if entity_name == preferred_entity:
@@ -602,6 +721,12 @@ class SemanticPlanner:
                 visited.add(neighbor)
                 queue.append((neighbor, next_path))
         raise ValueError(f"No allowed join path from {start_entity} to {end_entity}")
+
+    def _join_cost(self, start_entity: str, end_entity: str) -> int | None:
+        try:
+            return len(self._shortest_join_path(start_entity, end_entity))
+        except ValueError:
+            return None
 
     def _build_join_graph(self) -> dict[str, list[tuple[str, SemanticJoin, str]]]:
         graph: dict[str, list[tuple[str, SemanticJoin, str]]] = {}

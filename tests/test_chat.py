@@ -211,6 +211,44 @@ class ChatOrchestratorTests(unittest.TestCase):
         self.assertIn("products.product_name", [field.field_id for field in second.conversation_state.current_analysis_state.dimensions])
         self.assertIn("chart_spec", second.tool_result["data"])
 
+    def test_drill_down_follow_up_ignores_model_reuse_current_plan(self) -> None:
+        orchestrator = self._scripted_orchestrator_with_deterministic_tools(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Initial answer ready.")),
+                LlmResponse(
+                    LlmAssistantMessage(
+                        "",
+                        (
+                            LlmToolCall(
+                                "call-2",
+                                "answer",
+                                {
+                                    "question": "What is win rate by close month for enterprise?",
+                                    "reuse_current_plan": True,
+                                },
+                            ),
+                        ),
+                    )
+                ),
+                LlmResponse(LlmAssistantMessage("Drilled down to region.")),
+            ]
+        )
+        first = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month for enterprise?"),))
+        )
+
+        second = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="can you drill down to region level?"),),
+                conversation_state=first.conversation_state,
+            )
+        )
+
+        self.assertIn("opportunities.sales_region", [field.field_id for field in second.conversation_state.current_analysis_state.dimensions])
+        self.assertEqual(second.tool_trace[0].arguments["question"], "can you drill down to region level?")
+        self.assertFalse(second.tool_trace[0].arguments["reuse_current_plan"])
+
     def test_chat_supports_top_five_follow_up(self) -> None:
         orchestrator = self._scripted_orchestrator(
             [

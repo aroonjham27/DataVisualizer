@@ -148,6 +148,30 @@ class AnswerPipelineTests(unittest.TestCase):
         self.assertEqual(response.chart_spec.x, "products_product_family")
         self.assertIn("Active filter: Product Family = analytics", response.query_metadata.validation_notes)
 
+    def test_semantic_resolved_direct_dimensions_flow_through_answer_payload(self) -> None:
+        response = self.service.answer("What is the win rate by close month, industry, and region for enterprise?", row_limit=20)
+
+        self.assertIn("accounts.industry", [field.field_id for field in response.plan.dimensions])
+        self.assertIn("opportunities.sales_region", [field.field_id for field in response.plan.dimensions])
+        self.assertIn(("opportunities.segment", "=", "enterprise"), self._filter_signatures(response))
+        self.assertIn('WHERE "t0"."segment" = \'enterprise\'', response.sql)
+        self.assertIn("accounts_industry", [column.name for column in response.columns])
+        self.assertIn("opportunities_sales_region", [column.name for column in response.columns])
+        self.assertIn("accounts", response.query_metadata.involved_entities)
+        self.assertIn("opportunities", response.query_metadata.involved_entities)
+        self.assertEqual(response.chart_spec.chart_type, "line")
+
+    def test_semantic_resolved_drill_target_flows_through_answer_payload(self) -> None:
+        initial = self.service.answer("What is win rate by close month for enterprise?", row_limit=20)
+
+        response = self.service.answer("Go one level deeper to region", current_analysis_state=initial.plan, row_limit=20)
+
+        self.assertIn("opportunities.sales_region", [field.field_id for field in response.plan.dimensions])
+        self.assertIn(("opportunities.segment", "=", "enterprise"), self._filter_signatures(response))
+        self.assertIn('WHERE "t0"."segment" = \'enterprise\'', response.sql)
+        self.assertIn("opportunities_sales_region", [column.name for column in response.columns])
+        self.assertEqual(response.chart_spec.chart_type, "line")
+
     def test_http_answer_round_trip(self) -> None:
         payload = self._post_answer(
             {

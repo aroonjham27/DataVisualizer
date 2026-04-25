@@ -96,6 +96,37 @@ class PlannerGoldenQuestionTests(unittest.TestCase):
             ("opportunity_line_items", "products", "forward")
         ])
 
+    def test_semantic_resolver_adds_direct_win_rate_dimensions(self) -> None:
+        plan = self.planner.plan("What is the win rate by close month, industry, and region for enterprise?")
+
+        self.assertEqual(_field_ids(plan.dimensions), ["accounts.industry", "opportunities.sales_region"])
+        self.assertEqual(plan.time_dimension.field_id if plan.time_dimension else None, "opportunities.close_date")
+        self.assertEqual([(item.field.field_id, item.operator, item.value) for item in plan.filters], [
+            ("opportunities.segment", "=", "enterprise")
+        ])
+        self.assertIn("account-level sales region", " ".join(plan.warnings))
+
+    def test_semantic_resolver_adds_user_directed_drill_target(self) -> None:
+        initial = self.planner.plan("What is win rate by close month for enterprise?")
+
+        follow_up = self.planner.plan("Go one level deeper to region", current_state=initial)
+
+        self.assertEqual(_field_ids(follow_up.dimensions), ["opportunities.sales_region"])
+        self.assertEqual([(item.field.field_id, item.operator, item.value) for item in follow_up.filters], [
+            ("opportunities.segment", "=", "enterprise")
+        ])
+        self.assertIn("user-directed drill target opportunities.sales_region", " ".join(follow_up.notes))
+
+    def test_semantic_resolver_adds_product_style_follow_up_dimension(self) -> None:
+        initial = self.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+
+        by_product = self.planner.plan("Show that by product only", current_state=initial)
+        by_pricing_model = self.planner.plan("break it down by pricing model", current_state=initial)
+
+        self.assertIn("products.product_name", _field_ids(by_product.dimensions))
+        self.assertIn("products.pricing_model", _field_ids(by_pricing_model.dimensions))
+        self.assertIn("requested semantic breakdown products.pricing_model", " ".join(by_pricing_model.notes))
+
     def test_warning_status_behavior(self) -> None:
         review_needed = self.planner.plan("What is win rate by sales region?")
         ok_plan = self.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")

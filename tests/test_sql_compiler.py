@@ -27,6 +27,36 @@ class SqlCompilerTests(unittest.TestCase):
         self.assertIn("GROUP BY", compiled.sql)
         self.assertIn("LIMIT 25", compiled.sql)
 
+    def test_compiles_semantic_resolved_direct_win_rate_dimensions(self) -> None:
+        plan = self.planner.plan("What is the win rate by close month, industry, and region for enterprise?")
+
+        compiled = self.compiler.compile(plan)
+
+        self.assertIn('"t1"."industry" AS "accounts_industry"', compiled.sql)
+        self.assertIn('"t0"."sales_region" AS "opportunities_sales_region"', compiled.sql)
+        self.assertIn('WHERE "t0"."segment" = \'enterprise\'', compiled.sql)
+        self.assertIn('GROUP BY "t1"."industry", "t0"."sales_region", DATE_TRUNC', compiled.sql)
+
+    def test_compiles_semantic_resolved_drill_target_dimension(self) -> None:
+        initial = self.planner.plan("What is win rate by close month for enterprise?")
+        follow_up = self.planner.plan("Go one level deeper to region", current_state=initial)
+
+        compiled = self.compiler.compile(follow_up)
+
+        self.assertIn('"t0"."sales_region" AS "opportunities_sales_region"', compiled.sql)
+        self.assertIn('WHERE "t0"."segment" = \'enterprise\'', compiled.sql)
+        self.assertIn('GROUP BY "t0"."sales_region", DATE_TRUNC', compiled.sql)
+
+    def test_compiles_semantic_resolved_product_follow_up_dimension(self) -> None:
+        initial = self.planner.plan("How do quoted discount rates and annualized quote amounts vary by product family and line role?")
+        follow_up = self.planner.plan("break it down by pricing model", current_state=initial)
+
+        compiled = self.compiler.compile(follow_up)
+
+        self.assertIn('"t1"."pricing_model" AS "products_pricing_model"', compiled.sql)
+        self.assertIn('"products" AS "t1"', compiled.sql)
+        self.assertIn('"t1"."pricing_model"', compiled.sql)
+
     def test_compiles_measure_local_filters_for_usage_metrics(self) -> None:
         plan = self.planner.plan(
             "How do active users and processed transactions trend over time by product family and customer segment after contract start?"
