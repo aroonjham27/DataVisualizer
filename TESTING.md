@@ -36,6 +36,8 @@ py -3 -m unittest discover -s tests -t .
 - stable API success and error envelopes
 - routing flag behavior and compiled-plan-default routing metadata
 - restricted SQL tool contract round trips
+- deterministic fake-LLM routing tests for automatic restricted-SQL fallback after compiled-plan insufficiency
+- safe restricted-SQL fallback rejection behavior that returns a compiled result with warnings
 - provider adapter env parsing and graceful missing-credential behavior
 - governed tool registration and schema shape for model tool-calling
 - chat orchestration tool-call execution with a fake LLM client
@@ -58,6 +60,7 @@ py -3 -m unittest discover -s tests -t .
 - When ambiguity is expected, test for warnings rather than forcing brittle guesses.
 - Keep SQL compiler tests focused on structured plans and compiled SQL, never natural-language SQL generation.
 - Keep restricted SQL tests focused on governed validation boundaries; it is a fallback tool surface, not the default answer path.
+- Keep automatic fallback tests focused on routing behavior and SQL shape, not exact formatting.
 - When chart heuristics change, test both the intended chart and the table fallback reason.
 - Keep tool-facing payload tests explicit about `ok`, `tool_name`, `data`, `error`, routing metadata, and structured warnings.
 - Keep most orchestration tests on the fake client so behavior stays deterministic.
@@ -80,3 +83,5 @@ The live smoke path currently checks:
 - a normal analytics question
 - a drill follow-up
 - a case where restricted SQL is allowed but compiled-plan should still be chosen
+
+The deterministic chat suite includes golden fallback questions for custom opportunity, quote-line/product, and contract-header breakdowns. These tests assert that `/chat` evaluates `answer` first, uses `restricted_sql` only when policy and compiled-plan signals justify it, preserves inspector metadata, and handles restricted-SQL validation failure without broken UI payloads.

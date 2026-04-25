@@ -22,6 +22,7 @@ This roadmap tracks the path from the current pilot backend to a chat-first visu
 - [x] Phase 2 chat orchestration completed
 - [x] Phase 3 first chat UI completed
 - [x] Phase 4 explainability and inspection completed
+- [x] Phase 4.5 governed fallback orchestration hardening completed
 
 ---
 
@@ -103,6 +104,28 @@ Goal: make the system transparent and trustworthy.
 
 ---
 
+## Phase 4.5: Governed fallback orchestration hardening
+
+**Live LLM required:** Yes for fallback SQL generation, No for deterministic routing tests
+
+Goal: make restricted SQL available as an invisible governed fallback for valid analytics requests that the standard planner cannot fully cover.
+
+- [x] Keep compiled-plan `/answer` as the first/default chat lane
+- [x] Detect compiled-plan insufficiency before fallback
+  - [x] planner fallback semantic match
+  - [x] unsupported or incomplete review-needed states
+  - [x] requested semantic fields missing from the plan
+  - [x] unsupported chart/table fallback metadata
+- [x] Ask for restricted SQL only through the existing governed tool schema
+- [x] Provide only semantic entities, fields, approved joins, and safety rules to the fallback prompt
+- [x] Preserve restricted SQL validation and gateway execution
+- [x] Return compiled-plan output with warnings when fallback validation fails
+- [x] Add transparent alternate governed query path messaging
+- [x] Show fallback reason, SQL, entities, and limit metadata in the inspector
+- [x] Cover routing behavior with deterministic fake-LLM golden tests
+
+---
+
 ## Phase 5: Product evaluation harness
 
 **Live LLM required:** Yes for orchestration evaluation, No for deterministic backend checks
@@ -127,7 +150,7 @@ MVP is complete when all of the following are true:
 - [ ] System returns governed data + chart + explanation
 - [ ] User can drill by chat or chart click
 - [ ] Compiled-plan is the default reliable path
-- [ ] Restricted SQL exists as a safe secondary lane
+- [x] Restricted SQL exists as a safe secondary lane
 - [ ] Core flows are tested and demo-stable
 
 ---
@@ -167,7 +190,7 @@ MVP is complete when all of the following are true:
 
 ## Suggested immediate next task
 
-Phase 4 is complete. Move next to **Phase 5**, focused on the product evaluation harness:
+Phase 4.5 is complete. Move next to **Phase 5**, focused on the product evaluation harness:
 
 - [ ] curated benchmark question set
 - [ ] multi-turn drill-down evaluation

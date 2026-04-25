@@ -154,6 +154,7 @@ def build_inspector_view_model(tool_data: Mapping[str, Any]) -> dict[str, Any]:
         "query_mode": tool_data.get("query_mode"),
         "routing_policy": routing.get("policy") if routing else None,
         "sql": tool_data.get("sql", ""),
+        "fallback_reason": tool_data.get("fallback_reason"),
         "applied_filters": filters,
         "involved_entities": tuple(query_metadata.get("involved_entities", ())) if query_metadata else (),
         "limit": {

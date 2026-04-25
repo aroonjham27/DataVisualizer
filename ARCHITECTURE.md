@@ -57,7 +57,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Planning is semantic-model-first: natural-language questions are resolved into analysis metadata before any SQL exists.
 - Drill continuation carries semantic state, including the selected visual member when a follow-up is scoped to a clicked chart value.
 - SQL compilation is plan-first: only supported `AnalysisPlan` shapes compile, and unsupported filters, grains, joins, or aggregations are rejected.
-- Answers default to `compiled_plan` mode. Restricted SQL is a governed secondary boundary for future LLM tooling, not the primary route.
+- Answers default to `compiled_plan` mode. Restricted SQL is a governed secondary boundary for fallback LLM tooling, not the primary route.
 - The tool boundary is explicit: `/answer` is the default governed analytics tool, while restricted SQL is a separate governed capability.
 - Tool requests carry explicit routing controls so a future orchestrator does not need to infer lane permissions.
 - Chart specs are deterministic metadata for `line`, `bar`, `grouped_bar`, and `table`; rendering remains outside this repository. The generator inspects returned rows and falls back to tables for weak chart shapes.
@@ -65,7 +65,10 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Query execution uses one-extra-row probing so answer metadata distinguishes returned rows from true truncation.
 - API success and error envelopes are machine-friendly and stable for future tool-calling integration.
 - The live-model layer is adapter-based: provider configuration comes from environment variables, the transport uses an OpenAI-compatible tool-calling shape, and OpenRouter is treated as a deploy-time endpoint choice rather than an architecture dependency.
-- Tool registration is explicit: the model sees the governed `answer` tool and only sees `restricted_sql` when routing allows it and the user request is clearly SQL-oriented.
+- Tool registration is explicit: the model sees the governed `answer` tool first and only sees `restricted_sql` for clearly SQL-oriented requests or a backend-issued fallback prompt after compiled-plan evaluation.
+- The chat fallback policy is bounded: `/chat` runs `answer` first, inspects the compiled result, and considers restricted SQL only when routing allows it, the request is a valid analytics request, the compiled result is weak, and the semantic shape appears expressible as a safe governed `SELECT`.
+- Compiled-plan insufficiency signals include planner fallback warnings, unsupported or incomplete review-needed states, requested semantic dimensions or filters missing from the plan, and unsupported chart/table fallback metadata.
+- Automatic restricted-SQL fallback is transparent but not user-operated: the assistant notes the alternate governed query path, and the inspector shows query mode, fallback reason, SQL, involved entities, row limit, and truncation status.
 - Orchestration remains deterministic around tool execution: the model may choose among offered tools, but argument enrichment, execution, state updates, and response shaping stay backend-controlled.
 - Conversation state is first-class: the orchestrator carries forward prior analysis context so follow-ups such as `go deeper`, `just enterprise`, `top 5`, and `show as table` can reuse governed state instead of reinterpreting the full task from scratch.
 - The first UI is intentionally thin: plain static assets, no frontend framework, no build pipeline, and no alternate query path. It exists to prove the end-to-end chat + chart + drill loop with minimal overhead.
@@ -80,6 +83,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Usage facts should flow through `contracts` or `accounts`, not be joined directly to opportunities.
 - The pilot dataset is not treated as proof that every relationship is universal outside this seed.
 - Restricted SQL should not be used when the compiled-plan path already supports the request.
+- Restricted SQL must remain invisible as a user mode: no raw SQL input, no frontend SQL editor, and no toggle that lets users bypass normal chat orchestration.
 - Restricted SQL does not support CTEs, subqueries, comma joins, cross joins, unions, arbitrary operators, or direct table-function/file access.
 - Validation, unsupported-shape, and execution failures are normalized into distinct backend error types.
 - Missing live-model credentials should fail gracefully at the orchestration boundary rather than crashing the backend or exposing secrets.

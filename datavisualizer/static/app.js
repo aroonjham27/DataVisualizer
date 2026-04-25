@@ -539,6 +539,7 @@
       queryMode: data.query_mode || "unknown",
       routingPolicy: routing.policy || "not provided",
       sql: data.sql || "",
+      fallbackReason: data.fallback_reason || "",
       filters: (data.plan && Array.isArray(data.plan.filters)) ? data.plan.filters.map(filterSummary) : [],
       involvedEntities: Array.isArray(queryMetadata.involved_entities) ? queryMetadata.involved_entities : [],
       rowLimit: limit.row_limit,
@@ -628,6 +629,9 @@
     }
     if (inspector.fallbackReasons.length > 0) {
       details.appendChild(renderInspectorSection("Chart Fallback", inspector.fallbackReasons));
+    }
+    if (inspector.fallbackReason) {
+      details.appendChild(renderInspectorSection("Fallback Reason", [inspector.fallbackReason]));
     }
     if (inspector.plan) {
       details.appendChild(renderPlanSummary(inspector.plan));

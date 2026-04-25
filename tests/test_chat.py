@@ -22,6 +22,7 @@ from datavisualizer.llm_client import (
     ProviderConfig,
 )
 from datavisualizer.tool_registry import ToolDefinition, ToolRegistry
+from datavisualizer.ui_contract import build_inspector_view_model
 
 
 class DeterministicAnswerOnlyTools:
@@ -325,6 +326,154 @@ class ChatOrchestratorTests(unittest.TestCase):
 
         self.assertEqual(response.executed_tool_name, "answer")
         self.assertEqual(response.tool_result["data"]["query_mode"], "compiled_plan")
+
+    def test_supported_question_stays_on_compiled_plan_without_restricted_sql_fallback(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("Compiled plan answered the question.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="What is win rate by close month and account segment?"),))
+        )
+
+        self.assertEqual(response.executed_tool_name, "answer")
+        self.assertEqual(response.tool_result["data"]["query_mode"], "compiled_plan")
+        self.assertEqual([item.tool_name for item in response.tool_trace], ["answer"])
+        self.assertEqual(len(orchestrator.llm_client.calls), 2)
+
+    def test_custom_single_entity_breakdown_falls_back_to_restricted_sql(self) -> None:
+        sql = (
+            "SELECT implementation_complexity, support_tier_requested, "
+            "COUNT(DISTINCT opportunity_id) AS opportunity_count "
+            "FROM opportunities WHERE segment = 'enterprise' "
+            "GROUP BY implementation_complexity, support_tier_requested "
+            "ORDER BY opportunity_count DESC"
+        )
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "restricted_sql", {"sql": sql}),))),
+                LlmResponse(LlmAssistantMessage("Here is the custom breakdown.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(
+                messages=(
+                    ChatMessage(
+                        role="user",
+                        content="Show opportunity count by implementation complexity and requested support tier for enterprise deals.",
+                    ),
+                )
+            )
+        )
+
+        executed_sql = response.tool_result["data"]["sql"].lower()
+        inspector = build_inspector_view_model(response.tool_result["data"])
+        self.assertEqual([item.tool_name for item in response.tool_trace], ["answer", "restricted_sql"])
+        self.assertEqual(response.executed_tool_name, "restricted_sql")
+        self.assertEqual(response.tool_result["data"]["query_mode"], "restricted_sql")
+        self.assertIn("from opportunities", executed_sql)
+        self.assertIn("implementation_complexity", executed_sql)
+        self.assertIn("support_tier_requested", executed_sql)
+        self.assertIn("segment = 'enterprise'", executed_sql)
+        self.assertIn("group by implementation_complexity, support_tier_requested", executed_sql)
+        self.assertIn("alternate governed query path", response.assistant_message)
+        self.assertEqual(inspector["query_mode"], "restricted_sql")
+        self.assertIn("requested semantic fields were missing", inspector["fallback_reason"])
+
+    def test_custom_approved_join_breakdown_falls_back_to_restricted_sql(self) -> None:
+        sql = (
+            "SELECT p.pricing_model, oli.line_role, COUNT(DISTINCT oli.line_item_id) AS line_item_count "
+            "FROM opportunity_line_items oli JOIN products p ON oli.product_id = p.product_id "
+            "WHERE p.product_family = 'analytics' "
+            "GROUP BY p.pricing_model, oli.line_role ORDER BY line_item_count DESC"
+        )
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "restricted_sql", {"sql": sql}),))),
+                LlmResponse(LlmAssistantMessage("Line-item breakdown ready.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(
+                messages=(
+                    ChatMessage(
+                        role="user",
+                        content="For analytics products, show line item count by pricing model and line role.",
+                    ),
+                )
+            )
+        )
+
+        executed_sql = response.tool_result["data"]["sql"].lower()
+        inspector = build_inspector_view_model(response.tool_result["data"])
+        self.assertEqual(response.executed_tool_name, "restricted_sql")
+        self.assertIn("from opportunity_line_items oli join products p on oli.product_id = p.product_id", executed_sql)
+        self.assertIn("product_family = 'analytics'", executed_sql)
+        self.assertIn("group by p.pricing_model, oli.line_role", executed_sql)
+        self.assertEqual(response.tool_result["data"]["chart_spec"]["chart_type"], "table")
+        self.assertEqual(inspector["query_mode"], "restricted_sql")
+        self.assertIn("opportunity_line_items", inspector["involved_entities"])
+        self.assertIn("products", inspector["involved_entities"])
+
+    def test_custom_contract_header_aggregation_falls_back_to_restricted_sql(self) -> None:
+        sql = (
+            "SELECT billing_frequency, currency_code, COUNT(DISTINCT contract_id) AS active_contract_count "
+            "FROM contracts WHERE contract_status = 'active' "
+            "GROUP BY billing_frequency, currency_code ORDER BY active_contract_count DESC"
+        )
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "restricted_sql", {"sql": sql}),))),
+                LlmResponse(LlmAssistantMessage("Active contract counts are ready.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="Show active contract count by billing frequency and currency."),))
+        )
+
+        executed_sql = response.tool_result["data"]["sql"].lower()
+        self.assertEqual(response.executed_tool_name, "restricted_sql")
+        self.assertIn("from contracts", executed_sql)
+        self.assertIn("contract_status = 'active'", executed_sql)
+        self.assertIn("group by billing_frequency, currency_code", executed_sql)
+        self.assertEqual(response.tool_result["data"]["query_metadata"]["involved_entities"], ("contracts",))
+
+    def test_restricted_sql_fallback_validation_failure_returns_safe_compiled_result(self) -> None:
+        orchestrator = self._scripted_orchestrator(
+            [
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-1", "answer", {}),))),
+                LlmResponse(LlmAssistantMessage("", (LlmToolCall("call-2", "restricted_sql", {"sql": "SELECT * FROM missing_entity"}),))),
+                LlmResponse(LlmAssistantMessage("I returned the governed compiled-plan result with a warning.")),
+            ]
+        )
+
+        response = orchestrator.chat_request(
+            ChatRequest(
+                messages=(
+                    ChatMessage(
+                        role="user",
+                        content="Show opportunity count by implementation complexity and requested support tier for enterprise deals.",
+                    ),
+                )
+            )
+        )
+
+        self.assertEqual(response.executed_tool_name, "answer")
+        self.assertEqual(response.tool_result["data"]["query_mode"], "compiled_plan")
+        self.assertEqual([item.tool_name for item in response.tool_trace], ["answer"])
+        warning_text = " ".join(item["message"] for item in response.tool_result["data"]["warnings"])
+        self.assertIn("Restricted SQL fallback was attempted but rejected safely", warning_text)
+        inspector = build_inspector_view_model(response.tool_result["data"])
+        self.assertEqual(inspector["query_mode"], "compiled_plan")
 
     def test_chat_can_execute_restricted_sql_when_clearly_requested(self) -> None:
         orchestrator = self._scripted_orchestrator(

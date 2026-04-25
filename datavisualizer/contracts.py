@@ -406,7 +406,7 @@ class ChatRequest:
     conversation_state: ConversationState | None = None
     selected_member: DrillSelection | None = None
     semantic_model_path: str | None = None
-    routing: RoutingControls = field(default_factory=RoutingControls)
+    routing: RoutingControls = field(default_factory=lambda: RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True))
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "ChatRequest":
@@ -424,12 +424,18 @@ class ChatRequest:
                 source=raw.get("source", "visual_member"),
             )
 
+        routing_payload = payload.get("routing")
+        routing = (
+            RoutingControls.from_dict(routing_payload)
+            if routing_payload
+            else RoutingControls(compiled_plan_only=False, restricted_sql_allowed=True)
+        )
         return cls(
             messages=tuple(ChatMessage.from_dict(item) for item in payload.get("messages", ())),
             conversation_state=ConversationState.from_dict(payload.get("conversation_state")),
             selected_member=parse_selection(payload.get("selected_member")),
             semantic_model_path=payload.get("semantic_model_path"),
-            routing=RoutingControls.from_dict(payload.get("routing")),
+            routing=routing,
         )
 
 

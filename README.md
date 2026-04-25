@@ -13,8 +13,9 @@ This repository now contains:
 - an end-to-end compiled-plan answer pipeline with chart metadata
 - a governed restricted-SQL gateway for future fallback tooling
 - a provider-agnostic chat orchestrator with env-configured live LLM support
+- an automatic governed restricted-SQL fallback inside `/chat` for valid analytics requests the compiled planner cannot fully cover
 - a minimal single-page chat UI served by the existing Python backend
-- a compact per-response inspection surface for query mode, plan, SQL, filters, entities, limits, warnings, and chart fallbacks
+- a compact per-response inspection surface for query mode, plan, SQL, filters, entities, fallback reason, limits, warnings, and chart fallbacks
 - a standard-library test suite under `tests/`
 
 ## Running the project
@@ -51,7 +52,9 @@ Then open `http://127.0.0.1:8000/dev/chat-trace` to inspect the last N `/chat` r
 `/chat` sits on top of the governed tools instead of replacing them. The orchestrator exposes:
 
 - `answer` as the default analytics tool
-- `restricted_sql` as a secondary governed tool when routing allows it and the request is clearly SQL-specific
+- `restricted_sql` as a secondary governed tool when routing allows it and either the request is clearly SQL-specific or the compiled-plan result is insufficient for a valid analytics request
+
+The chat UI does not expose a restricted-SQL mode, SQL editor, or raw SQL input. Users ask normal business questions. When `/chat` uses the alternate governed query path, the assistant includes a short notice and the inspector shows `query_mode = restricted_sql`, the fallback reason, SQL executed, involved entities, and limit/truncation metadata.
 
 The live provider adapter is env-configured and provider-agnostic. The current local setup supports an OpenRouter-backed OpenAI-compatible endpoint without hard-coding provider secrets into the repo.
 
@@ -127,15 +130,15 @@ This repository includes the approved canonical synthetic seed copied from `../P
 
 ## Query Safety
 
-The default answer path is still `compiled_plan`: question -> `AnalysisPlan` -> deterministic SQL compiler -> execution. The restricted SQL gateway is a secondary governed capability for future LLM tooling. It accepts only a small validated `SELECT` subset over semantic-model entities and approved joins, enforces row limits, and rejects unsupported structure rather than repairing it.
+The default answer path is still `compiled_plan`: question -> `AnalysisPlan` -> deterministic SQL compiler -> execution. The restricted SQL gateway is a secondary governed capability for fallback LLM tooling. It accepts only a small validated `SELECT` subset over semantic-model entities and approved joins, enforces row limits, and rejects unsupported structure rather than repairing it.
 
 `/answer` accepts explicit routing controls:
 
 - `compiled_plan_only`
 - `restricted_sql_allowed`
 
-For this phase, `/answer` still selects the compiled-plan lane by default and reports that choice explicitly in the response.
+`/answer` still selects the compiled-plan lane by default and reports that choice explicitly in the response.
 
-The chat orchestrator preserves that posture. It uses live-model interpretation only to choose and parameterize governed tools. Tool execution itself remains deterministic and backend-controlled.
+The chat orchestrator preserves that posture. It evaluates compiled-plan insufficiency using signals such as planner fallback warnings, incomplete/review-needed unsupported states, requested semantic fields missing from the plan, and unsupported chart-shape fallback. It only asks the model for restricted SQL after the compiled plan has been evaluated, routing allows fallback, the request looks like analytics, and the requested shape can be expressed over governed semantic entities and approved joins. Execution still goes through the restricted SQL validator and gateway.
 
 The user-facing SPA preserves the same posture. It renders governed results from `/chat`, displays warnings and fallback reasons clearly, shows active filters and SQL in a collapsible inspector, and uses selected-member drill payloads rather than any raw-query escape hatch.

@@ -176,6 +176,7 @@ class UiHttpTests(unittest.TestCase):
         self.assertIn("What did the system do?", script)
         self.assertIn("SQL Executed", script)
         self.assertIn("Fallback explanations", script)
+        self.assertIn("Fallback Reason", script)
         self.assertIn(".chat-thread", styles)
         self.assertIn(".inspector", styles)
         self.assertIn(".sql-block", styles)
