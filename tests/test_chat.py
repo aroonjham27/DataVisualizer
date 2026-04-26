@@ -518,6 +518,72 @@ class ChatOrchestratorTests(unittest.TestCase):
         self.assertEqual(second.tool_result["data"]["chart_spec"]["y"], ("line_item_count",))
         self.assertTrue(second.tool_result["data"]["no_new_sql_executed"])
 
+    def test_heatmap_follow_up_does_not_silently_drop_extra_prior_dimensions(self) -> None:
+        state = ConversationState(
+            last_tool_name="answer",
+            last_query_mode="compiled_plan",
+            last_sql="SELECT stale win rate payload",
+            last_columns=(
+                {"name": "sales_region", "label": "Deal Sales Region", "role": "dimension"},
+                {"name": "pricing_model", "label": "Pricing Model", "role": "dimension"},
+                {"name": "line_role", "label": "Line Role", "role": "dimension"},
+                {"name": "close_date_month", "label": "Close Date", "role": "time"},
+                {"name": "opportunities_win_rate", "label": "Win Rate", "role": "measure"},
+            ),
+            last_rows=(("na", "subscription", "base", "2024-01-01", 0.42),),
+            last_chart_spec={"chart_type": "table", "columns": ("sales_region", "pricing_model", "line_role", "close_date_month", "opportunities_win_rate")},
+            last_limit={"row_limit": 500, "returned_rows": 1, "truncated": False, "possibly_truncated": False},
+            last_warnings=(),
+            last_query_metadata={"query_mode": "compiled_plan", "row_limit": 500, "involved_entities": ("opportunities",), "validation_notes": ()},
+        )
+        orchestrator = self._scripted_orchestrator([])
+
+        response = orchestrator.chat_request(
+            ChatRequest(messages=(ChatMessage(role="user", content="show this as a heatmap"),), conversation_state=state)
+        )
+
+        chart_spec = response.tool_result["data"]["chart_spec"]
+        self.assertEqual(response.executed_tool_name, "visualize_result")
+        self.assertEqual(chart_spec["chart_type"], "table")
+        self.assertIn("multiple grouping fields", chart_spec["warnings"][0])
+        self.assertIn("pricing_model", chart_spec["warnings"][0])
+        self.assertIn("line_role", chart_spec["warnings"][0])
+        self.assertIn("close_date_month", chart_spec["warnings"][0])
+        self.assertIn("kept it as a table", response.assistant_message)
+
+    def test_heatmap_follow_up_can_use_explicit_axes_when_prior_result_has_extra_dimensions(self) -> None:
+        state = ConversationState(
+            last_tool_name="answer",
+            last_query_mode="compiled_plan",
+            last_sql="SELECT stale win rate payload",
+            last_columns=(
+                {"name": "sales_region", "label": "Deal Sales Region", "role": "dimension"},
+                {"name": "pricing_model", "label": "Pricing Model", "role": "dimension"},
+                {"name": "line_role", "label": "Line Role", "role": "dimension"},
+                {"name": "close_date_month", "label": "Close Date", "role": "time"},
+                {"name": "opportunities_win_rate", "label": "Win Rate", "role": "measure"},
+            ),
+            last_rows=(("na", "subscription", "base", "2024-01-01", 0.42),),
+            last_chart_spec={"chart_type": "table", "columns": ("sales_region", "pricing_model", "line_role", "close_date_month", "opportunities_win_rate")},
+            last_limit={"row_limit": 500, "returned_rows": 1, "truncated": False, "possibly_truncated": False},
+            last_warnings=(),
+            last_query_metadata={"query_mode": "compiled_plan", "row_limit": 500, "involved_entities": ("opportunities",), "validation_notes": ()},
+        )
+        orchestrator = self._scripted_orchestrator([])
+
+        response = orchestrator.chat_request(
+            ChatRequest(
+                messages=(ChatMessage(role="user", content="show this as a heatmap by pricing model and line role"),),
+                conversation_state=state,
+            )
+        )
+
+        chart_spec = response.tool_result["data"]["chart_spec"]
+        self.assertEqual(chart_spec["chart_type"], "heatmap")
+        self.assertEqual(chart_spec["x"], "pricing_model")
+        self.assertEqual(chart_spec["series"], "line_role")
+        self.assertEqual(chart_spec["y"], ("opportunities_win_rate",))
+
     def test_custom_approved_join_breakdown_falls_back_to_restricted_sql(self) -> None:
         sql = (
             "SELECT p.pricing_model, oli.line_role, COUNT(DISTINCT oli.line_item_id) AS line_item_count "

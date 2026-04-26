@@ -14,6 +14,7 @@ Fix two trust-critical orchestration bugs found during UI validation:
 - Detect explicit new standalone analytics requests when their requested measure or entity conflicts with the current analysis state.
 - Preserve state for true follow-ups such as "go deeper", "top 5", "for enterprise only", and "plot the above".
 - Constrain assistant prose with the returned governed payload so stale-state text cannot claim a different measure, filter, or chart type.
+- Require unambiguous heatmap mappings so chart follow-ups do not silently drop extra dimensions or time fields.
 - Keep the existing Phase 4.6 visualization follow-up behavior intact.
 
 ## Non-Goals
@@ -59,6 +60,17 @@ The prior result snapshot remains available for visualization follow-ups until a
 
 The model can still draft the final response, but the orchestrator checks the returned prose against the governed payload. If the text claims a measure, filter, or grouped-bar chart type not present in the payload, the orchestrator falls back to a deterministic payload-derived summary.
 
+## Heatmap Mapping Policy
+
+Heatmaps are only rendered when the axis and measure mapping is unambiguous.
+
+- Automatic heatmaps require exactly two grouping axes and exactly one measure.
+- If a prior result has more than two categorical or time grouping fields, `/chat` renders a table with a clarification warning unless the user explicitly names the two heatmap axes.
+- If a prior result has more than one measure, `/chat` requires an explicit measure or falls back to table with a warning.
+- Existing chart specs may provide an explicit mapping through `x`, `series`, and `y`; otherwise extra dimensions are never silently ignored.
+
+For example, a stale result containing sales region, pricing model, line role, close month, and win rate must not become a heatmap just because the user says "show this as a heatmap." The response should ask the user to choose two fields, or use the explicitly named axes if the user says "by pricing model and line role."
+
 ## Verification Plan
 
 | Requirement | Proof Method |
@@ -69,3 +81,5 @@ The model can still draft the final response, but the orchestrator checks the re
 | True "go deeper" follow-up still preserves mid-market state | Fake-LLM multi-turn chat regression test |
 | "plot the above" still reuses prior restricted SQL result | Existing result-aware visualization regression test |
 | Assistant prose cannot claim stale measure, filter, or chart type | Fake-LLM contradiction regression test |
+| Heatmap does not silently drop extra prior dimensions | Reused-result heatmap regression test |
+| Explicit heatmap axes can be used when prior result has extra dimensions | Reused-result heatmap regression test |

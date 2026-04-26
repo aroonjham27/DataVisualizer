@@ -422,7 +422,13 @@ class ChatOrchestrator:
 
     def _visualize_existing_result(self, latest_user_message: str, state: ConversationState) -> dict[str, Any]:
         chart_override = self._requested_chart_override(latest_user_message)
-        chart_spec = self._chart_spec_for_existing_result(state.last_columns, state.last_rows, chart_override)
+        chart_spec = self._chart_spec_for_existing_result(
+            state.last_columns,
+            state.last_rows,
+            chart_override,
+            latest_user_message,
+            state.last_chart_spec,
+        )
         warnings = list(state.last_warnings)
         for warning in chart_spec.get("warnings", ()):
             warnings.append(
@@ -484,6 +490,8 @@ class ChatOrchestrator:
         columns: tuple[dict[str, Any], ...],
         rows: tuple[tuple[Any, ...], ...],
         chart_override: str | None,
+        message: str = "",
+        previous_chart_spec: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         column_names = tuple(str(column.get("name", "")) for column in columns)
         dimensions, measures, time_columns = self._infer_existing_result_roles(columns, rows)
@@ -494,27 +502,32 @@ class ChatOrchestrator:
             return self._existing_result_table_chart(column_names, title, ("Prior result is empty; table view is safest.",))
         desired = chart_override
         if desired is None:
-            if len(dimensions) >= 2 and measures:
-                desired = "heatmap" if len(measures) == 1 else "grouped_bar"
+            if len(dimensions) == 2 and len(measures) == 1 and not time_columns:
+                desired = "heatmap"
+            elif len(dimensions) >= 2 and measures:
+                desired = "grouped_bar"
             elif len(dimensions) >= 1 and measures:
                 desired = "bar"
         elif desired == "bar" and len(dimensions) >= 2 and measures:
             desired = "grouped_bar"
         if desired == "heatmap":
-            if len(dimensions) < 2 or not measures:
-                return self._existing_result_table_chart(column_names, title, ("Heatmap needs two dimensions and at least one measure.",))
-            warnings = self._heatmap_shape_warnings(rows, columns, dimensions[0], dimensions[1])
+            mapping = self._heatmap_mapping_for_existing_result(columns, dimensions, time_columns, measures, message, previous_chart_spec)
+            if isinstance(mapping, tuple) and len(mapping) == 3:
+                x_column, y_column, measure = mapping
+            else:
+                return self._existing_result_table_chart(column_names, title, (str(mapping),))
+            warnings = self._heatmap_shape_warnings(rows, columns, x_column, y_column)
             if warnings:
                 return self._existing_result_table_chart(column_names, title, warnings)
             return {
                 "chart_type": "heatmap",
                 "title": title,
-                "x": dimensions[0],
-                "y": (measures[0],),
-                "series": dimensions[1],
+                "x": x_column,
+                "y": (measure,),
+                "series": y_column,
                 "columns": column_names,
                 "warnings": (),
-                "chart_choice_explanation": "Selected a heatmap because the prior result has two category dimensions and one measure.",
+                "chart_choice_explanation": "Selected a heatmap because the prior result has an unambiguous two-axis, one-measure mapping.",
             }
         if desired == "grouped_bar":
             if len(dimensions) < 2 or not measures:
@@ -562,6 +575,68 @@ class ChatOrchestrator:
                 "chart_choice_explanation": "Selected a line chart because the prior result has a time-like column and measure values.",
             }
         return self._existing_result_table_chart(column_names, title, ("Could not infer a supported chart shape from the prior result.",))
+
+    def _heatmap_mapping_for_existing_result(
+        self,
+        columns: tuple[dict[str, Any], ...],
+        dimensions: list[str],
+        time_columns: list[str],
+        measures: list[str],
+        message: str,
+        previous_chart_spec: dict[str, Any] | None,
+    ) -> tuple[str, str, str] | str:
+        axis_candidates = [*dimensions, *time_columns]
+        if len(axis_candidates) == 2 and len(measures) == 1:
+            return axis_candidates[0], axis_candidates[1], measures[0]
+        explicit_axes = self._explicit_columns_from_message(message, columns, axis_candidates)
+        explicit_measures = self._explicit_columns_from_message(message, columns, measures)
+        if len(explicit_axes) == 2 and len(measures) == 1:
+            return explicit_axes[0], explicit_axes[1], measures[0]
+        if len(explicit_axes) == 2 and len(explicit_measures) == 1:
+            return explicit_axes[0], explicit_axes[1], explicit_measures[0]
+        spec_mapping = self._heatmap_mapping_from_chart_spec(axis_candidates, measures, previous_chart_spec)
+        if spec_mapping is not None:
+            return spec_mapping
+        if len(axis_candidates) > 2:
+            return (
+                "Heatmap needs exactly two axes, but the prior result has multiple grouping fields: "
+                f"{', '.join(axis_candidates)}. Please name the two fields to use."
+            )
+        if len(measures) != 1:
+            return (
+                "Heatmap needs exactly one measure, but the prior result has "
+                f"{len(measures)} measures. Please name the measure to use."
+            )
+        return "Heatmap needs exactly two dimensions and one measure."
+
+    def _explicit_columns_from_message(self, message: str, columns: tuple[dict[str, Any], ...], candidates: list[str]) -> list[str]:
+        normalized_message = normalize_semantic_term(message)
+        matched: list[str] = []
+        columns_by_name = {str(column.get("name", "")): column for column in columns}
+        for candidate in candidates:
+            terms = {normalize_semantic_term(candidate), normalize_semantic_term(candidate.replace("_", " "))}
+            label = str(columns_by_name.get(candidate, {}).get("label", ""))
+            if label:
+                terms.add(normalize_semantic_term(label))
+            if any(term and f" {term} " in f" {normalized_message} " for term in terms):
+                matched.append(candidate)
+        return matched
+
+    def _heatmap_mapping_from_chart_spec(
+        self,
+        axis_candidates: list[str],
+        measures: list[str],
+        chart_spec: dict[str, Any] | None,
+    ) -> tuple[str, str, str] | None:
+        if not isinstance(chart_spec, dict):
+            return None
+        x = chart_spec.get("x")
+        series = chart_spec.get("series")
+        y_values = chart_spec.get("y") or ()
+        y = y_values[0] if isinstance(y_values, (tuple, list)) and y_values else None
+        if x in axis_candidates and series in axis_candidates and y in measures:
+            return str(x), str(series), str(y)
+        return None
 
     def _infer_existing_result_roles(
         self,

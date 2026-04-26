@@ -493,6 +493,25 @@ class RowAwareChartSpecTests(unittest.TestCase):
         self.assertEqual(chart.series, "line_role")
         self.assertEqual(chart.y, ("line_item_count",))
 
+    def test_heatmap_with_extra_dimensions_falls_back_to_table(self) -> None:
+        plan = replace(
+            self.plan,
+            question="Show stale mixed win rate payload as a heatmap.",
+            chart_intent=ChartIntent(chart_type="heatmap", reason="test"),
+        )
+        columns = (
+            ResultColumn("sales_region", "Deal Sales Region", "string", ("opportunities.sales_region",), "dimension"),
+            ResultColumn("pricing_model", "Pricing Model", "string", ("products.pricing_model",), "dimension"),
+            ResultColumn("line_role", "Line Role", "string", ("opportunity_line_items.line_role",), "dimension"),
+            ResultColumn("opportunities_win_rate", "Win Rate", "number", ("opportunities.win_rate",), "measure"),
+        )
+        rows = (("na", "subscription", "base", 0.42),)
+
+        chart = self.generator.generate(plan, columns, rows)
+
+        self.assertEqual(chart.chart_type, "table")
+        self.assertIn("exactly two dimensions and one measure", " ".join(chart.warnings))
+
     def test_heatmap_for_contract_billing_frequency_and_currency_question(self) -> None:
         plan = replace(
             self.plan,

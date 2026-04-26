@@ -74,6 +74,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - Visualization-only follow-ups are deterministic: requests such as "plot the above", "visualize it", "show as table", or "make it a grouped bar" reuse the prior governed result and produce a new chart spec without calling a query tool.
 - Reused-result responses preserve the original query mode and SQL in the inspector and add metadata for source result tool, source query mode, chart override requested, visualization follow-up, and no-new-SQL status.
 - Chart specs include a chart choice explanation so assistant prose, inspector details, and rendered chart type can stay consistent.
+- Heatmap chart specs are intentionally strict: automatic heatmaps require exactly two grouping axes and one measure, while reused prior results with extra categorical or time fields require explicit user-selected axes or fall back to table.
 - Orchestration remains deterministic around tool execution: the model may choose among offered tools, but argument enrichment, execution, state updates, and response shaping stay backend-controlled.
 - Conversation state is first-class: the orchestrator carries forward prior analysis context so follow-ups such as `go deeper`, `just enterprise`, `top 5`, and `show as table` can reuse governed state instead of reinterpreting the full task from scratch.
 - New-topic detection protects that state: explicit standalone requests with a conflicting measure or entity intent drop the current analysis plan before tool execution, while the last governed result remains available for visualization follow-ups.
@@ -100,6 +101,7 @@ The semantic layer and planner sit between raw data files and any automated anal
 - The browser UI must never bypass `/chat` to recreate planning or query behavior client-side.
 - Warning, fallback, and filter visibility should be preserved in the UI because these are part of the trust boundary, not decorative metadata.
 - Chart choice explanations should stay grounded in result shape, such as two category dimensions plus one measure for a heatmap.
+- Heatmap rendering must not silently ignore extra grouping fields such as line role, pricing model, sales region, or close date.
 
 ## Review Model
 

@@ -165,7 +165,10 @@ Goal: fix UI-discovered trust bugs around restricted-SQL value casing and stale 
 - [x] Drop current analysis state and selected member for standalone new-topic requests
 - [x] Preserve state for true follow-ups such as "go deeper", "top 5", and visualization-only requests
 - [x] Guard assistant prose against stale measure, filter, and chart-type claims
+- [x] Require unambiguous heatmap axes and one measure before rendering heatmap follow-ups
+- [x] Fall back to table instead of silently dropping extra categorical or time fields
 - [x] Add exact regressions for restricted SQL casing, stale win-rate state, true drill follow-up preservation, visualization reuse, and prose/payload consistency
+- [x] Add heatmap ambiguity regressions for stale mixed prior payloads
 
 ---
 

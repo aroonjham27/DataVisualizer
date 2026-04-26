@@ -102,10 +102,10 @@ class ChartSpecGenerator:
 
     def _heatmap(self, plan: AnalysisPlan, columns: tuple[ResultColumn, ...], rows: tuple[tuple[Any, ...], ...]) -> ChartSpec:
         dimensions = self._columns_by_role(columns, "dimension")
-        measure = self._first_column(columns, "measure")
+        measures = self._columns_by_role(columns, "measure")
         warnings = []
-        if len(dimensions) < 2 or measure is None:
-            warnings.append("Heatmap needs two dimensions and one measure.")
+        if len(dimensions) != 2 or len(measures) != 1:
+            warnings.append("Heatmap needs exactly two dimensions and one measure.")
         elif self._distinct_count(dimensions[0], rows, columns) > self.max_heatmap_x:
             warnings.append("Heatmap has too many x-axis categories for the pilot renderer contract.")
         elif self._distinct_count(dimensions[1], rows, columns) > self.max_heatmap_y:
@@ -116,7 +116,7 @@ class ChartSpecGenerator:
             chart_type="heatmap",
             title=self._title(plan),
             x=dimensions[0].name,
-            y=(measure.name,),
+            y=(measures[0].name,),
             series=dimensions[1].name,
             columns=tuple(column.name for column in columns),
             chart_choice_explanation="Selected a heatmap because the result has two category dimensions and one measure.",

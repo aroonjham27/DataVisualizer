@@ -62,6 +62,8 @@ The chat UI does not expose a restricted-SQL mode, SQL editor, or raw SQL input.
 
 For standalone new questions, `/chat` now detects explicit measure or entity intent that conflicts with the current analysis state and starts a fresh governed analysis instead of carrying stale filters or measures forward.
 
+Heatmap follow-ups are deliberately shape-strict. The backend only renders a heatmap automatically when the prior governed result has an unambiguous two-axis, one-measure mapping. If a reused result has extra categorical or time fields, `/chat` keeps the table and asks which two fields to use unless the user explicitly names the axes.
+
 The live provider adapter is env-configured and provider-agnostic. The current local setup supports an OpenRouter-backed OpenAI-compatible endpoint without hard-coding provider secrets into the repo.
 
 The frontend stack is intentionally minimal:

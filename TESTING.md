@@ -35,6 +35,7 @@ py -3 -m unittest discover -s tests -t .
 - true truncation detection with one-extra-row probing
 - row-aware chart fallback behavior for empty, sparse, over-wide, and too-many-category results
 - heatmap chart specs for two-dimension, one-measure result shapes
+- heatmap table fallback when extra dimensions would make the mapping ambiguous
 - chart choice explanations in chart specs, reused-result prose, and inspector/static UI coverage
 - stable API success and error envelopes
 - routing flag behavior and compiled-plan-default routing metadata
@@ -73,6 +74,7 @@ py -3 -m unittest discover -s tests -t .
 - Keep state-reset tests multi-turn so they prove true follow-ups still preserve state while standalone questions drop stale state.
 - When chart heuristics change, test both the intended chart and the table fallback reason.
 - For heatmaps, use representative two-category-dimension questions from the pricing seed, such as implementation complexity by support tier, pricing model by line role, billing frequency by currency, and segment by region.
+- For heatmap follow-ups, assert that extra categorical or time dimensions are not silently dropped; require explicit axes or a table fallback warning.
 - Keep tool-facing payload tests explicit about `ok`, `tool_name`, `data`, `error`, routing metadata, and structured warnings.
 - Keep most orchestration tests on the fake client so behavior stays deterministic.
 - Keep dev trace tests focused on bounded, opt-in observability and redaction; do not make tracing required for normal `/chat` behavior.
@@ -100,3 +102,5 @@ The deterministic chat suite includes golden fallback questions for custom oppor
 The suite also covers Phase 4.6 visualization follow-ups: a restricted-SQL table followed by "plot the above" must reuse the prior rows, preserve original SQL and query mode, set `no_new_sql_executed`, and produce a chart spec that matches the assistant prose.
 
 The Phase 4.7 trust-hardening regressions cover restricted SQL casing for `enterprise`, `Enterprise`, and `ENTERPRISE`; safe rejection for unknown indexed values; a win-rate drill followed by a standalone analytics product line-item question; preservation of the true `go deeper` follow-up; and model prose that tries to claim stale measures, filters, or chart types.
+
+Heatmap trust regressions cover the stale-payload case explicitly: a prior result with sales region, pricing model, line role, close date, and win rate must stay a table unless the user names the two heatmap axes.
